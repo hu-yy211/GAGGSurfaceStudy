@@ -13,6 +13,7 @@ add_executable(gagg_surface_study
   src/PhysicsList.cc
   src/PrimaryGeneratorAction.cc
   src/RunAction.cc
+  src/StackingAction.cc
   src/SteppingAction.cc
 )
 target_include_directories(gagg_surface_study PRIVATE ${PROJECT_SOURCE_DIR}/include)
@@ -171,5 +172,51 @@ if(BUILD_TESTING)
     DEPENDS a4_surface_validate
     ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
     PASS_REGULAR_EXPRESSION "\\[a4-plot\\] status=PASS"
+  )
+
+  add_test(
+    NAME a5_linearity_export
+    COMMAND $<TARGET_FILE:gagg_surface_study>
+            ${PROJECT_BINARY_DIR}/macros/validation/a5_linearity.mac
+  )
+  set_tests_properties(a5_linearity_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[output\\] csv=results/a5/energy_40kev.csv rows=20"
+    FAIL_REGULAR_EXPRESSION "unclassified=[1-9][0-9]*|status=FAIL|G4Exception|Fatal Exception"
+    TIMEOUT 300
+  )
+
+  add_test(
+    NAME a5_slow_time_export
+    COMMAND $<TARGET_FILE:gagg_surface_study>
+            ${PROJECT_BINARY_DIR}/macros/validation/a5_slow_time.mac
+  )
+  set_tests_properties(a5_slow_time_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[output\\] csv=results/a5/energy_20kev_slow.csv rows=20"
+    FAIL_REGULAR_EXPRESSION "unclassified=[1-9][0-9]*|status=FAIL|G4Exception|Fatal Exception"
+    TIMEOUT 300
+  )
+
+  add_test(
+    NAME a5_scintillation_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_a5.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/a5
+  )
+  set_tests_properties(a5_scintillation_validate PROPERTIES
+    DEPENDS "a5_linearity_export;a5_slow_time_export"
+    PASS_REGULAR_EXPRESSION "\\[a5-check\\] scintillation status=PASS"
+  )
+
+  add_test(
+    NAME a5_plot
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/plot_a5.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/a5
+            --output-dir ${PROJECT_BINARY_DIR}/a5_plots
+  )
+  set_tests_properties(a5_plot PROPERTIES
+    DEPENDS a5_scintillation_validate
+    ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
+    PASS_REGULAR_EXPRESSION "\\[a5-plot\\] status=PASS"
   )
 endif()

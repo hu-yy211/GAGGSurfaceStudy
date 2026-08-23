@@ -8,3 +8,7 @@ It then switches back to polishedvm2000air for fixed-seed reproducibility.
 
 This macro still uses the A3 fixed-count isotropic optical source. It validates
 LUT loading and switching only; it is not the A7 Fig. 4 production macro.
+
+A5 scintillation-validation macros live in macros/validation because they are
+controlled physics checks rather than paper-production runs. A6 will add the
+first gamma-source macro; A7 will add the final four-finish production macro.

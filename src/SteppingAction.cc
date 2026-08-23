@@ -41,13 +41,21 @@ G4OpBoundaryProcess* SteppingAction::FindBoundaryProcess() {
 }
 
 void SteppingAction::UserSteppingAction(const G4Step* step) {
-  if (step->GetTrack()->GetDefinition() != G4OpticalPhoton::Definition()) {
+  const auto* pre = step->GetPreStepPoint();
+  const auto* preVolume = pre->GetPhysicalVolume();
+  const auto isOpticalPhoton =
+      step->GetTrack()->GetDefinition() == G4OpticalPhoton::Definition();
+  if (!isOpticalPhoton && preVolume != nullptr &&
+      preVolume->GetName() == "GAGG" &&
+      step->GetTotalEnergyDeposit() > 0.0) {
+    fEventAction->RecordEnergyDeposit(step->GetTotalEnergyDeposit());
+  }
+
+  if (!isOpticalPhoton) {
     return;
   }
 
   const auto* post = step->GetPostStepPoint();
-  const auto* pre = step->GetPreStepPoint();
-  const auto* preVolume = pre->GetPhysicalVolume();
   const auto* postVolume = post->GetPhysicalVolume();
   const auto surfaceTolerance =
       G4GeometryTolerance::GetInstance()->GetSurfaceTolerance();

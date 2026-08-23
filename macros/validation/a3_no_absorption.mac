@@ -4,6 +4,7 @@
 /tracking/verbose 0
 /gagg/geometry/mode paper
 /gagg/optics/gaggBulkAbsorption false
+/gagg/source/particle optical
 /gagg/source/mode isotropic
 /gagg/source/photonsPerEvent 200
 /gagg/source/position 0 0 0 mm

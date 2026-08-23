@@ -11,7 +11,11 @@ EXPECTED_COLUMNS = [
     "source_x_mm",
     "source_y_mm",
     "source_z_mm",
+    "source_particle",
+    "source_energy_keV",
     "stage_a_surface",
+    "edep_keV",
+    "scintillation",
     "generated",
     "output",
     "crystal_absorption",
@@ -25,7 +29,7 @@ EXPECTED_COLUMNS = [
     "unclassified",
 ]
 
-COUNT_COLUMNS = EXPECTED_COLUMNS[5:]
+COUNT_COLUMNS = EXPECTED_COLUMNS[8:]
 
 
 def main() -> int:
@@ -61,6 +65,12 @@ def main() -> int:
             raise ValueError(f"unexpected A0 source position: {source}")
         if row["stage_a_surface"] != "none":
             raise ValueError(f"unexpected A0 surface: {row['stage_a_surface']}")
+        if row["source_particle"] != "optical":
+            raise ValueError(f"unexpected A0 source: {row['source_particle']}")
+        if not 0.0 < float(row["source_energy_keV"]) < 0.01:
+            raise ValueError(f"unexpected A0 source energy: {row}")
+        if float(row["edep_keV"]) != 0.0 or values["scintillation"] != 0:
+            raise ValueError(f"A0 unexpectedly produced scintillation: {row}")
         if values["world_exit"] != (
             values["output"] + values["other_world_exit"]
         ):

@@ -13,7 +13,11 @@ EXPECTED_COLUMNS = [
     "source_x_mm",
     "source_y_mm",
     "source_z_mm",
+    "source_particle",
+    "source_energy_keV",
     "stage_a_surface",
+    "edep_keV",
+    "scintillation",
     "generated",
     "output",
     "crystal_absorption",
@@ -27,7 +31,7 @@ EXPECTED_COLUMNS = [
     "unclassified",
 ]
 
-COUNT_COLUMNS = EXPECTED_COLUMNS[5:]
+COUNT_COLUMNS = EXPECTED_COLUMNS[8:]
 
 
 @dataclass(frozen=True)
@@ -82,6 +86,12 @@ def load_summary(path: Path, expected_z_mm: float) -> Summary:
             raise ValueError(f"unexpected source in {path}: {source}")
         if row["stage_a_surface"] != "none":
             raise ValueError(f"unexpected A3 surface in {path}")
+        if row["source_particle"] != "optical":
+            raise ValueError(f"unexpected A3 source in {path}")
+        if not 0.0 < float(row["source_energy_keV"]) < 0.01:
+            raise ValueError(f"unexpected A3 source energy in {path}")
+        if float(row["edep_keV"]) != 0.0:
+            raise ValueError(f"A3 optical source deposited energy in {path}")
 
         values = {key: int(row[key]) for key in COUNT_COLUMNS}
         if expected_generated is None:
@@ -111,6 +121,8 @@ def load_summary(path: Path, expected_z_mm: float) -> Summary:
             raise ValueError(f"unclassified photon in {path}: {values}")
         if values["surface_absorption"] != 0 or values["lut_interactions"] != 0:
             raise ValueError(f"A3 unexpectedly invoked LUT transport in {path}")
+        if values["scintillation"] != 0:
+            raise ValueError(f"A3 unexpectedly produced scintillation in {path}")
 
         for key, value in values.items():
             totals[key] += value

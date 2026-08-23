@@ -4,6 +4,7 @@
 #include "GAGG/PhysicsList.hh"
 #include "GAGG/PrimaryGeneratorAction.hh"
 #include "GAGG/RunAction.hh"
+#include "GAGG/StackingAction.hh"
 #include "GAGG/SteppingAction.hh"
 
 #include "G4RunManager.hh"
@@ -56,6 +57,7 @@ int main(int argc, char** argv) {
   runManager->SetUserAction(runAction);
   auto* eventAction = new gagg::EventAction(runAction, primaryGenerator);
   runManager->SetUserAction(eventAction);
+  runManager->SetUserAction(new gagg::StackingAction(eventAction));
   runManager->SetUserAction(new gagg::SteppingAction(eventAction));
 
   std::unique_ptr<G4VisManager> visManager;

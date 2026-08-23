@@ -9,6 +9,7 @@
 #include "G4LogicalBorderSurface.hh"
 #include "G4LogicalVolume.hh"
 #include "G4Material.hh"
+#include "G4MaterialPropertyVector.hh"
 #include "G4MaterialPropertiesTable.hh"
 #include "G4Navigator.hh"
 #include "G4NistManager.hh"
@@ -100,6 +101,19 @@ DetectorConstruction::DetectorConstruction()
       "Enable the literature GAGG bulk self-absorption length.");
   absorptionCommand.SetStates(G4State_PreInit);
 
+  auto& scintillationTimeCommand = fOpticsMessenger->DeclarePropertyWithUnit(
+      "scintillationTimeConstant", "ns", fScintillationTimeConstant,
+      "Set the single-component GAGG scintillation decay time.");
+  scintillationTimeCommand.SetParameterName("tau", false);
+  scintillationTimeCommand.SetRange("tau>0.");
+  scintillationTimeCommand.SetDefaultValue("62.53");
+  scintillationTimeCommand.SetStates(G4State_PreInit);
+
+  auto& validateScintillationCommand = fOpticsMessenger->DeclareMethod(
+      "validateScintillation", &DetectorConstruction::ValidateScintillation,
+      "Validate the initialized GAGG scintillation properties.");
+  validateScintillationCommand.SetStates(G4State_Idle);
+
   auto& surfaceCommand = fStageAMessenger->DeclareMethod(
       "surface", &DetectorConstruction::SetStageASurface,
       "Select the Stage A LBNL LUT finish; none disables the LUT boundary.");
@@ -179,6 +193,20 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
     if (fGaggBulkAbsorption) {
       gaggMpt->AddProperty("ABSLENGTH", energies, absorption);
     }
+    const std::vector<G4double> scintillationEnergies = {
+        config::PhotonEnergy(config::kScintillationWavelengthMax),
+        config::EmissionPhotonEnergy(),
+        config::PhotonEnergy(config::kScintillationWavelengthMin)};
+    const std::vector<G4double> scintillationIntensity = {0.0, 1.0, 0.0};
+    gaggMpt->AddProperty("SCINTILLATIONCOMPONENT1", scintillationEnergies,
+                         scintillationIntensity);
+    gaggMpt->AddConstProperty("SCINTILLATIONYIELD",
+                              config::kScintillationYield);
+    gaggMpt->AddConstProperty("RESOLUTIONSCALE",
+                              config::kScintillationResolutionScale);
+    gaggMpt->AddConstProperty("SCINTILLATIONTIMECONSTANT1",
+                              fScintillationTimeConstant);
+    gaggMpt->AddConstProperty("SCINTILLATIONYIELD1", 1.0);
     gagg->SetMaterialPropertiesTable(gaggMpt);
   }
 
@@ -351,6 +379,70 @@ void DetectorConstruction::ValidateStageASurface() {
          << " data_file=" << dataFile
          << " data_status=" << (dataPass ? "PASS" : "FAIL")
          << " status=" << (allPass ? "PASS" : "FAIL") << G4endl;
+}
+
+void DetectorConstruction::ValidateScintillation() {
+  const auto* gagg = G4Material::GetMaterial("GAGG_Ce", false);
+  const auto* properties =
+      gagg == nullptr ? nullptr : gagg->GetMaterialPropertiesTable();
+  const auto* spectrum =
+      properties == nullptr
+          ? nullptr
+          : properties->GetProperty("SCINTILLATIONCOMPONENT1");
+  const auto constantsPass =
+      properties != nullptr &&
+      properties->ConstPropertyExists("SCINTILLATIONYIELD") &&
+      properties->ConstPropertyExists("RESOLUTIONSCALE") &&
+      properties->ConstPropertyExists("SCINTILLATIONTIMECONSTANT1") &&
+      properties->ConstPropertyExists("SCINTILLATIONYIELD1");
+  const auto yield = constantsPass
+                         ? properties->GetConstProperty("SCINTILLATIONYIELD")
+                         : -1.0;
+  const auto resolutionScale =
+      constantsPass ? properties->GetConstProperty("RESOLUTIONSCALE") : -1.0;
+  const auto timeConstant =
+      constantsPass
+          ? properties->GetConstProperty("SCINTILLATIONTIMECONSTANT1")
+          : -1.0;
+  const auto componentFraction =
+      constantsPass ? properties->GetConstProperty("SCINTILLATIONYIELD1")
+                    : -1.0;
+  const auto constantsValuesPass =
+      constantsPass && RelativeClose(yield, config::kScintillationYield) &&
+      RelativeClose(resolutionScale,
+                    config::kScintillationResolutionScale) &&
+      RelativeClose(timeConstant, fScintillationTimeConstant) &&
+      RelativeClose(componentFraction, 1.0);
+
+  const auto spectrumPass =
+      spectrum != nullptr && spectrum->GetVectorLength() == 3 &&
+      RelativeClose(
+          spectrum->Energy(0),
+          config::PhotonEnergy(config::kScintillationWavelengthMax)) &&
+      RelativeClose(spectrum->Energy(1), config::EmissionPhotonEnergy()) &&
+      RelativeClose(
+          spectrum->Energy(2),
+          config::PhotonEnergy(config::kScintillationWavelengthMin)) &&
+      RelativeClose((*spectrum)[0], 0.0) &&
+      RelativeClose((*spectrum)[1], 1.0) &&
+      RelativeClose((*spectrum)[2], 0.0);
+  const auto allPass = constantsValuesPass && spectrumPass;
+
+  G4cout << "[a5] scintillation_yield_photons_per_MeV=" << yield * MeV
+         << " resolution_scale=" << resolutionScale
+         << " time_constant_ns=" << timeConstant / ns
+         << " component_fraction=" << componentFraction << G4endl;
+  G4cout << "[a5] emission_min_nm="
+         << config::kScintillationWavelengthMin / nm
+         << " emission_peak_nm=" << config::kEmissionWavelength / nm
+         << " emission_max_nm="
+         << config::kScintillationWavelengthMax / nm
+         << " spectrum_points="
+         << (spectrum == nullptr ? 0 : spectrum->GetVectorLength())
+         << " spectrum_status=" << (spectrumPass ? "PASS" : "FAIL")
+         << G4endl;
+  G4cout << "[a5] scintillation_material status="
+         << (allPass ? "PASS" : "FAIL") << G4endl;
 }
 
 void DetectorConstruction::ValidateGeometry() {

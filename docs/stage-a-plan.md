@@ -72,12 +72,20 @@ closed photon accounting and zero unclassified photons. Switching back to
 `polishedvm2000air` reproduced all 50 event rows exactly. The A4 output order
 is recorded but is not a pass criterion before A7.
 
-### A5 - Scintillation validation
+### A5 - Scintillation validation - PASSED
 
 Add only a narrow 550 nm component and 54000 photons/MeV.
 
 Pass: N_generated is linear in Edep with the correct slope; photon accounting
 closes; integrated counts do not depend on time constants.
+
+Status: passed on 2026-08-23. A controlled 10/20/40 keV electron source
+deposited its full energy in GAGG and generated 540/1080/2160 photons per
+event. The fitted slope was exactly 54000 photons/MeV, all terminal accounting
+closed, and every generated secondary was created by `Scintillation`.
+Changing the single-component constant from 62.53 ns to 190.89 ns changed the
+integrated yield by 4.63e-5 relative; output efficiencies differed by only
+0.150 sigma. Cerenkov production is disabled. No gamma source exists yet.
 
 ### A6 - 662 keV gamma
 

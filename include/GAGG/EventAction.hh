@@ -23,10 +23,18 @@ class EventAction final : public G4UserEventAction {
   void RecordOtherAbsorption() { ++fOtherAbsorption; }
   void RecordOtherWorldExit() { ++fOtherWorldExit; }
   void RecordLutInteraction() { ++fLutInteractions; }
+  void RecordEnergyDeposit(G4double energy) { fEnergyDeposit += energy; }
+  void RecordScintillationPhoton() {
+    ++fScintillation;
+    ++fGenerated;
+  }
 
  private:
   RunAction* fRunAction = nullptr;
   const PrimaryGeneratorAction* fPrimaryGenerator = nullptr;
+  G4double fEnergyDeposit = 0.0;
+  G4int fScintillation = 0;
+  G4int fGenerated = 0;
   G4int fOutput = 0;
   G4int fCrystalAbsorption = 0;
   G4int fReflectorAbsorption = 0;

@@ -166,3 +166,53 @@ Status: validation gate A4 passed. The observed functional comparison does
 not match the paper's Fig. 4 ordering, but A4 deliberately does not test that
 ordering. Scintillation, a 662 keV gamma source, full-energy event selection
 and the Fig. 4 validation criterion remain A5-A7 work.
+
+## 2026-08-23 - A5 scintillation validation
+
+- The GAGG material now has a three-point
+  `SCINTILLATIONCOMPONENT1` spectrum at 545, 550 and 555 nm with relative
+  intensities 0, 1 and 0. The narrow spectrum is a documented simplification
+  of the paper's 550 nm peak rather than a fitted emission curve.
+- `SCINTILLATIONYIELD` is 54000 photons/MeV, `SCINTILLATIONYIELD1` is 1 and
+  `RESOLUTIONSCALE` is zero. The zero resolution scale deliberately removes
+  yield fluctuations from the slope validation; the paper's 2% intrinsic
+  resolution remains disabled until its simulation role is defined.
+- The default one-component decay constant is the paper's 62.53 ns fast
+  value. `/gagg/optics/scintillationTimeConstant` permits a PreInit change;
+  190.89 ns, the paper's slow value, is used only as the A5 timing control.
+  No two-component time profile has been introduced.
+- `/gagg/optics/validateScintillation` read back the material table and
+  confirmed the yield, component fraction, resolution scale, selected time
+  constant, increasing three-point energy grid and 550 nm peak.
+- `G4Scintillation` is enabled and Cerenkov production is explicitly disabled.
+  A new stacking action counts only optical secondaries whose creator process
+  is `Scintillation`; A0-A4 retain explicit optical primary sources and require
+  zero scintillation photons.
+- `/gagg/source/particle optical|electron` and
+  `/gagg/source/kineticEnergy` add a controlled electron validation source.
+  A5 uses exactly one center-origin electron per event and does not add a
+  gamma source.
+- Event output now includes `source_particle`, `source_energy_keV`,
+  `edep_keV` and `scintillation`. `edep_keV` counts non-optical energy deposits
+  in GAGG only, preventing later optical self-absorption from being counted a
+  second time as primary deposited energy.
+- Twenty events each at 10, 20 and 40 keV deposited exactly 200, 400 and
+  800 keV in total and generated 10,800, 21,600 and 43,200 scintillation
+  photons. This is exactly 540, 1080 and 2160 photons per event and gives a
+  through-origin slope of 54000 photons/MeV with zero relative error.
+- Every A5 event satisfied exact photon terminal accounting with zero
+  unclassified photons and had nonzero LBNL LUT boundary interactions.
+- At 20 keV, changing the decay constant from 62.53 ns to 190.89 ns changed
+  the integrated count from 21,600 to 21,599 photons. The relative difference
+  is 4.63e-5, within the predefined 1e-4 integer-generation tolerance. The
+  output efficiencies differed by 0.150 combined standard deviations.
+- The scintillation-linearity plot and timing-control plot were generated and
+  visually inspected. The Qt/OpenGL scene opened successfully with one red
+  1 keV electron and its green optical trajectories; the event deposited
+  1 keV, generated 54 scintillation photons, recorded 194 LUT interactions,
+  produced 49 output photons and closed with zero unclassified photons.
+- The complete A0-A5 regression suite passed 17/17 CTest tests.
+
+Status: validation gate A5 passed. The model now validates optical transport,
+LUT boundaries and scintillation production separately. A 662 keV gamma
+source, full-energy selection and Fig. 4 ordering remain A6-A7 work.

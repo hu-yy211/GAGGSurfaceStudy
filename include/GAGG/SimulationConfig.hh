@@ -12,6 +12,8 @@ inline constexpr G4double kCrystalRadius = 12.7 * mm;
 inline constexpr G4double kCrystalLength = 25.4 * mm;
 inline constexpr G4double kCrystalDensity = 6.63 * g / cm3;
 inline constexpr G4double kEmissionWavelength = 550.0 * nm;
+inline constexpr G4double kScintillationWavelengthMin = 545.0 * nm;
+inline constexpr G4double kScintillationWavelengthMax = 555.0 * nm;
 inline constexpr G4double kGaggRefractiveIndex = 1.91;
 inline constexpr G4double kWorldRefractiveIndex = 1.0;
 inline constexpr G4double kSelfAbsorptionCoefficient = 0.0155 / cm;
@@ -29,9 +31,17 @@ inline constexpr G4double kTopReflectorCenterZ =
     0.5 * (kCrystalLength + kReflectorThickness);
 inline constexpr G4double kOpticalEnergyMin = 2.0 * eV;
 inline constexpr G4double kOpticalEnergyMax = 3.0 * eV;
+inline constexpr G4double kScintillationYield = 54000.0 / MeV;
+inline constexpr G4double kScintillationResolutionScale = 0.0;
+inline constexpr G4double kFastScintillationTimeConstant = 62.53 * ns;
+inline constexpr G4double kSlowScintillationTimeConstant = 190.89 * ns;
 
 inline G4double EmissionPhotonEnergy() {
   return h_Planck * c_light / kEmissionWavelength;
+}
+
+inline G4double PhotonEnergy(G4double wavelength) {
+  return h_Planck * c_light / wavelength;
 }
 
 }  // namespace gagg::config

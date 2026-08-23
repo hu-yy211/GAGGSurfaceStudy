@@ -9,6 +9,8 @@ namespace gagg {
 struct EventRecord {
   G4int eventId = 0;
   G4ThreeVector sourcePosition;
+  G4double energyDeposit = 0.0;
+  G4int scintillation = 0;
   G4int generated = 0;
   G4int output = 0;
   G4int crystalAbsorption = 0;

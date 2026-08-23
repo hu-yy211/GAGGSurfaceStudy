@@ -1,6 +1,8 @@
 #ifndef GAGG_DETECTOR_CONSTRUCTION_HH
 #define GAGG_DETECTOR_CONSTRUCTION_HH
 
+#include "GAGG/SimulationConfig.hh"
+
 #include "G4VUserDetectorConstruction.hh"
 #include "globals.hh"
 
@@ -23,10 +25,14 @@ class DetectorConstruction final : public G4VUserDetectorConstruction {
   void SetStageASurface(const G4String& surface);
   void ValidateGeometry();
   void ValidateStageASurface();
+  void ValidateScintillation();
 
   const G4String& GetStageASurfaceName() const { return fStageASurface; }
   G4bool HasStageALutSurface() const { return fStageASurface != "none"; }
   G4String GetRealSurfaceDataPath() const;
+  G4double GetScintillationTimeConstant() const {
+    return fScintillationTimeConstant;
+  }
 
  private:
   void ConfigureStageASurface();
@@ -38,6 +44,8 @@ class DetectorConstruction final : public G4VUserDetectorConstruction {
   G4String fGeometryMode = "bare";
   G4String fStageASurface = "none";
   G4bool fGaggBulkAbsorption = true;
+  G4double fScintillationTimeConstant =
+      config::kFastScintillationTimeConstant;
   G4VPhysicalVolume* fWorldPhysical = nullptr;
   G4VPhysicalVolume* fCrystalPhysical = nullptr;
   G4VPhysicalVolume* fSideReflectorPhysical = nullptr;

@@ -9,7 +9,7 @@ collection.
   5.75 mm x 5.75 mm x 20 mm crystal with the UNIFIED model and one shared
   rough-surface sigma_alpha.
 
-The current validated milestone is A4. A0 provides a one-photon optical
+The current validated milestone is A5. A0 provides a one-photon optical
 transport baseline, Qt/OpenGL view, event-level CSV output, accounting checks
 and reproducible plots. A1 validates the literature parameters and their
 Geant4 unit conversions. A2 adds the paper's 1 mm Teflon-assumption side
@@ -17,12 +17,13 @@ sleeve and top cap while leaving the -z crystal output face open. A3 adds a
 fixed-count isotropic 550 nm source at controlled positions and records the
 first crossing of that open face as `N_output`. A4 attaches the four paper
 LBNL LUT finishes to the GAGG-to-side/top borders and switches them at runtime
-through geometry reinitialization.
+through geometry reinitialization. A5 adds Geant4 scintillation with a narrow
+550 nm component and validates its 54000 photons/MeV yield using controlled
+electron energy deposits.
 
-There is no scintillation production, gamma source, PMT, or fitting yet. The
-current A4 `N_output/N_generated` values validate LUT loading, switching and
-accounting only. Fig. 4 ordering is deliberately deferred until A7, after A5
-scintillation and A6 gamma-interaction validation.
+There is no gamma source, PMT, or fitting yet. A5 validates scintillation
+production independently of gamma interactions. Fig. 4 ordering is still
+deferred until A7, after the A6 662 keV gamma and full-energy-event gate.
 
 ## Build and run
 
@@ -217,6 +218,63 @@ respectively. This is not the paper's order and is not treated as an A4
 failure: the source is still a point-like fixed-count optical source rather
 than 662 keV gamma-induced scintillation. No parameter was tuned.
 
+## A5 scintillation validation
+
+A5 uses one controlled electron at the crystal center to deposit 10, 20 or
+40 keV without introducing a gamma source. Run the linearity and timing
+controls, validate the CSV files and create the plots:
+
+~~~sh
+./build/gagg_surface_study \
+  ./build/macros/validation/a5_linearity.mac
+./build/gagg_surface_study \
+  ./build/macros/validation/a5_slow_time.mac
+python analysis/validate_a5.py --input-dir results/a5
+MPLCONFIGDIR=results/.mplconfig python analysis/plot_a5.py \
+  --input-dir results/a5 --output-dir results/a5/figures
+~~~
+
+This creates:
+
+- `results/a5/energy_10kev.csv`, `energy_20kev.csv` and `energy_40kev.csv`
+- `results/a5/energy_20kev_slow.csv`
+- `results/a5/figures/a5_scintillation_summary.csv`
+- `results/a5/figures/a5_scintillation_linearity.png`
+- `results/a5/figures/a5_timing_control.png`
+
+Open a Qt/OpenGL event with one red 1 keV electron and its green
+scintillation-photon trajectories:
+
+~~~sh
+./build/gagg_surface_study --interactive \
+  ./build/macros/validation/a5_vis.mac
+~~~
+
+The source and single-component decay time are macro-controlled:
+
+~~~text
+/gagg/source/particle optical|electron
+/gagg/source/kineticEnergy 20 keV
+/gagg/optics/scintillationTimeConstant 62.53 ns
+/gagg/optics/validateScintillation
+~~~
+
+The scintillation spectrum is the narrow three-point simplification 545,
+550 and 555 nm with its peak at 550 nm. `SCINTILLATIONYIELD` is 54000/MeV,
+`SCINTILLATIONYIELD1` is 1, and `RESOLUTIONSCALE` is zero for the isolated
+linearity test. Cerenkov production is explicitly disabled, so `generated`
+contains primary optical photons in A0-A4 or Scintillation-created photons in
+A5, but no mixed optical source.
+
+The event CSV now records `source_particle`, `source_energy_keV`, `edep_keV`
+and `scintillation`. `edep_keV` excludes later optical-photon absorption and
+contains only non-optical energy deposited in GAGG. The three fast-component
+runs produced exactly 540, 1080 and 2160 photons per event at 10, 20 and
+40 keV, giving a fitted slope of exactly 54000 photons/MeV. Changing the
+single decay constant from the paper's 62.53 ns fast value to its 190.89 ns
+slow value changed the integrated yield by only 4.63e-5 relative; the output
+fractions differed by 0.150 standard deviations. All photon accounting closed.
+
 ## Directory design
 
 ~~~text
@@ -245,9 +303,12 @@ centralized in "include/GAGG/SimulationConfig.hh".
 |---|---:|---|---|
 | Stage A crystal | diameter 25.4 mm, length 25.4 mm | literature | paper |
 | density | 6.63 g/cm3 | literature | paper |
-| light yield | 54000 photons/MeV | literature | inactive |
+| light yield | 54000 photons/MeV | literature | A5 active and validated |
 | refractive index | 1.91 | literature | paper |
-| emission wavelength | 550 nm | literature simplification | paper |
+| emission spectrum | narrow 545/550/555 nm, peak 550 nm | literature simplification | A5 active |
+| fast decay time | 62.53 ns | literature | A5 single-component default |
+| slow decay time | 190.89 ns | literature | A5 timing-control value |
+| resolution scale | 0 | validation setting | disables yield fluctuations in A5 |
 | absorption coefficient | 0.0155 cm^-1 | literature | paper |
 | absorption length | 64.516 cm | derived | reciprocal |
 | reflector | 1 mm, n=1.35 | literature | A2 geometry active in `paper` mode |
@@ -262,11 +323,12 @@ The bulk composition is stoichiometric Gd3Al2Ga3O12. Ce concentration was not
 provided and is omitted from mass composition; supplied density and optical
 constants are used directly.
 
-For A2/A4 the side sleeve directly touches the crystal and spans only the crystal
-length. The top cap covers the full 13.7 mm outer radius and directly touches
-both crystal and sleeve. The paper gives no finite air-gap thickness, so none
-is invented. A4 assigns the selected LUT as directional GAGG-to-reflector
-border surfaces on the side and top only; the -z output face remains open.
+For the Stage A paper geometry, the side sleeve directly touches the crystal
+and spans only the crystal length. The top cap covers the full 13.7 mm outer
+radius and directly touches both crystal and sleeve. The paper gives no finite
+air-gap thickness, so none is invented. A4 and later stages assign the selected
+LUT as directional GAGG-to-reflector border surfaces on the side and top only;
+the -z output face remains open.
 
 The Stage A qualitative target read from Fig. 4 is:
 

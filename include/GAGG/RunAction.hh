@@ -36,6 +36,8 @@ class RunAction final : public G4UserRunAction {
   G4int fEventPrintModulo = 1;
   std::ofstream fCsv;
   G4int fRowsWritten = 0;
+  G4double fEnergyDeposit = 0.0;
+  std::int64_t fScintillation = 0;
   std::int64_t fGenerated = 0;
   std::int64_t fOutput = 0;
   std::int64_t fCrystalAbsorption = 0;

@@ -2,15 +2,19 @@
 /run/verbose 0
 /event/verbose 0
 /tracking/verbose 0
-/random/setSeeds 314159 271828
+/random/setSeeds 161803 141421
 /gagg/geometry/mode paper
 /gagg/optics/gaggBulkAbsorption true
-/gagg/source/particle optical
-/gagg/source/mode isotropic
-/gagg/source/photonsPerEvent 20
+/gagg/optics/scintillationTimeConstant 62.53 ns
+/gagg/stageA/surface polishedvm2000air
+/gagg/source/particle electron
+/gagg/source/mode fixed
 /gagg/source/position 0 0 0 mm
+/gagg/source/kineticEnergy 1 keV
 /gagg/output/eventPrintModulo 1
 /run/initialize
+/gagg/stageA/validate
+/gagg/optics/validateScintillation
 
 /vis/open OGL 1000x800-0+0
 /vis/viewer/set/autoRefresh false
@@ -24,6 +28,7 @@
 /vis/scene/add/trajectories smooth
 /vis/modeling/trajectories/create/drawByParticleID
 /vis/modeling/trajectories/drawByParticleID-0/set opticalphoton green
+/vis/modeling/trajectories/drawByParticleID-0/set e- red
 /vis/scene/endOfEventAction accumulate 1
 /tracking/storeTrajectory 1
 /vis/viewer/set/autoRefresh true

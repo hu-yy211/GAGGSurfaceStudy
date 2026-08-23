@@ -6,6 +6,7 @@
 /gagg/geometry/mode paper
 /gagg/optics/gaggBulkAbsorption true
 /gagg/stageA/surface groundtioair
+/gagg/source/particle optical
 /gagg/source/mode isotropic
 /gagg/source/photonsPerEvent 20
 /gagg/source/position 0 0 0 mm

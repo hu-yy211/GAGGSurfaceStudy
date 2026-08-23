@@ -3,6 +3,7 @@
 #include "GAGG/SimulationConfig.hh"
 
 #include "G4Exception.hh"
+#include "G4Electron.hh"
 #include "G4GenericMessenger.hh"
 #include "G4OpticalPhoton.hh"
 #include "G4ParticleGun.hh"
@@ -18,8 +19,16 @@ namespace gagg {
 
 PrimaryGeneratorAction::PrimaryGeneratorAction()
     : fMessenger(std::make_unique<G4GenericMessenger>(
-          this, "/gagg/source/", "Optical-photon source controls")),
+          this, "/gagg/source/", "Primary source controls")),
       fParticleGun(std::make_unique<G4ParticleGun>(1)) {
+  auto& particleCommand = fMessenger->DeclareMethod(
+      "particle", &PrimaryGeneratorAction::SetParticleMode,
+      "Select optical primaries or one controlled electron per event.");
+  particleCommand.SetParameterName("particle", false);
+  particleCommand.SetCandidates("optical electron");
+  particleCommand.SetDefaultValue("optical");
+  particleCommand.SetStates(G4State_PreInit, G4State_Idle);
+
   auto& modeCommand = fMessenger->DeclareMethod(
       "mode", &PrimaryGeneratorAction::SetDirectionMode,
       "Select fixed +z or isotropic photon directions.");
@@ -33,6 +42,14 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
       "Set the fixed number of optical photons generated per event.");
   countCommand.SetParameterName("count", false);
   countCommand.SetStates(G4State_PreInit, G4State_Idle);
+
+  auto& energyCommand = fMessenger->DeclareMethodWithUnit(
+      "kineticEnergy", "keV", &PrimaryGeneratorAction::SetKineticEnergy,
+      "Set the kinetic energy of the controlled electron source.");
+  energyCommand.SetParameterName("energy", false);
+  energyCommand.SetRange("energy>0.");
+  energyCommand.SetDefaultValue("20.");
+  energyCommand.SetStates(G4State_PreInit, G4State_Idle);
 
   fPositionCommand = std::make_unique<G4UIcmdWith3VectorAndUnit>(
       "/gagg/source/position", this);
@@ -54,6 +71,16 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction() = default;
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event) {
   ValidateConfiguration();
   fParticleGun->SetParticlePosition(fPosition);
+  if (fParticleMode == "electron") {
+    fParticleGun->SetParticleDefinition(G4Electron::Definition());
+    fParticleGun->SetParticleEnergy(fKineticEnergy);
+    fParticleGun->SetParticleMomentumDirection({0.0, 0.0, 1.0});
+    fParticleGun->GeneratePrimaryVertex(event);
+    return;
+  }
+
+  fParticleGun->SetParticleDefinition(G4OpticalPhoton::Definition());
+  fParticleGun->SetParticleEnergy(config::EmissionPhotonEnergy());
   for (G4int photon = 0; photon < fPhotonsPerEvent; ++photon) {
     if (fDirectionMode == "isotropic") {
       ConfigureIsotropicPhoton();
@@ -76,6 +103,23 @@ void PrimaryGeneratorAction::SetDirectionMode(const G4String& mode) {
   fDirectionMode = mode;
 }
 
+void PrimaryGeneratorAction::SetParticleMode(const G4String& particle) {
+  fParticleMode = particle;
+}
+
+void PrimaryGeneratorAction::SetKineticEnergy(G4double energy) {
+  if (energy <= 0.0) {
+    G4Exception("PrimaryGeneratorAction::SetKineticEnergy", "GAGG-A5-001",
+                FatalException, "kineticEnergy must be positive");
+  }
+  fKineticEnergy = energy;
+}
+
+G4double PrimaryGeneratorAction::GetSourceEnergy() const {
+  return fParticleMode == "optical" ? config::EmissionPhotonEnergy()
+                                     : fKineticEnergy;
+}
+
 void PrimaryGeneratorAction::SetPhotonsPerEvent(G4int count) {
   if (count <= 0) {
     G4Exception("PrimaryGeneratorAction::SetPhotonsPerEvent", "GAGG-A3-001",
@@ -95,8 +139,10 @@ void PrimaryGeneratorAction::ResetDirectionDiagnostics() {
 }
 
 void PrimaryGeneratorAction::ReportDirectionDiagnostics() const {
-  if (fDirectionMode != "isotropic" || fDirectionSamples == 0) {
-    G4cout << "[source] isotropy status=SKIP mode=" << fDirectionMode
+  if (fParticleMode != "optical" || fDirectionMode != "isotropic" ||
+      fDirectionSamples == 0) {
+    G4cout << "[source] isotropy status=SKIP particle=" << fParticleMode
+           << " mode=" << fDirectionMode
            << G4endl;
     return;
   }

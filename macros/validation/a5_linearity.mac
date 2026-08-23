@@ -1,0 +1,31 @@
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/gagg/geometry/mode paper
+/gagg/optics/gaggBulkAbsorption true
+/gagg/optics/scintillationTimeConstant 62.53 ns
+/gagg/stageA/surface polishedvm2000air
+/gagg/source/particle electron
+/gagg/source/mode fixed
+/gagg/source/position 0 0 0 mm
+/gagg/source/kineticEnergy 10 keV
+/gagg/output/eventPrintModulo 0
+/run/initialize
+/gagg/geometry/validate
+/gagg/stageA/validate
+/gagg/optics/validateScintillation
+
+/random/setSeeds 161803 141421
+/gagg/output/csv results/a5/energy_10kev.csv
+/run/beamOn 20
+
+/gagg/source/kineticEnergy 20 keV
+/random/setSeeds 161803 141421
+/gagg/output/csv results/a5/energy_20kev.csv
+/run/beamOn 20
+
+/gagg/source/kineticEnergy 40 keV
+/random/setSeeds 161803 141421
+/gagg/output/csv results/a5/energy_40kev.csv
+/run/beamOn 20

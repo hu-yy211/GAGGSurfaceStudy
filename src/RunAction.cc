@@ -37,6 +37,8 @@ RunAction::~RunAction() = default;
 void RunAction::BeginOfRunAction(const G4Run*) {
   fPrimaryGenerator->ResetDirectionDiagnostics();
   fRowsWritten = 0;
+  fEnergyDeposit = 0.0;
+  fScintillation = 0;
   fGenerated = 0;
   fOutput = 0;
   fCrystalAbsorption = 0;
@@ -56,8 +58,10 @@ void RunAction::BeginOfRunAction(const G4Run*) {
          << " eV rindex=" << config::kGaggRefractiveIndex
          << " absorption_length=" << config::kAbsorptionLength / cm << " cm"
          << G4endl;
-  G4cout << "[source] mode=" << fPrimaryGenerator->GetDirectionMode()
-         << " photons_per_event="
+  G4cout << "[source] particle=" << fPrimaryGenerator->GetParticleMode()
+         << " energy_keV=" << fPrimaryGenerator->GetSourceEnergy() / keV
+         << " mode=" << fPrimaryGenerator->GetDirectionMode()
+         << " configured_optical_photons_per_event="
          << fPrimaryGenerator->GetPhotonsPerEvent()
          << " position_mm=" << fPrimaryGenerator->GetPosition() / mm
          << G4endl;
@@ -71,6 +75,11 @@ void RunAction::BeginOfRunAction(const G4Run*) {
          << " data_status="
          << (fDetector->HasStageALutSurface() ? "PASS" : "SKIP")
          << G4endl;
+  G4cout << "[a5-run] scintillation_yield_photons_per_MeV="
+         << config::kScintillationYield * MeV
+         << " time_constant_ns="
+         << fDetector->GetScintillationTimeConstant() / ns
+         << " cerenkov=off" << G4endl;
 
   if (fCsvPath.empty()) {
     return;
@@ -85,7 +94,8 @@ void RunAction::BeginOfRunAction(const G4Run*) {
     G4cerr << "[output] failed_to_open=" << fCsvPath << G4endl;
     return;
   }
-  fCsv << "event_id,source_x_mm,source_y_mm,source_z_mm,stage_a_surface,"
+  fCsv << "event_id,source_x_mm,source_y_mm,source_z_mm,source_particle,"
+          "source_energy_keV,stage_a_surface,edep_keV,scintillation,"
           "generated,output,"
           "crystal_absorption,reflector_absorption,other_absorption,"
           "surface_absorption,other_world_exit,world_exit,bulk_absorption,"
@@ -101,6 +111,11 @@ void RunAction::EndOfRunAction(const G4Run* run) {
   }
   const auto efficiency =
       fGenerated == 0 ? 0.0 : static_cast<G4double>(fOutput) / fGenerated;
+  const auto measuredYield =
+      fEnergyDeposit == 0.0
+          ? 0.0
+          : static_cast<G4double>(fScintillation) /
+                (fEnergyDeposit / MeV);
   G4cout << "[a3] generated=" << fGenerated << " output=" << fOutput
          << " efficiency=" << efficiency
          << " crystal_absorption=" << fCrystalAbsorption
@@ -109,6 +124,13 @@ void RunAction::EndOfRunAction(const G4Run* run) {
          << " other_absorption=" << fOtherAbsorption
          << " other_world_exit=" << fOtherWorldExit
          << " lut_interactions=" << fLutInteractions
+         << " unclassified=" << fUnclassified << G4endl;
+  G4cout << "[a5] edep_keV=" << fEnergyDeposit / keV
+         << " scintillation=" << fScintillation
+         << " generated=" << fGenerated
+         << " measured_yield_photons_per_MeV=" << measuredYield
+         << " expected_yield_photons_per_MeV="
+         << config::kScintillationYield * MeV
          << " unclassified=" << fUnclassified << G4endl;
   G4cout << "[a4] surface=" << fDetector->GetStageASurfaceName()
          << " generated=" << fGenerated << " output=" << fOutput
@@ -121,6 +143,8 @@ void RunAction::EndOfRunAction(const G4Run* run) {
 }
 
 void RunAction::WriteEvent(const EventRecord& record) {
+  fEnergyDeposit += record.energyDeposit;
+  fScintillation += record.scintillation;
   fGenerated += record.generated;
   fOutput += record.output;
   fCrystalAbsorption += record.crystalAbsorption;
@@ -136,8 +160,12 @@ void RunAction::WriteEvent(const EventRecord& record) {
          << record.sourcePosition.x() / mm << ','
          << record.sourcePosition.y() / mm << ','
          << record.sourcePosition.z() / mm << ','
-         << fDetector->GetStageASurfaceName() << ',' << record.generated
-         << ',' << record.output << ',' << record.crystalAbsorption << ','
+         << fPrimaryGenerator->GetParticleMode() << ','
+         << fPrimaryGenerator->GetSourceEnergy() / keV << ','
+         << fDetector->GetStageASurfaceName() << ','
+         << record.energyDeposit / keV << ',' << record.scintillation << ','
+         << record.generated << ',' << record.output << ','
+         << record.crystalAbsorption << ','
          << record.reflectorAbsorption << ',' << record.otherAbsorption << ','
          << record.surfaceAbsorption << ',' << record.otherWorldExit << ','
          << record.WorldExit() << ',' << record.BulkAbsorption() << ','

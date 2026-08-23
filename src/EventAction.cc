@@ -14,6 +14,9 @@ EventAction::EventAction(RunAction* runAction,
     : fRunAction(runAction), fPrimaryGenerator(primaryGenerator) {}
 
 void EventAction::BeginOfEventAction(const G4Event*) {
+  fEnergyDeposit = 0.0;
+  fScintillation = 0;
+  fGenerated = fPrimaryGenerator->GetPrimaryOpticalPhotonsPerEvent();
   fOutput = 0;
   fCrystalAbsorption = 0;
   fReflectorAbsorption = 0;
@@ -24,15 +27,16 @@ void EventAction::BeginOfEventAction(const G4Event*) {
 }
 
 void EventAction::EndOfEventAction(const G4Event* event) {
-  const auto generated = fPrimaryGenerator->GetPhotonsPerEvent();
   const auto classified = fOutput + fCrystalAbsorption +
                           fReflectorAbsorption + fSurfaceAbsorption +
                           fOtherAbsorption + fOtherWorldExit;
-  const auto unclassified = generated - classified;
+  const auto unclassified = fGenerated - classified;
 
   const EventRecord record{event->GetEventID(),
                            fPrimaryGenerator->GetPosition(),
-                           generated,
+                           fEnergyDeposit,
+                           fScintillation,
+                           fGenerated,
                            fOutput,
                            fCrystalAbsorption,
                            fReflectorAbsorption,
@@ -44,7 +48,9 @@ void EventAction::EndOfEventAction(const G4Event* event) {
 
   if (fRunAction->ShouldPrintEvent(event->GetEventID()) || unclassified != 0) {
     G4cout << "[event] id=" << event->GetEventID()
-           << " generated=" << generated << " output=" << fOutput
+           << " edep_keV=" << fEnergyDeposit / keV
+           << " scintillation=" << fScintillation
+           << " generated=" << fGenerated << " output=" << fOutput
            << " crystal_absorption=" << fCrystalAbsorption
            << " reflector_absorption=" << fReflectorAbsorption
            << " surface_absorption=" << fSurfaceAbsorption

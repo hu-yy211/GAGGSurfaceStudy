@@ -20,7 +20,11 @@ EXPECTED_COLUMNS = [
     "source_x_mm",
     "source_y_mm",
     "source_z_mm",
+    "source_particle",
+    "source_energy_keV",
     "stage_a_surface",
+    "edep_keV",
+    "scintillation",
     "generated",
     "output",
     "crystal_absorption",
@@ -34,7 +38,7 @@ EXPECTED_COLUMNS = [
     "unclassified",
 ]
 
-COUNT_COLUMNS = EXPECTED_COLUMNS[5:]
+COUNT_COLUMNS = EXPECTED_COLUMNS[8:]
 
 
 @dataclass(frozen=True)
@@ -90,6 +94,12 @@ def load_summary(
             raise ValueError(
                 f"surface mismatch in {path}: {row['stage_a_surface']}"
             )
+        if row["source_particle"] != "optical":
+            raise ValueError(f"unexpected A4 source in {path}")
+        if not 0.0 < float(row["source_energy_keV"]) < 0.01:
+            raise ValueError(f"unexpected A4 source energy in {path}")
+        if float(row["edep_keV"]) != 0.0:
+            raise ValueError(f"A4 optical source deposited energy in {path}")
 
         values = {key: int(row[key]) for key in COUNT_COLUMNS}
         if values["generated"] != 200:
@@ -113,6 +123,8 @@ def load_summary(
             raise ValueError(f"photon accounting failed in {path}: {values}")
         if values["unclassified"] != 0:
             raise ValueError(f"unclassified photon in {path}: {values}")
+        if values["scintillation"] != 0:
+            raise ValueError(f"A4 unexpectedly produced scintillation in {path}")
 
         for key, value in values.items():
             totals[key] += value
