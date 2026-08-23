@@ -4,6 +4,7 @@
 
 #include "G4Exception.hh"
 #include "G4Electron.hh"
+#include "G4Gamma.hh"
 #include "G4GenericMessenger.hh"
 #include "G4OpticalPhoton.hh"
 #include "G4ParticleGun.hh"
@@ -23,9 +24,9 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
       fParticleGun(std::make_unique<G4ParticleGun>(1)) {
   auto& particleCommand = fMessenger->DeclareMethod(
       "particle", &PrimaryGeneratorAction::SetParticleMode,
-      "Select optical primaries or one controlled electron per event.");
+      "Select optical primaries, one electron, or one gamma per event.");
   particleCommand.SetParameterName("particle", false);
-  particleCommand.SetCandidates("optical electron");
+  particleCommand.SetCandidates("optical electron gamma");
   particleCommand.SetDefaultValue("optical");
   particleCommand.SetStates(G4State_PreInit, G4State_Idle);
 
@@ -45,7 +46,7 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
 
   auto& energyCommand = fMessenger->DeclareMethodWithUnit(
       "kineticEnergy", "keV", &PrimaryGeneratorAction::SetKineticEnergy,
-      "Set the kinetic energy of the controlled electron source.");
+      "Set the kinetic energy of the controlled electron or gamma source.");
   energyCommand.SetParameterName("energy", false);
   energyCommand.SetRange("energy>0.");
   energyCommand.SetDefaultValue("20.");
@@ -75,6 +76,14 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event) {
     fParticleGun->SetParticleDefinition(G4Electron::Definition());
     fParticleGun->SetParticleEnergy(fKineticEnergy);
     fParticleGun->SetParticleMomentumDirection({0.0, 0.0, 1.0});
+    fParticleGun->GeneratePrimaryVertex(event);
+    return;
+  }
+
+  if (fParticleMode == "gamma") {
+    fParticleGun->SetParticleDefinition(G4Gamma::Definition());
+    fParticleGun->SetParticleEnergy(fKineticEnergy);
+    fParticleGun->SetParticleMomentumDirection({0.0, 0.0, -1.0});
     fParticleGun->GeneratePrimaryVertex(event);
     return;
   }
@@ -168,6 +177,25 @@ void PrimaryGeneratorAction::ReportDirectionDiagnostics() const {
 void PrimaryGeneratorAction::ValidateConfiguration() const {
   const auto radialSquared = fPosition.x() * fPosition.x() +
                              fPosition.y() * fPosition.y();
+  if (fParticleMode == "gamma") {
+    const auto insideWorld =
+        std::abs(fPosition.x()) < config::kWorldHalfLength &&
+        std::abs(fPosition.y()) < config::kWorldHalfLength &&
+        std::abs(fPosition.z()) < config::kWorldHalfLength;
+    const auto aimedAtCrystal =
+        radialSquared < config::kCrystalRadius * config::kCrystalRadius;
+    const auto abovePaperGeometry =
+        fPosition.z() >= config::kStageAGammaSourceZ;
+    if (fDirectionMode != "fixed" || !insideWorld || !aimedAtCrystal ||
+        !abovePaperGeometry) {
+      G4Exception("PrimaryGeneratorAction::ValidateConfiguration",
+                  "GAGG-A6-001", FatalException,
+                  "The A6 gamma source must use fixed mode, start inside the "
+                  "world above the paper geometry, and point at the crystal");
+    }
+    return;
+  }
+
   const auto insideRadius =
       radialSquared < config::kCrystalRadius * config::kCrystalRadius;
   const auto insideLength =

@@ -216,3 +216,42 @@ and the Fig. 4 validation criterion remain A5-A7 work.
 Status: validation gate A5 passed. The model now validates optical transport,
 LUT boundaries and scintillation production separately. A 662 keV gamma
 source, full-energy selection and Fig. 4 ordering remain A6-A7 work.
+
+## 2026-08-23 - A6 662 keV gamma response
+
+- `/gagg/source/particle` now accepts `gamma` in addition to the existing
+  `optical` and `electron` modes. One gamma is generated per event with its
+  macro-selected kinetic energy; gamma primaries in fixed mode travel along
+  -z while existing optical/electron behavior remains unchanged.
+- The paper gamma energy is centralized as 662 keV. The validation source is
+  at `(0, 0, 14.7 mm)`, one millimetre above the outer top-reflector face, and
+  is constrained to remain inside the world and aimed at the crystal.
+- `G4EmStandardPhysics`, already used for the controlled A5 electrons, is the
+  minimum electromagnetic constructor for A6. It provides gamma photoelectric
+  and Compton interactions plus charged-secondary transport. No radioactive
+  decay physics was added.
+- The fixed seeds are 271828 and 314159. Of 100 events, 42 lay in the
+  predefined `661.5 <= Edep <= 662.5 keV` full-energy gate, 30 had partial
+  energy deposition and 28 had exactly zero GAGG energy deposition.
+- The full-energy events deposited 27,804 keV and generated 1,501,410
+  scintillation photons, giving 53999.784 photons/MeV and a relative error of
+  4.00e-6 from the A5 yield. Across all depositing events the result was
+  53999.839 photons/MeV, a relative error of 2.98e-6.
+- Every zero-deposit event generated and transported zero scintillation
+  photons. Every event satisfied exact optical terminal accounting with zero
+  unclassified photons.
+- The energy-deposition histogram and generated-light scatter plot were
+  generated and visually inspected. The latter follows the 54000 photons/MeV
+  reference line across zero, partial and full-energy events.
+- The Qt/OpenGL A6 scene opened successfully. Its fixed first event deposited
+  all 662 keV and generated 35,748 photons. A gamma-only trajectory filter
+  displayed the normally incident magenta gamma without drawing the optical
+  tracks; the optical photons were still transported and their accounting
+  closed.
+- The complete A0-A6 regression suite passed 20/20 CTest tests in 46.04 s.
+
+Status: validation gate A6 passed. The sharp full-energy entries validate
+energy conservation and scintillation yield; they are not an experimental
+peak-width prediction because resolution scale, radioactive decay,
+electronics and PMT response are not modeled. The four-finish Fig. 4
+production comparison remains A7 work.

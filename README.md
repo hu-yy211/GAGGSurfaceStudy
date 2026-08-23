@@ -9,7 +9,7 @@ collection.
   5.75 mm x 5.75 mm x 20 mm crystal with the UNIFIED model and one shared
   rough-surface sigma_alpha.
 
-The current validated milestone is A5. A0 provides a one-photon optical
+The current validated milestone is A6. A0 provides a one-photon optical
 transport baseline, Qt/OpenGL view, event-level CSV output, accounting checks
 and reproducible plots. A1 validates the literature parameters and their
 Geant4 unit conversions. A2 adds the paper's 1 mm Teflon-assumption side
@@ -19,11 +19,14 @@ first crossing of that open face as `N_output`. A4 attaches the four paper
 LBNL LUT finishes to the GAGG-to-side/top borders and switches them at runtime
 through geometry reinitialization. A5 adds Geant4 scintillation with a narrow
 550 nm component and validates its 54000 photons/MeV yield using controlled
-electron energy deposits.
+electron energy deposits. A6 adds the minimum standard electromagnetic
+physics application: one normally incident 662 keV gamma per event, a
+full-energy event gate and zero-deposit controls.
 
-There is no gamma source, PMT, or fitting yet. A5 validates scintillation
-production independently of gamma interactions. Fig. 4 ordering is still
-deferred until A7, after the A6 662 keV gamma and full-energy-event gate.
+There is no radioactive-decay source, detector energy resolution, PMT, or
+fitting yet. A6 validates gamma energy deposition and scintillation production
+without changing the optical parameters. The four-finish Fig. 4 comparison is
+still deferred until A7.
 
 ## Build and run
 
@@ -275,6 +278,58 @@ single decay constant from the paper's 62.53 ns fast value to its 190.89 ns
 slow value changed the integrated yield by only 4.63e-5 relative; the output
 fractions differed by 0.150 standard deviations. All photon accounting closed.
 
+## A6 662 keV gamma validation
+
+A6 uses one 662 keV gamma per event at `(0, 0, 14.7 mm)`, which is 1 mm above
+the outer face of the top reflector. In `fixed` mode, gamma primaries travel
+along -z and enter the paper geometry normally. `G4EmStandardPhysics` supplies
+the photoelectric, Compton and charged-secondary transport needed at this
+energy; optical production and transport remain those validated in A3-A5.
+
+Run the fixed-seed 100-event sample, validate it and create the two plots:
+
+~~~sh
+./build/gagg_surface_study \
+  ./build/macros/validation/a6_gamma.mac
+python analysis/validate_a6.py \
+  --input results/a6/gamma_662kev.csv --expect-events 100
+MPLCONFIGDIR=results/.mplconfig python analysis/plot_a6.py \
+  --input results/a6/gamma_662kev.csv \
+  --output-dir results/a6/figures
+~~~
+
+This creates:
+
+- `results/a6/gamma_662kev.csv`
+- `results/a6/figures/a6_gamma_summary.csv`
+- `results/a6/figures/a6_energy_deposition.png`
+- `results/a6/figures/a6_gamma_light_yield.png`
+
+Open the A6 Qt/OpenGL scene:
+
+~~~sh
+./build/gagg_surface_study --interactive \
+  ./build/macros/validation/a6_vis.mac
+~~~
+
+The scene filters out optical trajectories and shows the normally incident
+gamma in magenta, so the detector geometry is not obscured by tens of
+thousands of scintillation tracks. The underlying optical photons are still
+fully transported and counted.
+
+The A6 full-energy gate is `661.5 <= Edep <= 662.5 keV`. With seeds 271828 and
+314159, 100 events gave 28 zero-deposit events, 30 partial-energy events and
+42 full-energy events. The full-energy subset produced 1,501,410 photons from
+27,804 keV deposited, or 53999.784 photons/MeV. All 28 zero-deposit events
+generated zero scintillation photons, and every event closed its optical
+terminal accounting with zero unclassified photons.
+
+The sharp simulated 662 keV entries are an energy-conservation validation,
+not a prediction of the experimental peak width. `RESOLUTIONSCALE=0` remains
+the A5 validation setting, and no electronics or intrinsic detector-energy
+resolution has been applied. The source is a monoenergetic particle gun, not
+a simulated radioactive decay.
+
 ## Directory design
 
 ~~~text
@@ -309,6 +364,8 @@ centralized in "include/GAGG/SimulationConfig.hh".
 | fast decay time | 62.53 ns | literature | A5 single-component default |
 | slow decay time | 190.89 ns | literature | A5 timing-control value |
 | resolution scale | 0 | validation setting | disables yield fluctuations in A5 |
+| Stage A gamma energy | 662 keV | literature | A6 monoenergetic source active |
+| A6 gamma source | z=+14.7 mm, direction -z | validation geometry | 1 mm above top reflector |
 | absorption coefficient | 0.0155 cm^-1 | literature | paper |
 | absorption length | 64.516 cm | derived | reciprocal |
 | reflector | 1 mm, n=1.35 | literature | A2 geometry active in `paper` mode |

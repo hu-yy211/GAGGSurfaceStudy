@@ -80,6 +80,10 @@ void RunAction::BeginOfRunAction(const G4Run*) {
          << " time_constant_ns="
          << fDetector->GetScintillationTimeConstant() / ns
          << " cerenkov=off" << G4endl;
+  G4cout << "[a6-run] em_physics=G4EmStandardPhysics"
+         << " gamma_energy_keV=" << config::kStageAGammaEnergy / keV
+         << " gamma_source_z_mm=" << config::kStageAGammaSourceZ / mm
+         << " direction=minus_z" << G4endl;
 
   if (fCsvPath.empty()) {
     return;

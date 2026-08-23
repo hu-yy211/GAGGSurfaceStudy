@@ -87,12 +87,19 @@ Changing the single-component constant from 62.53 ns to 190.89 ns changed the
 integrated yield by 4.63e-5 relative; output efficiencies differed by only
 0.150 sigma. Cerenkov production is disabled. No gamma source exists yet.
 
-### A6 - 662 keV gamma
+### A6 - 662 keV gamma - PASSED
 
 Add the minimum electromagnetic physics and a normally incident gamma beam.
 
 Pass: full-energy events appear at 662 keV; N_generated/Edep matches the
 validated yield; zero-Edep events create no scintillation.
+
+Status: passed on 2026-08-23. A fixed-seed 100-event normally incident gamma
+sample contained 42 events in the 661.5-662.5 keV full-energy gate, 30
+partial-energy events and 28 zero-deposit events. The full-energy subset gave
+53999.784 photons/MeV, every zero-deposit event generated zero photons and all
+optical terminal accounting closed. The source is a monoenergetic particle
+gun; radioactive decay and detector energy resolution remain out of scope.
 
 ### A7 - Fig. 4
 

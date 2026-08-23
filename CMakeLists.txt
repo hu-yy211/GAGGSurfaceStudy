@@ -219,4 +219,40 @@ if(BUILD_TESTING)
     ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
     PASS_REGULAR_EXPRESSION "\\[a5-plot\\] status=PASS"
   )
+
+  add_test(
+    NAME a6_gamma_export
+    COMMAND $<TARGET_FILE:gagg_surface_study>
+            ${PROJECT_BINARY_DIR}/macros/validation/a6_gamma.mac
+  )
+  set_tests_properties(a6_gamma_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[output\\] csv=results/a6/gamma_662kev.csv rows=100"
+    FAIL_REGULAR_EXPRESSION "unclassified=[1-9][0-9]*|status=FAIL|G4Exception|Fatal Exception"
+    TIMEOUT 300
+  )
+
+  add_test(
+    NAME a6_gamma_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_a6.py
+            --input ${PROJECT_BINARY_DIR}/results/a6/gamma_662kev.csv
+            --expect-events 100
+  )
+  set_tests_properties(a6_gamma_validate PROPERTIES
+    DEPENDS a6_gamma_export
+    PASS_REGULAR_EXPRESSION "\\[a6-check\\] gamma status=PASS"
+  )
+
+  add_test(
+    NAME a6_plot
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/plot_a6.py
+            --input ${PROJECT_BINARY_DIR}/results/a6/gamma_662kev.csv
+            --output-dir ${PROJECT_BINARY_DIR}/a6_plots
+  )
+  set_tests_properties(a6_plot PROPERTIES
+    DEPENDS a6_gamma_validate
+    ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
+    PASS_REGULAR_EXPRESSION "\\[a6-plot\\] status=PASS"
+  )
 endif()

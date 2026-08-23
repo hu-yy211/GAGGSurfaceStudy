@@ -1,0 +1,20 @@
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/gagg/geometry/mode paper
+/gagg/optics/gaggBulkAbsorption true
+/gagg/optics/scintillationTimeConstant 62.53 ns
+/gagg/stageA/surface polishedvm2000air
+/gagg/source/particle gamma
+/gagg/source/mode fixed
+/gagg/source/position 0 0 14.7 mm
+/gagg/source/kineticEnergy 662 keV
+/gagg/output/eventPrintModulo 0
+/gagg/output/csv results/a6/gamma_662kev.csv
+/run/initialize
+/gagg/geometry/validate
+/gagg/stageA/validate
+/gagg/optics/validateScintillation
+/random/setSeeds 271828 314159
+/run/beamOn 100

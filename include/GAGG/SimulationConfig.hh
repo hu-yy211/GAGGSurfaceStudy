@@ -35,6 +35,11 @@ inline constexpr G4double kScintillationYield = 54000.0 / MeV;
 inline constexpr G4double kScintillationResolutionScale = 0.0;
 inline constexpr G4double kFastScintillationTimeConstant = 62.53 * ns;
 inline constexpr G4double kSlowScintillationTimeConstant = 190.89 * ns;
+inline constexpr G4double kStageAGammaEnergy = 662.0 * keV;
+inline constexpr G4double kStageAGammaSourceClearance = 1.0 * mm;
+inline constexpr G4double kStageAGammaSourceZ =
+    0.5 * kCrystalLength + kReflectorThickness +
+    kStageAGammaSourceClearance;
 
 inline G4double EmissionPhotonEnergy() {
   return h_Planck * c_light / kEmissionWavelength;
