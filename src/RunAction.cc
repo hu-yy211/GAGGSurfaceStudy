@@ -48,9 +48,13 @@ void RunAction::BeginOfRunAction(const G4Run*) {
   fOtherWorldExit = 0;
   fLutInteractions = 0;
   fUnclassified = 0;
-  G4cout << "[config] crystal_diameter="
-         << G4BestUnit(2.0 * config::kCrystalRadius, "Length")
-         << " crystal_length=" << G4BestUnit(config::kCrystalLength, "Length")
+  G4cout << "[config] geometry_mode=" << fDetector->GetGeometryMode()
+         << " crystal_size_x="
+         << G4BestUnit(fDetector->GetCrystalSizeX(), "Length")
+         << " crystal_size_y="
+         << G4BestUnit(fDetector->GetCrystalSizeY(), "Length")
+         << " crystal_size_z="
+         << G4BestUnit(fDetector->GetCrystalSizeZ(), "Length")
          << " density=" << config::kCrystalDensity / (g / cm3) << " g/cm3"
          << G4endl;
   G4cout << "[config] wavelength=" << config::kEmissionWavelength / nm
@@ -63,6 +67,8 @@ void RunAction::BeginOfRunAction(const G4Run*) {
          << " mode=" << fPrimaryGenerator->GetDirectionMode()
          << " configured_optical_photons_per_event="
          << fPrimaryGenerator->GetPhotonsPerEvent()
+         << " beam_radius_mm=" << fPrimaryGenerator->GetBeamRadius() / mm
+         << " event_seed_base=" << fPrimaryGenerator->GetEventSeedBase()
          << " position_mm=" << fPrimaryGenerator->GetPosition() / mm
          << G4endl;
   G4cout << "[a4-run] surface=" << fDetector->GetStageASurfaceName()
@@ -74,6 +80,10 @@ void RunAction::BeginOfRunAction(const G4Run*) {
                  : fDetector->GetRealSurfaceDataPath())
          << " data_status="
          << (fDetector->HasStageALutSurface() ? "PASS" : "SKIP")
+         << " reflectivity=" << fDetector->GetStageAReflectivity()
+         << " interface=" << fDetector->GetStageAInterfaceMode()
+         << " air_gap_mm=" << fDetector->GetStageAAirGap() / mm
+         << " output_scoring=" << fDetector->GetOutputScoringMode()
          << G4endl;
   G4cout << "[a5-run] scintillation_yield_photons_per_MeV="
          << config::kScintillationYield * MeV

@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
   auto* eventAction = new gagg::EventAction(runAction, primaryGenerator);
   runManager->SetUserAction(eventAction);
   runManager->SetUserAction(new gagg::StackingAction(eventAction));
-  runManager->SetUserAction(new gagg::SteppingAction(eventAction));
+  runManager->SetUserAction(new gagg::SteppingAction(eventAction, detector));
 
   std::unique_ptr<G4VisManager> visManager;
   if (interactive) {

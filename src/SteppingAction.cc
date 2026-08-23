@@ -1,7 +1,7 @@
 #include "GAGG/SteppingAction.hh"
 
+#include "GAGG/DetectorConstruction.hh"
 #include "GAGG/EventAction.hh"
-#include "GAGG/SimulationConfig.hh"
 
 #include "G4GeometryTolerance.hh"
 #include "G4LogicalBorderSurface.hh"
@@ -17,8 +17,9 @@
 
 namespace gagg {
 
-SteppingAction::SteppingAction(EventAction* eventAction)
-    : fEventAction(eventAction) {}
+SteppingAction::SteppingAction(EventAction* eventAction,
+                               const DetectorConstruction* detector)
+    : fEventAction(eventAction), fDetector(detector) {}
 
 G4OpBoundaryProcess* SteppingAction::FindBoundaryProcess() {
   if (fBoundaryProcess != nullptr) {
@@ -60,14 +61,26 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
   const auto surfaceTolerance =
       G4GeometryTolerance::GetInstance()->GetSurfaceTolerance();
 
-  const auto outputFaceCrossing =
+  const auto outputFaceArrival =
       post->GetStepStatus() == fGeomBoundary && preVolume != nullptr &&
-      postVolume != nullptr && preVolume->GetName() == "GAGG" &&
-      postVolume->GetName() == "World" &&
-      std::abs(post->GetPosition().z() + 0.5 * config::kCrystalLength) <
-          surfaceTolerance &&
-      post->GetPosition().perp() <
-          config::kCrystalRadius - surfaceTolerance;
+      preVolume->GetName() == "GAGG" &&
+      fDetector->IsOnOutputFace(post->GetPosition(), surfaceTolerance);
+  auto* outputBoundary =
+      outputFaceArrival ? FindBoundaryProcess() : nullptr;
+  const auto outputBoundaryStatus =
+      outputBoundary == nullptr ? Undefined : outputBoundary->GetStatus();
+  const auto outputFaceCrossing =
+      outputFaceArrival && postVolume != nullptr &&
+      postVolume->GetName() == fDetector->GetOutputReceiverVolumeName() &&
+      (outputBoundaryStatus == FresnelRefraction ||
+       outputBoundaryStatus == Transmission ||
+       outputBoundaryStatus == SameMaterial);
+  if (outputFaceArrival &&
+      fDetector->GetOutputScoringMode() == "firstArrival") {
+    fEventAction->RecordOutput();
+    step->GetTrack()->SetTrackStatus(fStopAndKill);
+    return;
+  }
   if (outputFaceCrossing) {
     fEventAction->RecordOutput();
     step->GetTrack()->SetTrackStatus(fStopAndKill);

@@ -3,13 +3,13 @@
 This project studies how GAGG:Ce surface treatment changes optical-photon
 collection.
 
-- Stage A reproduces the qualitative ordering in Fig. 4 of the paper with
-  four Geant4 LUT finishes.
+- Stage A attempts the qualitative ordering in Fig. 4 of the paper with four
+  Geant4 LUT finishes; the A7 ordering gate is currently not passed.
 - Stage B models the six experimental surface states for a
   5.75 mm x 5.75 mm x 20 mm crystal with the UNIFIED model and one shared
   rough-surface sigma_alpha.
 
-The current validated milestone is A6. A0 provides a one-photon optical
+The current validated milestone is B0. A0 provides a one-photon optical
 transport baseline, Qt/OpenGL view, event-level CSV output, accounting checks
 and reproducible plots. A1 validates the literature parameters and their
 Geant4 unit conversions. A2 adds the paper's 1 mm Teflon-assumption side
@@ -24,9 +24,11 @@ physics application: one normally incident 662 keV gamma per event, a
 full-energy event gate and zero-deposit controls.
 
 There is no radioactive-decay source, detector energy resolution, PMT, or
-fitting yet. A6 validates gamma energy deposition and scintillation production
-without changing the optical parameters. The four-finish Fig. 4 comparison is
-still deferred until A7.
+fitting yet. A6 validates gamma energy deposition and scintillation production.
+A7 has not passed its Fig. 4 ordering gate; four controlled interface/scoring
+models are retained as diagnosed mismatches rather than tuned into agreement.
+Following that bounded audit, B0 starts the experimental geometry without
+introducing roughness fitting or the six-state comparison yet.
 
 ## Build and run
 
@@ -215,11 +217,13 @@ the next `/run/beamOn` initialize it). The validator confirms two directional
 borders, `model=LUT`, `type=dielectric_LUT`, the exact finish, the required
 RealSurface file and a nonzero `lut_interactions` count.
 
-The fixed A4 functional run returned 0.8818, 0.8586, 0.8826 and 0.8657 for
+With the explicit paper reflectivity lower bounds added during the A7 audit,
+the fixed A4 functional run returns 0.8300, 0.7109, 0.8238 and 0.7268 for
 `polishedvm2000air`, `polishedtioair`, `groundvm2000air` and `groundtioair`,
 respectively. This is not the paper's order and is not treated as an A4
 failure: the source is still a point-like fixed-count optical source rather
-than 662 keV gamma-induced scintillation. No parameter was tuned.
+than 662 keV gamma-induced scintillation. The published `a4` tag preserves the
+earlier LUT-loading-only baseline; no parameter was adjusted to force an order.
 
 ## A5 scintillation validation
 
@@ -330,6 +334,148 @@ the A5 validation setting, and no electronics or intrinsic detector-energy
 resolution has been applied. The source is a monoenergetic particle gun, not
 a simulated radioactive decay.
 
+## A7 Fig. 4 comparison - ordering gate not passed
+
+A7 interprets the paper's normally incident gamma beam as a uniform circular
+parallel beam over the 12.7 mm crystal radius. Four surfaces use the same 100
+primary events and deterministic event seed base 730001. Scintillation tracks
+are deferred until non-optical transport completes, so each event ID has the
+same source position, Edep and N_generated for every finish. This removes a
+random-stream coupling in which surface transport changed later gamma events.
+
+Run the current comparison, validator and diagnostic plots:
+
+~~~sh
+./build/gagg_surface_study \
+  ./build/macros/stage_a/a7_compare.mac
+python analysis/validate_a7.py \
+  --input-dir results/a7/production --expect-events 100
+MPLCONFIGDIR=results/.mplconfig python analysis/plot_a7.py \
+  --input-dir results/a7/production \
+  --output-dir results/a7/figures --expect-events 100
+~~~
+
+The validator intentionally exits nonzero while the Fig. 4 order is wrong.
+It still verifies the CSV schema, source disk, paired event selection,
+scintillation yield, LUT activity and exact optical terminal accounting before
+testing the order. The fixed sample contains the same 33 full-energy events
+for all four finishes and gives event-level means with 95% confidence
+intervals:
+
+| Surface | Mean N_output/N_generated | 95% CI | Mean N_output |
+|---|---:|---:|---:|
+| polishedvm2000air | 0.80963 | 0.80168-0.81758 | 28942.7 |
+| polishedtioair | 0.71835 | 0.70296-0.73374 | 25679.6 |
+| groundvm2000air | 0.82768 | 0.82107-0.83430 | 29588.0 |
+| groundtioair | 0.72919 | 0.71544-0.74295 | 26067.2 |
+
+Thus the observed order is:
+
+~~~text
+groundvm2000air
+  > polishedvm2000air
+  > groundtioair
+  > polishedtioair
+~~~
+
+Only `groundtioair > polishedtioair` agrees with the target. The other two
+required pair differences have 95% confidence intervals entirely in the
+wrong direction, so more events alone cannot repair the result.
+
+The A7 audit found that the legacy LBNL LUT files provide reflected angular
+distributions while Geant4's boundary process defaults absolute reflectivity
+to one unless a surface property is supplied. The paper separately states
+reflectivity above 98% for ESR and above 95% for TiO2. The current model uses
+the conservative literature lower bounds 0.98 and 0.95, with the remainder
+transmitted into the modeled reflector and absorbed according to its 0.1 mm
+bulk absorption length. A diagnostic using the LUT default and another using
+a ten-times-shorter GAGG absorption length both failed to recover Fig. 4, so
+neither parameter was adopted as a fit.
+
+A7 remains unvalidated. Do not create or move the `a7` tag until a documented
+model difference explains the mismatch and the predefined ordering gate
+passes.
+
+The output-face audit also separated two definitions that had previously
+looked identical:
+
+- `firstArrival` counts and terminates a photon at its first geometrical
+  arrival at the -z crystal face. This is the formal Stage A interpretation
+  of the paper phrase "arriving at the output face".
+- `transmitted` inspects `G4OpBoundaryProcess` and counts only
+  `FresnelRefraction`, `Transmission` or `SameMaterial` into the receiver.
+  Reflected photons continue transporting.
+
+Four 50-primary paired diagnostics crossed direct/explicit-air interfaces
+with both scoring definitions. All geometry, pairing and accounting checks
+passed, but no model reproduced the complete Fig. 4 order:
+
+| Model | Observed order | Fig. 4 |
+|---|---|---|
+| direct + first arrival | ground VM > polished VM > ground TiO > polished TiO | FAIL |
+| 0.1 mm air + first arrival | ground VM > polished VM > ground TiO > polished TiO | FAIL |
+| direct + transmitted | ground VM > ground TiO > polished TiO > polished VM | FAIL |
+| 0.1 mm air + transmitted | ground VM > ground TiO > polished TiO > polished VM | FAIL |
+
+The transmitted direct model reduced the full-energy mean counts to about
+6564, 9948, 14698 and 10367 for polished VM, polished TiO, ground VM and
+ground TiO. It therefore recovered `ground TiO > polished TiO > polished VM`
+and moved the absolute scale toward Fig. 4, but `ground VM` remained highest
+instead of lowest. Adding the explicit diagnostic air volume changed the
+efficiencies by only a few (10^{-3}), so its thickness was not tuned.
+
+Run and summarize the bounded model grid:
+
+~~~sh
+./build/gagg_surface_study +  ./build/macros/validation/a7_model_direct_transmitted.mac
+./build/gagg_surface_study +  ./build/macros/validation/a7_model_direct_first_arrival.mac
+./build/gagg_surface_study +  ./build/macros/validation/a7_model_airgap_transmitted.mac
+./build/gagg_surface_study +  ./build/macros/validation/a7_model_airgap_first_arrival.mac
+python analysis/summarize_a7_models.py +  --input-dir results/a7/models --expect-events 50 +  --output results/a7/models/model_summary.csv
+~~~
+
+## B0 experimental geometry and optical baseline
+
+B0 is validated independently of the failed A7 ordering. It establishes the
+measured 5.75 x 5.75 x 20 mm3 GAGG crystal, an explicit side air volume,
+surrounding black absorber, top ESR and a bottom PMT receiver window. The
+convention is +z top/ESR and -z bottom/PMT.
+
+~~~text
+                     +z
+              ┌─────────────┐
+              │  top ESR    │
+        ┌─────┴─────────────┴─────┐
+        │ black │  side air │ black│
+        │       │ ┌───────┐ │      │
+        │       │ │ GAGG  │ │      │  20 mm
+        │       │ │5.75 mm│ │      │
+        │       │ └───────┘ │      │
+        └───────┴─────┬─────┴──────┘
+                      │ PMT window
+                     -z
+~~~
+
+The ESR and ideal black absorber use UNIFIED polished boundaries in B0. The
+GAGG faces remain geometrically polished; no rough `sigma_alpha` and no
+six-state surface switch are introduced until B1. B0 counts only photons that
+actually transmit into `PMTWindow`, stored in the existing `output` column.
+
+Run the geometry and 5000-photon optical baseline:
+
+~~~sh
+./build/gagg_surface_study +  ./build/macros/validation/b0_geometry.mac
+./build/gagg_surface_study +  ./build/macros/validation/b0_transport.mac
+python analysis/validate_b0.py +  --input results/b0/b0_transport.csv +  --expect-events 50 --photons-per-event 100
+./build/gagg_surface_study --interactive +  ./build/macros/validation/b0_vis.mac
+~~~
+
+The validated baseline delivered 1845/5000 photons to the PMT window,
+`N_PMT/N_generated = 0.369`. All 5000 photons had exactly one terminal
+classification, the direction sample passed isotropy checks, all analytic
+geometry/position/overlap checks passed, and the full suite passed 23/23
+CTest tests in 44.05 s.
+
 ## Directory design
 
 ~~~text
@@ -340,7 +486,7 @@ GAGG/
 ├── macros/
 │   ├── validation/         deterministic checks
 │   ├── stage_a/            paper-reproduction runs
-│   └── stage_b/            real-experiment runs, future
+│   └── stage_b/            real-experiment runs
 ├── analysis/               reduction and plotting
 ├── docs/                   plans, decisions, validation log
 ├── reference/              source PDF/PPTX, read-only
@@ -373,7 +519,15 @@ centralized in "include/GAGG/SimulationConfig.hh".
 | reflector absorption | 100 cm^-1 = 0.1 mm length | literature model assumption | A2 bulk property active |
 | Stage A LUT data | RealSurface 2.2 | installed Geant4 dataset | A4 active |
 | Stage A finishes | four named LBNL LUT finishes | literature model choice | A4 runtime-selectable |
+| VM2000 reflectivity | 0.98 | literature lower-bound proxy | A7 explicit surface property |
+| TiO2 reflectivity | 0.95 | literature lower-bound proxy | A7 explicit surface property |
+| A7 beam radius | 12.7 mm | documented interpretation | uniform parallel beam over crystal face |
+| A7 event seed base | 730001 | validation control | pairs source/Edep/generated across finishes |
 | Stage B crystal | 5.75 x 5.75 x 20 mm3 | measured/setup | slides |
+| B0 side air gap | 0.1 mm | unmeasured placeholder | runtime-selectable; not fitted |
+| B0 black structure thickness | 1.0 mm | unmeasured placeholder | runtime-selectable; ideal absorber |
+| B0 top ESR thickness | 0.1 mm | unmeasured placeholder | runtime-selectable |
+| B0 PMT window thickness/index | 0.5 mm / 1.52 | model placeholder | direct contact in B0 |
 | rough sigma_alpha | unset | free parameter | one shared value |
 
 The bulk composition is stoichiometric Gd3Al2Ga3O12. Ce concentration was not
@@ -399,4 +553,5 @@ groundtioair
 See "docs/stage-a-plan.md" and "docs/validation-log.md".
 
 Git commits and annotated tags are created only after a validation gate
-passes. See "docs/git-workflow.md" for the A0-A7 push convention.
+passes. A7 remains untagged; B0 is the next eligible validated checkpoint.
+See "docs/git-workflow.md" for the push convention.

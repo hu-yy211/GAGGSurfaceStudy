@@ -3,7 +3,9 @@
 /event/verbose 0
 /tracking/verbose 0
 /gagg/geometry/mode paper
+/gagg/scoring/outputMode firstArrival
 /gagg/optics/gaggBulkAbsorption true
+/gagg/stageA/usePaperReflectivity true
 /gagg/optics/scintillationTimeConstant 190.89 ns
 /gagg/stageA/surface polishedvm2000air
 /gagg/source/particle electron

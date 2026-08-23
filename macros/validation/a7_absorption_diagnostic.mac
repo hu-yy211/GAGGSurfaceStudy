@@ -1,0 +1,47 @@
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/gagg/geometry/mode paper
+/gagg/scoring/outputMode firstArrival
+/gagg/optics/gaggBulkAbsorption true
+# Diagnostic only: 64.516 mm instead of the validated 64.516 cm.
+/gagg/optics/gaggAbsorptionLengthScale 0.1
+/gagg/optics/scintillationTimeConstant 62.53 ns
+/gagg/source/particle gamma
+/gagg/source/mode fixed
+/gagg/source/position 0 0 14.7 mm
+/gagg/source/kineticEnergy 662 keV
+/gagg/source/beamRadius 12.7 mm
+/gagg/source/eventSeedBase 730001
+/gagg/optics/deferScintillationPhotons true
+/gagg/stageA/usePaperReflectivity false
+/gagg/output/eventPrintModulo 0
+
+/gagg/stageA/surface polishedvm2000air
+/run/initialize
+/gagg/stageA/validate
+/random/setSeeds 173205 223607
+/gagg/output/csv results/a7/diagnostics/absorption_x0p1/polishedvm2000air.csv
+/run/beamOn 25
+
+/gagg/stageA/surface polishedtioair
+/run/initialize
+/gagg/stageA/validate
+/random/setSeeds 173205 223607
+/gagg/output/csv results/a7/diagnostics/absorption_x0p1/polishedtioair.csv
+/run/beamOn 25
+
+/gagg/stageA/surface groundvm2000air
+/run/initialize
+/gagg/stageA/validate
+/random/setSeeds 173205 223607
+/gagg/output/csv results/a7/diagnostics/absorption_x0p1/groundvm2000air.csv
+/run/beamOn 25
+
+/gagg/stageA/surface groundtioair
+/run/initialize
+/gagg/stageA/validate
+/random/setSeeds 173205 223607
+/gagg/output/csv results/a7/diagnostics/absorption_x0p1/groundtioair.csv
+/run/beamOn 25

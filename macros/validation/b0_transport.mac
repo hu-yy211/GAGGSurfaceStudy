@@ -1,0 +1,22 @@
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/random/setSeeds 424242 515151
+/gagg/geometry/mode experiment
+/gagg/stageA/surface none
+/gagg/stageB/sideAirGap 0.1 mm
+/gagg/stageB/blackHousingThickness 1.0 mm
+/gagg/stageB/esrThickness 0.1 mm
+/gagg/stageB/pmtWindowThickness 0.5 mm
+/gagg/optics/gaggBulkAbsorption true
+/gagg/scoring/outputMode transmitted
+/gagg/source/particle optical
+/gagg/source/mode isotropic
+/gagg/source/photonsPerEvent 100
+/gagg/source/position 0 0 0 mm
+/gagg/output/csv results/b0/b0_transport.csv
+/gagg/output/eventPrintModulo 0
+/run/initialize
+/gagg/geometry/validate
+/run/beamOn 50

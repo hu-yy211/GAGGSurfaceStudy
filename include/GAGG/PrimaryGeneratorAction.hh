@@ -27,6 +27,8 @@ class PrimaryGeneratorAction final : public G4VUserPrimaryGeneratorAction,
   void SetDirectionMode(const G4String& mode);
   void SetParticleMode(const G4String& particle);
   void SetKineticEnergy(G4double energy);
+  void SetBeamRadius(G4double radius);
+  void SetEventSeedBase(G4long seed);
   void SetPhotonsPerEvent(G4int count);
   void SetPosition(const G4ThreeVector& position);
 
@@ -38,6 +40,9 @@ class PrimaryGeneratorAction final : public G4VUserPrimaryGeneratorAction,
   }
   G4int GetPhotonsPerEvent() const { return fPhotonsPerEvent; }
   const G4ThreeVector& GetPosition() const { return fPosition; }
+  const G4ThreeVector& GetEventPosition() const { return fEventPosition; }
+  G4double GetBeamRadius() const { return fBeamRadius; }
+  G4long GetEventSeedBase() const { return fEventSeedBase; }
   void ResetDirectionDiagnostics();
   void ReportDirectionDiagnostics() const;
 
@@ -53,6 +58,9 @@ class PrimaryGeneratorAction final : public G4VUserPrimaryGeneratorAction,
   G4double fKineticEnergy = 20.0 * keV;
   G4int fPhotonsPerEvent = 1;
   G4ThreeVector fPosition;
+  G4ThreeVector fEventPosition;
+  G4double fBeamRadius = 0.0;
+  G4long fEventSeedBase = 0;
   std::int64_t fDirectionSamples = 0;
   G4ThreeVector fDirectionSum;
   G4ThreeVector fDirectionSquareSum;

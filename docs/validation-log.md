@@ -255,3 +255,113 @@ energy conservation and scintillation yield; they are not an experimental
 peak-width prediction because resolution scale, radioactive decay,
 electronics and PMT response are not modeled. The four-finish Fig. 4
 production comparison remains A7 work.
+
+## 2026-08-23 - A7 entered; Fig. 4 ordering gate failed
+
+- Fig. 4 and its surrounding text were re-read from the reference PDF. The
+  required peak-position order remains `groundtioair > polishedtioair >
+  polishedvm2000air > groundvm2000air`; the figure also shows a much lower
+  absolute output scale than the initial A7 prescan.
+- The initial axial pencil-beam prescan did not reproduce the order. The
+  paper's phrase "parallel gamma beam incident on the crystal end face" was
+  then implemented as a macro-controlled uniform disk with radius 12.7 mm.
+  Every sampled `(x,y)` lies inside the crystal face and is stored in CSV.
+- Resetting only the run seed was insufficient for a paired comparison because
+  optical surface transport consumed the shared random stream and changed
+  later gamma events. A7 now optionally reseeds by event ID and defers
+  scintillation tracks until non-optical transport completes. With these
+  controls, all four finishes have exactly matching source positions, Edep,
+  generated counts and full-energy event IDs.
+- The Geant4 11.2 boundary implementation was audited against the official
+  source. The legacy LBNL LUT supplies the reflected angular distribution;
+  `G4OpBoundaryProcess` uses the surface `REFLECTIVITY`, whose default is one.
+  The paper states ESR reflectivity above 98% and TiO2 reflectivity above 95%,
+  so 0.98 and 0.95 are now explicit centralized literature lower-bound
+  proxies. The complementary fraction is transmitted to the reflector volume,
+  where the existing 0.1 mm absorption length classifies the terminal loss.
+- A 25-event paired prescan with the explicit reflectivities still failed the
+  order. A ten-times-shorter GAGG absorption-length diagnostic, representing a
+  possible cm/mm reciprocal error, failed both with explicit reflectivities
+  and with LUT-default unit reflectivity. The validated 64.516 cm length was
+  retained.
+- The formal comparison used 100 primaries per finish and selected the same 33
+  events in the 661.5-662.5 keV full-energy gate. Every selected and rejected
+  event closed exact optical accounting with zero unclassified photons.
+- Event-level means (95% CI) were 0.80963 (0.80168-0.81758), 0.71835
+  (0.70296-0.73374), 0.82768 (0.82107-0.83430) and 0.72919
+  (0.71544-0.74295) for polished VM2000, polished TiO, ground VM2000 and ground
+  TiO respectively. Mean output counts were 28942.7, 25679.6, 29588.0 and
+  26067.2.
+- The paired difference `groundtioair - polishedtioair` was positive, 0.01084
+  with 95% CI 0.00601-0.01567. The required `polishedtioair -
+  polishedvm2000air` and `polishedvm2000air - groundvm2000air` differences
+  were negative with confidence intervals fully below zero. More statistics
+  cannot plausibly reverse those two comparisons.
+- The confidence-interval plot, full-energy output distributions and summary
+  CSV were generated and visually inspected. `validate_a7.py` intentionally
+  exits with status 1 after all structural checks because the ordering gate
+  fails.
+- The existing A0-A6 regression suite still passed 20/20 tests in 42.66 s.
+
+Status: A7 is not passed. No arbitrary adjustment was made, no A7 CTest was
+registered as passing, and no `a7` tag or remote push is allowed at this
+point. The next investigation must identify a documented geometry/scoring/LUT
+implementation difference or obtain the authors' Geant4 configuration.
+
+## 2026-08-23 - A7 bounded scoring/interface audit
+
+- Added independent runtime controls for `firstArrival` and true
+  `transmitted` output scoring. The latter accepts only
+  `FresnelRefraction`, `Transmission` or `SameMaterial` boundary
+  statuses; volume-name inspection alone was shown to count reflected
+  boundary arrivals.
+- Added direct and explicit-air Stage A interface modes. The explicit
+  0.1 mm air separation is a centralized diagnostic placeholder, not a paper
+  measurement or fitted parameter.
+- Four paired 50-primary runs used identical event seeding and selected 17
+  full-energy events for the direct models and 16 for the air models. Every
+  model passed analytic geometry, overlap, LUT assignment, paired
+  source/Edep/generated and exact terminal-accounting checks.
+- The two first-arrival models retained
+  `ground VM > polished VM > ground TiO > polished TiO`.
+- The two transmitted models gave
+  `ground VM > ground TiO > polished TiO > polished VM`.
+  For direct transmission the full-energy efficiencies were 0.18362,
+  0.27827, 0.41116 and 0.28999 for polished VM, polished TiO, ground VM and
+  ground TiO, with mean output counts 6564, 9948, 14698 and 10367.
+- Explicit air changed each corresponding efficiency by only a few
+  (10^{-3}). It did not resolve the stable ground-VM reversal and was not
+  scanned further.
+
+Status: structural audit passed; Fig. 4 ordering failed in all four models.
+A7 remains untagged. The audit improved the interpretation and absolute scale
+without introducing an arbitrary fit.
+
+## 2026-08-23 - B0 experiment geometry and optical baseline
+
+- Added runtime `experiment` geometry mode with the measured
+  5.75 mm x 5.75 mm x 20 mm3 GAGG crystal. The convention is top ESR at +z
+  and PMT window at -z.
+- Added an explicit side-air subtraction volume, surrounding black
+  subtraction volume, top ESR and bottom PMT receiver window. Runtime
+  defaults are 0.1 mm side gap, 1.0 mm black thickness, 0.1 mm ESR thickness
+  and 0.5 mm PMT-window thickness. These are labeled unmeasured B0
+  placeholders and are not fits.
+- ESR reflectivity 0.98 and ideal-black reflectivity zero use UNIFIED polished
+  dielectric-metal boundaries. No rough GAGG surface or `sigma_alpha` is
+  active in B0.
+- Geometry validation passed analytic volumes, five navigator probes, five
+  overlap checks, the two UNIFIED boundary assignments and PMT-window
+  refractive index 1.52. Boolean-solid volume estimates use a documented 0.2%
+  numerical tolerance; ordinary box volumes retain strict checks.
+- The optical baseline transported 100 isotropic center-origin photons in
+  each of 50 events. Of 5000 photons, 1845 transmitted into the PMT window,
+  1492 were absorbed in GAGG, 1662 at ESR/black surfaces and one exited
+  elsewhere. Thus `N_PMT/N_generated = 0.369`; accounting closed exactly
+  with zero unclassified photons.
+- The 5000-direction sample passed isotropy checks. The complete A0-A6+B0
+  regression suite passed 23/23 tests in 44.05 s.
+
+Status: B0 validation gate passed. B1 will add the six runtime-selectable
+GAGG face states and one shared rough-surface `sigma_alpha`; it must not tune
+individual faces.

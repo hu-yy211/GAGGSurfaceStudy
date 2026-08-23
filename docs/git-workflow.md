@@ -21,6 +21,12 @@ Recommended commit and annotated-tag names:
 | A5 | milestone(A5): validate scintillation production | a5 |
 | A6 | milestone(A6): validate 662 keV gamma response | a6 |
 | A7 | milestone(A7): reproduce Fig. 4 qualitative ordering | a7 |
+| B0 | milestone(B0): validate experiment geometry baseline | b0 |
+
+If A7 remains scientifically unresolved while an independently validated B0
+is authorized to proceed, retain the A7 failure evidence in the B0 checkpoint
+but do not create or move the `a7` tag. The `b0` tag certifies only the B0
+geometry/transport gates documented in `docs/stage-b-plan.md`.
 
 Before each milestone commit:
 
@@ -46,4 +52,3 @@ git push origin a1
 Replace A1/a1 with the gate that actually passed. Never move or reuse a
 published milestone tag. Bug fixes after a published gate use a normal commit
 or, if a corrected milestone must be identified, a new tag such as "a1.1".
-

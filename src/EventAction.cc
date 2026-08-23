@@ -33,7 +33,7 @@ void EventAction::EndOfEventAction(const G4Event* event) {
   const auto unclassified = fGenerated - classified;
 
   const EventRecord record{event->GetEventID(),
-                           fPrimaryGenerator->GetPosition(),
+                           fPrimaryGenerator->GetEventPosition(),
                            fEnergyDeposit,
                            fScintillation,
                            fGenerated,

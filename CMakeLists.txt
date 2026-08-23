@@ -255,4 +255,38 @@ if(BUILD_TESTING)
     ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
     PASS_REGULAR_EXPRESSION "\\[a6-plot\\] status=PASS"
   )
+
+  add_test(
+    NAME b0_experiment_geometry
+    COMMAND $<TARGET_FILE:gagg_surface_study>
+            ${PROJECT_BINARY_DIR}/macros/validation/b0_geometry.mac
+  )
+  set_tests_properties(b0_experiment_geometry PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[b0\\] geometry status=PASS"
+    FAIL_REGULAR_EXPRESSION "status=FAIL|Overlap with volume|G4Exception|Fatal Exception"
+  )
+
+  add_test(
+    NAME b0_transport_export
+    COMMAND $<TARGET_FILE:gagg_surface_study>
+            ${PROJECT_BINARY_DIR}/macros/validation/b0_transport.mac
+  )
+  set_tests_properties(b0_transport_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[output\\] csv=results/b0/b0_transport.csv rows=50"
+    FAIL_REGULAR_EXPRESSION "unclassified=[1-9][0-9]*|status=FAIL|G4Exception|Fatal Exception"
+    TIMEOUT 300
+  )
+
+  add_test(
+    NAME b0_transport_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_b0.py
+            --input ${PROJECT_BINARY_DIR}/results/b0/b0_transport.csv
+            --expect-events 50
+            --photons-per-event 100
+  )
+  set_tests_properties(b0_transport_validate PROPERTIES
+    DEPENDS b0_transport_export
+    PASS_REGULAR_EXPRESSION "\\[b0-check\\].*status=PASS"
+  )
 endif()

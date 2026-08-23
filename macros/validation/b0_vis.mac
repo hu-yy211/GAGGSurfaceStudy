@@ -1,0 +1,26 @@
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/gagg/geometry/mode experiment
+/gagg/stageA/surface none
+/gagg/stageB/sideAirGap 0.1 mm
+/gagg/stageB/blackHousingThickness 1.0 mm
+/gagg/stageB/esrThickness 0.1 mm
+/gagg/stageB/pmtWindowThickness 0.5 mm
+/gagg/scoring/outputMode transmitted
+/run/initialize
+/gagg/geometry/validate
+
+/vis/open OGL 1000x800-0+0
+/vis/viewer/set/autoRefresh false
+/vis/verbose errors
+/vis/drawVolume
+/vis/viewer/set/viewpointThetaPhi 75 35 deg
+/vis/viewer/set/style surface
+/vis/viewer/set/auxiliaryEdge true
+/vis/viewer/zoom 6.0
+/vis/scene/add/axes 0 0 0 5 mm
+/vis/viewer/set/autoRefresh true
+/vis/viewer/refresh
+/vis/verbose warnings

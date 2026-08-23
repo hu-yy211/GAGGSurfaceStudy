@@ -20,11 +20,16 @@ inline constexpr G4double kSelfAbsorptionCoefficient = 0.0155 / cm;
 inline constexpr G4double kAbsorptionLength =
     1.0 / kSelfAbsorptionCoefficient;
 inline constexpr G4double kReflectorThickness = 1.0 * mm;
+// Diagnostic-only explicit air separation used to test the meaning of the
+// legacy LUT finishes ending in "air". This is not a measured paper value.
+inline constexpr G4double kStageAAirGapDiagnostic = 0.1 * mm;
 inline constexpr G4double kReflectorDensity = 2.2 * g / cm3;
 inline constexpr G4double kReflectorRefractiveIndex = 1.35;
 inline constexpr G4double kReflectorAbsorptionCoefficient = 100.0 / cm;
 inline constexpr G4double kReflectorAbsorptionLength =
     1.0 / kReflectorAbsorptionCoefficient;
+inline constexpr G4double kVm2000Reflectivity = 0.98;
+inline constexpr G4double kTiOReflectivity = 0.95;
 inline constexpr G4double kReflectorOuterRadius =
     kCrystalRadius + kReflectorThickness;
 inline constexpr G4double kTopReflectorCenterZ =
@@ -40,6 +45,23 @@ inline constexpr G4double kStageAGammaSourceClearance = 1.0 * mm;
 inline constexpr G4double kStageAGammaSourceZ =
     0.5 * kCrystalLength + kReflectorThickness +
     kStageAGammaSourceClearance;
+
+// Stage B measured crystal dimensions.
+inline constexpr G4double kExperimentCrystalWidth = 5.75 * mm;
+inline constexpr G4double kExperimentCrystalDepth = 5.75 * mm;
+inline constexpr G4double kExperimentCrystalLength = 20.0 * mm;
+
+// B0 geometry placeholders. These remain runtime-selectable and must be
+// replaced by measurements before quantitative Stage B comparison.
+inline constexpr G4double kExperimentSideAirGapDefault = 0.1 * mm;
+inline constexpr G4double kExperimentBlackHousingThicknessDefault = 1.0 * mm;
+inline constexpr G4double kExperimentEsrThicknessDefault = 0.1 * mm;
+inline constexpr G4double kExperimentPmtWindowThicknessDefault = 0.5 * mm;
+inline constexpr G4double kExperimentPmtWindowRefractiveIndex = 1.52;
+inline constexpr G4double kExperimentBlackRefractiveIndex = 1.50;
+inline constexpr G4double kExperimentBlackAbsorptionLength = 1.0 * um;
+inline constexpr G4double kExperimentEsrReflectivity = 0.98;
+inline constexpr G4double kExperimentBlackReflectivity = 0.0;
 
 inline G4double EmissionPhotonEnergy() {
   return h_Planck * c_light / kEmissionWavelength;

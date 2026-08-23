@@ -4,7 +4,9 @@
 /tracking/verbose 0
 /random/setSeeds 161803 141421
 /gagg/geometry/mode paper
+/gagg/scoring/outputMode firstArrival
 /gagg/optics/gaggBulkAbsorption true
+/gagg/stageA/usePaperReflectivity true
 /gagg/optics/scintillationTimeConstant 62.53 ns
 /gagg/stageA/surface polishedvm2000air
 /gagg/source/particle electron

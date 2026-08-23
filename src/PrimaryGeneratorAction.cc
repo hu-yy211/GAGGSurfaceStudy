@@ -4,6 +4,7 @@
 
 #include "G4Exception.hh"
 #include "G4Electron.hh"
+#include "G4Event.hh"
 #include "G4Gamma.hh"
 #include "G4GenericMessenger.hh"
 #include "G4OpticalPhoton.hh"
@@ -52,6 +53,24 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
   energyCommand.SetDefaultValue("20.");
   energyCommand.SetStates(G4State_PreInit, G4State_Idle);
 
+  auto& beamRadiusCommand = fMessenger->DeclareMethodWithUnit(
+      "beamRadius", "mm", &PrimaryGeneratorAction::SetBeamRadius,
+      "Set the radius of a uniform circular parallel gamma beam; zero "
+      "selects a pencil beam.");
+  beamRadiusCommand.SetParameterName("radius", false);
+  beamRadiusCommand.SetRange("radius>=0.");
+  beamRadiusCommand.SetDefaultValue("0.");
+  beamRadiusCommand.SetStates(G4State_PreInit, G4State_Idle);
+
+  auto& eventSeedCommand = fMessenger->DeclareMethod(
+      "eventSeedBase", &PrimaryGeneratorAction::SetEventSeedBase,
+      "Set a positive deterministic per-event seed base; zero keeps the "
+      "run-level random stream.");
+  eventSeedCommand.SetParameterName("seed", false);
+  eventSeedCommand.SetRange("seed>=0");
+  eventSeedCommand.SetDefaultValue("0");
+  eventSeedCommand.SetStates(G4State_PreInit, G4State_Idle);
+
   fPositionCommand = std::make_unique<G4UIcmdWith3VectorAndUnit>(
       "/gagg/source/position", this);
   fPositionCommand->SetGuidance(
@@ -70,8 +89,21 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
 PrimaryGeneratorAction::~PrimaryGeneratorAction() = default;
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event) {
+  if (fEventSeedBase > 0) {
+    const auto eventId = static_cast<G4long>(event->GetEventID());
+    G4long seeds[2] = {fEventSeedBase + 104729 * eventId,
+                       fEventSeedBase + 130363 * eventId + 1};
+    G4Random::setTheSeeds(seeds);
+  }
   ValidateConfiguration();
-  fParticleGun->SetParticlePosition(fPosition);
+  fEventPosition = fPosition;
+  if (fParticleMode == "gamma" && fBeamRadius > 0.0) {
+    const auto radius = fBeamRadius * std::sqrt(G4UniformRand());
+    const auto phi = twopi * G4UniformRand();
+    fEventPosition +=
+        G4ThreeVector(radius * std::cos(phi), radius * std::sin(phi), 0.0);
+  }
+  fParticleGun->SetParticlePosition(fEventPosition);
   if (fParticleMode == "electron") {
     fParticleGun->SetParticleDefinition(G4Electron::Definition());
     fParticleGun->SetParticleEnergy(fKineticEnergy);
@@ -122,6 +154,22 @@ void PrimaryGeneratorAction::SetKineticEnergy(G4double energy) {
                 FatalException, "kineticEnergy must be positive");
   }
   fKineticEnergy = energy;
+}
+
+void PrimaryGeneratorAction::SetBeamRadius(G4double radius) {
+  if (radius < 0.0) {
+    G4Exception("PrimaryGeneratorAction::SetBeamRadius", "GAGG-A7-001",
+                FatalException, "beamRadius must be non-negative");
+  }
+  fBeamRadius = radius;
+}
+
+void PrimaryGeneratorAction::SetEventSeedBase(G4long seed) {
+  if (seed < 0) {
+    G4Exception("PrimaryGeneratorAction::SetEventSeedBase", "GAGG-A7-002",
+                FatalException, "eventSeedBase must be non-negative");
+  }
+  fEventSeedBase = seed;
 }
 
 G4double PrimaryGeneratorAction::GetSourceEnergy() const {
@@ -182,8 +230,9 @@ void PrimaryGeneratorAction::ValidateConfiguration() const {
         std::abs(fPosition.x()) < config::kWorldHalfLength &&
         std::abs(fPosition.y()) < config::kWorldHalfLength &&
         std::abs(fPosition.z()) < config::kWorldHalfLength;
+    const auto beamCenterRadius = std::sqrt(radialSquared);
     const auto aimedAtCrystal =
-        radialSquared < config::kCrystalRadius * config::kCrystalRadius;
+        beamCenterRadius + fBeamRadius <= config::kCrystalRadius;
     const auto abovePaperGeometry =
         fPosition.z() >= config::kStageAGammaSourceZ;
     if (fDirectionMode != "fixed" || !insideWorld || !aimedAtCrystal ||

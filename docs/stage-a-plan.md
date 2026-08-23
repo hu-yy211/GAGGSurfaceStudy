@@ -101,7 +101,7 @@ partial-energy events and 28 zero-deposit events. The full-energy subset gave
 optical terminal accounting closed. The source is a monoenergetic particle
 gun; radioactive decay and detector energy resolution remain out of scope.
 
-### A7 - Fig. 4
+### A7 - Fig. 4 - IN PROGRESS, ORDERING GATE FAILED
 
 Run identical statistics and fixed seeds for the four LUT finishes.
 
@@ -116,6 +116,32 @@ groundtioair
 
 Report confidence intervals. If the order fails, diagnose geometry, surface
 assignment, LUT data, counting and event selection before changing parameters.
+
+Current status: not passed on 2026-08-23. A paired 100-primary comparison had
+33 identical full-energy events per finish. Source position, Edep and
+N_generated matched event by event and all optical accounting closed, but the
+observed mean order was `groundvm2000air > polishedvm2000air > groundtioair >
+polishedtioair`. The paper's target failed with confidence intervals entirely
+in the wrong direction for two adjacent pairs. The audit added the paper's
+0.98/0.95 reflector lower bounds because the legacy LUT otherwise defaults to
+unit reflectivity. Uniform-face irradiation, random-stream isolation, a LUT
+default-reflectivity control and a ten-times-shorter absorption-length unit
+diagnostic did not recover the target. No parameter was fitted and no `a7`
+milestone tag may be created yet.
+
+A bounded follow-up separated direct versus explicit 0.1 mm air connection
+and first-arrival versus true boundary-transmission scoring. All four
+50-primary paired models passed geometry, pairing and accounting validation;
+none passed the Fig. 4 order. True transmission was identified by
+`G4OpBoundaryProcess` status rather than post-volume name, which can still
+name the candidate next volume on a reflected boundary step. It reduced the
+direct-model full-energy mean counts to 6564, 9948, 14698 and 10367 for
+polished VM2000, polished TiO, ground VM2000 and ground TiO. This recovered
+`ground TiO > polished TiO > polished VM` and improved the absolute scale,
+but ground VM2000 remained highest rather than lowest. The explicit air
+volume changed efficiencies only by a few (10^{-3}), so no thickness scan
+or fit was performed. Stage B may proceed independently, but A7 remains open
+and untagged.
 
 ## Explicit ambiguities
 

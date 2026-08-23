@@ -1,0 +1,50 @@
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/gagg/geometry/mode paper
+/gagg/optics/gaggBulkAbsorption true
+/gagg/optics/gaggAbsorptionLengthScale 1.0
+/gagg/optics/scintillationTimeConstant 62.53 ns
+/gagg/optics/deferScintillationPhotons true
+/gagg/stageA/usePaperReflectivity true
+/gagg/stageA/interfaceMode airgap
+# Fixed diagnostic separation, not a fitted or paper-measured value.
+/gagg/stageA/airGap 0.1 mm
+/gagg/scoring/outputMode transmitted
+/gagg/source/particle gamma
+/gagg/source/mode fixed
+/gagg/source/position 0 0 14.7 mm
+/gagg/source/kineticEnergy 662 keV
+/gagg/source/beamRadius 12.7 mm
+/gagg/source/eventSeedBase 730001
+/gagg/output/eventPrintModulo 0
+
+/gagg/stageA/surface polishedvm2000air
+/run/initialize
+/gagg/geometry/validate
+/gagg/stageA/validate
+/random/setSeeds 173205 223607
+/gagg/output/csv results/a7/models/airgap_transmitted/polishedvm2000air.csv
+/run/beamOn 50
+
+/gagg/stageA/surface polishedtioair
+/run/initialize
+/gagg/stageA/validate
+/random/setSeeds 173205 223607
+/gagg/output/csv results/a7/models/airgap_transmitted/polishedtioair.csv
+/run/beamOn 50
+
+/gagg/stageA/surface groundvm2000air
+/run/initialize
+/gagg/stageA/validate
+/random/setSeeds 173205 223607
+/gagg/output/csv results/a7/models/airgap_transmitted/groundvm2000air.csv
+/run/beamOn 50
+
+/gagg/stageA/surface groundtioair
+/run/initialize
+/gagg/stageA/validate
+/random/setSeeds 173205 223607
+/gagg/output/csv results/a7/models/airgap_transmitted/groundtioair.csv
+/run/beamOn 50

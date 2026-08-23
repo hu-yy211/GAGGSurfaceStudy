@@ -4,13 +4,18 @@
 /tracking/verbose 0
 /random/setSeeds 271828 314159
 /gagg/geometry/mode paper
+/gagg/scoring/outputMode firstArrival
 /gagg/optics/gaggBulkAbsorption true
+/gagg/stageA/usePaperReflectivity true
 /gagg/optics/scintillationTimeConstant 62.53 ns
 /gagg/stageA/surface polishedvm2000air
 /gagg/source/particle gamma
 /gagg/source/mode fixed
 /gagg/source/position 0 0 14.7 mm
 /gagg/source/kineticEnergy 662 keV
+/gagg/source/beamRadius 0 mm
+/gagg/source/eventSeedBase 0
+/gagg/optics/deferScintillationPhotons false
 /gagg/output/eventPrintModulo 1
 /run/initialize
 /gagg/geometry/validate

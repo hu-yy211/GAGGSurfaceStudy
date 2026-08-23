@@ -3,6 +3,7 @@
 /event/verbose 0
 /tracking/verbose 0
 /gagg/geometry/mode paper
+/gagg/scoring/outputMode firstArrival
 /gagg/optics/gaggBulkAbsorption false
 /gagg/source/particle optical
 /gagg/source/mode isotropic

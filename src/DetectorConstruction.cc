@@ -17,6 +17,7 @@
 #include "G4PVPlacement.hh"
 #include "G4RunManager.hh"
 #include "G4StateManager.hh"
+#include "G4SubtractionSolid.hh"
 #include "G4TransportationManager.hh"
 #include "G4Tubs.hh"
 #include "G4VisAttributes.hh"
@@ -72,6 +73,16 @@ G4String StageASurfaceDataFile(const G4String& name) {
   return "none";
 }
 
+G4double StageASurfaceReflectivity(const G4String& name) {
+  if (name == "polishedvm2000air" || name == "groundvm2000air") {
+    return gagg::config::kVm2000Reflectivity;
+  }
+  if (name == "polishedtioair" || name == "groundtioair") {
+    return gagg::config::kTiOReflectivity;
+  }
+  return 0.0;
+}
+
 }  // namespace
 
 namespace gagg {
@@ -82,24 +93,37 @@ DetectorConstruction::DetectorConstruction()
       fOpticsMessenger(std::make_unique<G4GenericMessenger>(
           this, "/gagg/optics/", "GAGG optical-material controls")),
       fStageAMessenger(std::make_unique<G4GenericMessenger>(
-          this, "/gagg/stageA/", "Stage A LUT surface controls")) {
+          this, "/gagg/stageA/", "Stage A LUT surface controls")),
+      fStageBMessenger(std::make_unique<G4GenericMessenger>(
+          this, "/gagg/stageB/", "Stage B experiment geometry controls")),
+      fScoringMessenger(std::make_unique<G4GenericMessenger>(
+          this, "/gagg/scoring/", "Optical output scoring controls")) {
   auto& modeCommand = fMessenger->DeclareMethod(
       "mode", &DetectorConstruction::SetGeometryMode,
-      "Select bare A0 geometry or paper A2 reflector geometry.");
+      "Select bare A0, paper Stage A, or experimental Stage B geometry.");
   modeCommand.SetParameterName("mode", false);
-  modeCommand.SetCandidates("bare paper");
+  modeCommand.SetCandidates("bare paper experiment");
   modeCommand.SetDefaultValue("bare");
   modeCommand.SetStates(G4State_PreInit);
 
   auto& validateCommand = fMessenger->DeclareMethod(
       "validate", &DetectorConstruction::ValidateGeometry,
-      "Validate the initialized paper geometry.");
+      "Validate the initialized paper or experiment geometry.");
   validateCommand.SetStates(G4State_Idle);
 
   auto& absorptionCommand = fOpticsMessenger->DeclareProperty(
       "gaggBulkAbsorption", fGaggBulkAbsorption,
       "Enable the literature GAGG bulk self-absorption length.");
   absorptionCommand.SetStates(G4State_PreInit);
+
+  auto& absorptionScaleCommand = fOpticsMessenger->DeclareProperty(
+      "gaggAbsorptionLengthScale", fGaggAbsorptionLengthScale,
+      "Scale the validated GAGG absorption length for explicitly labeled "
+      "diagnostic runs; the physical default is 1.");
+  absorptionScaleCommand.SetParameterName("scale", false);
+  absorptionScaleCommand.SetRange("scale>0.");
+  absorptionScaleCommand.SetDefaultValue("1.");
+  absorptionScaleCommand.SetStates(G4State_PreInit);
 
   auto& scintillationTimeCommand = fOpticsMessenger->DeclarePropertyWithUnit(
       "scintillationTimeConstant", "ns", fScintillationTimeConstant,
@@ -123,10 +147,80 @@ DetectorConstruction::DetectorConstruction()
   surfaceCommand.SetDefaultValue("none");
   surfaceCommand.SetStates(G4State_PreInit, G4State_Idle);
 
+  auto& reflectivityCommand = fStageAMessenger->DeclareProperty(
+      "usePaperReflectivity", fStageAUsePaperReflectivity,
+      "Use the paper's 0.98 VM2000 and 0.95 TiO reflectivity lower bounds; "
+      "false is reserved for LUT-default diagnostics.");
+  reflectivityCommand.SetStates(G4State_PreInit);
+
+  auto& interfaceCommand = fStageAMessenger->DeclareProperty(
+      "interfaceMode", fStageAInterfaceMode,
+      "Connect the LUT directly to the reflector or through an explicit air "
+      "volume for a labeled A7 diagnostic.");
+  interfaceCommand.SetCandidates("direct airgap");
+  interfaceCommand.SetDefaultValue("direct");
+  interfaceCommand.SetStates(G4State_PreInit);
+
+  auto& airGapCommand = fStageAMessenger->DeclarePropertyWithUnit(
+      "airGap", "mm", fStageAAirGap,
+      "Diagnostic explicit Stage A air-gap thickness; not a paper fit "
+      "parameter.");
+  airGapCommand.SetParameterName("gap", false);
+  airGapCommand.SetRange("gap>0.");
+  airGapCommand.SetDefaultValue("0.1");
+  airGapCommand.SetStates(G4State_PreInit);
+
   auto& validateSurfaceCommand = fStageAMessenger->DeclareMethod(
       "validate", &DetectorConstruction::ValidateStageASurface,
       "Validate the active Stage A LUT surface and border assignments.");
   validateSurfaceCommand.SetStates(G4State_Idle);
+
+  auto& outputModeCommand = fScoringMessenger->DeclareProperty(
+      "outputMode", fOutputScoringMode,
+      "Count transmitted photons or terminate/count each photon at its first "
+      "geometrical arrival at the crystal output face.");
+  outputModeCommand.SetCandidates("transmitted firstArrival");
+  outputModeCommand.SetDefaultValue("firstArrival");
+  outputModeCommand.SetStates(G4State_PreInit);
+
+  auto& experimentAirGapCommand =
+      fStageBMessenger->DeclarePropertyWithUnit(
+          "sideAirGap", "mm", fExperimentSideAirGap,
+          "Stage B side air gap. The B0 default is an explicit unmeasured "
+          "placeholder.");
+  experimentAirGapCommand.SetParameterName("gap", false);
+  experimentAirGapCommand.SetRange("gap>0.");
+  experimentAirGapCommand.SetDefaultValue("0.1");
+  experimentAirGapCommand.SetStates(G4State_PreInit);
+
+  auto& experimentBlackCommand =
+      fStageBMessenger->DeclarePropertyWithUnit(
+          "blackHousingThickness", "mm",
+          fExperimentBlackHousingThickness,
+          "Stage B black absorbing side-housing thickness.");
+  experimentBlackCommand.SetParameterName("thickness", false);
+  experimentBlackCommand.SetRange("thickness>0.");
+  experimentBlackCommand.SetDefaultValue("1.0");
+  experimentBlackCommand.SetStates(G4State_PreInit);
+
+  auto& experimentEsrCommand =
+      fStageBMessenger->DeclarePropertyWithUnit(
+          "esrThickness", "mm", fExperimentEsrThickness,
+          "Stage B top ESR thickness; B0 uses a documented placeholder.");
+  experimentEsrCommand.SetParameterName("thickness", false);
+  experimentEsrCommand.SetRange("thickness>0.");
+  experimentEsrCommand.SetDefaultValue("0.1");
+  experimentEsrCommand.SetStates(G4State_PreInit);
+
+  auto& experimentPmtCommand =
+      fStageBMessenger->DeclarePropertyWithUnit(
+          "pmtWindowThickness", "mm", fExperimentPmtWindowThickness,
+          "Stage B PMT receiver-window thickness; B0 uses direct crystal "
+          "contact.");
+  experimentPmtCommand.SetParameterName("thickness", false);
+  experimentPmtCommand.SetRange("thickness>0.");
+  experimentPmtCommand.SetDefaultValue("0.5");
+  experimentPmtCommand.SetStates(G4State_PreInit);
 }
 
 DetectorConstruction::~DetectorConstruction() = default;
@@ -151,6 +245,12 @@ void DetectorConstruction::SetStageASurface(const G4String& surface) {
     fCrystalPhysical = nullptr;
     fSideReflectorPhysical = nullptr;
     fTopReflectorPhysical = nullptr;
+    fSideAirGapPhysical = nullptr;
+    fTopAirGapPhysical = nullptr;
+    fExperimentSideAirGapPhysical = nullptr;
+    fExperimentBlackHousingPhysical = nullptr;
+    fExperimentEsrPhysical = nullptr;
+    fExperimentPmtWindowPhysical = nullptr;
     G4RunManager::GetRunManager()->ReinitializeGeometry(true);
     G4cout << "[a4] surface_change old=" << oldSurface
            << " new=" << fStageASurface
@@ -161,6 +261,48 @@ void DetectorConstruction::SetStageASurface(const G4String& surface) {
 G4String DetectorConstruction::GetRealSurfaceDataPath() const {
   const auto* path = std::getenv("G4REALSURFACEDATA");
   return path == nullptr ? G4String() : G4String(path);
+}
+
+G4double DetectorConstruction::GetStageAReflectivity() const {
+  return fStageAUsePaperReflectivity
+             ? StageASurfaceReflectivity(fStageASurface)
+             : 1.0;
+}
+
+G4double DetectorConstruction::GetCrystalSizeX() const {
+  return fGeometryMode == "experiment"
+             ? config::kExperimentCrystalWidth
+             : 2.0 * config::kCrystalRadius;
+}
+
+G4double DetectorConstruction::GetCrystalSizeY() const {
+  return fGeometryMode == "experiment"
+             ? config::kExperimentCrystalDepth
+             : 2.0 * config::kCrystalRadius;
+}
+
+G4double DetectorConstruction::GetCrystalSizeZ() const {
+  return fGeometryMode == "experiment"
+             ? config::kExperimentCrystalLength
+             : config::kCrystalLength;
+}
+
+G4bool DetectorConstruction::IsOnOutputFace(
+    const G4ThreeVector& position, G4double tolerance) const {
+  if (fGeometryMode == "experiment") {
+    return std::abs(position.z() +
+                    0.5 * config::kExperimentCrystalLength) < tolerance &&
+           std::abs(position.x()) <
+               0.5 * config::kExperimentCrystalWidth - tolerance &&
+           std::abs(position.y()) <
+               0.5 * config::kExperimentCrystalDepth - tolerance;
+  }
+  return std::abs(position.z() + 0.5 * config::kCrystalLength) < tolerance &&
+         position.perp() < config::kCrystalRadius - tolerance;
+}
+
+G4String DetectorConstruction::GetOutputReceiverVolumeName() const {
+  return fGeometryMode == "experiment" ? "PMTWindow" : "World";
 }
 
 G4VPhysicalVolume* DetectorConstruction::Construct() {
@@ -187,7 +329,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
     const std::vector<G4double> gaggIndex = {
         config::kGaggRefractiveIndex, config::kGaggRefractiveIndex};
     const std::vector<G4double> absorption = {
-        config::kAbsorptionLength, config::kAbsorptionLength};
+        config::kAbsorptionLength * fGaggAbsorptionLengthScale,
+        config::kAbsorptionLength * fGaggAbsorptionLengthScale};
     auto* gaggMpt = new G4MaterialPropertiesTable();
     gaggMpt->AddProperty("RINDEX", energies, gaggIndex);
     if (fGaggBulkAbsorption) {
@@ -224,6 +367,41 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
     reflector->SetMaterialPropertiesTable(reflectorMpt);
   }
 
+  auto* air = nist->FindOrBuildMaterial("G4_AIR");
+  if (air->GetMaterialPropertiesTable() == nullptr) {
+    const std::vector<G4double> airIndex = {config::kWorldRefractiveIndex,
+                                             config::kWorldRefractiveIndex};
+    auto* airMpt = new G4MaterialPropertiesTable();
+    airMpt->AddProperty("RINDEX", energies, airIndex);
+    air->SetMaterialPropertiesTable(airMpt);
+  }
+
+  auto* experimentBlack = nist->FindOrBuildMaterial("G4_GRAPHITE");
+  if (experimentBlack->GetMaterialPropertiesTable() == nullptr) {
+    const std::vector<G4double> blackIndex = {
+        config::kExperimentBlackRefractiveIndex,
+        config::kExperimentBlackRefractiveIndex};
+    const std::vector<G4double> blackAbsorption = {
+        config::kExperimentBlackAbsorptionLength,
+        config::kExperimentBlackAbsorptionLength};
+    auto* blackMpt = new G4MaterialPropertiesTable();
+    blackMpt->AddProperty("RINDEX", energies, blackIndex);
+    blackMpt->AddProperty("ABSLENGTH", energies, blackAbsorption);
+    experimentBlack->SetMaterialPropertiesTable(blackMpt);
+  }
+
+  auto* experimentEsr = nist->FindOrBuildMaterial("G4_MYLAR");
+  auto* experimentPmtWindow =
+      nist->FindOrBuildMaterial("G4_Pyrex_Glass");
+  if (experimentPmtWindow->GetMaterialPropertiesTable() == nullptr) {
+    const std::vector<G4double> windowIndex = {
+        config::kExperimentPmtWindowRefractiveIndex,
+        config::kExperimentPmtWindowRefractiveIndex};
+    auto* windowMpt = new G4MaterialPropertiesTable();
+    windowMpt->AddProperty("RINDEX", energies, windowIndex);
+    experimentPmtWindow->SetMaterialPropertiesTable(windowMpt);
+  }
+
   auto* worldSolid =
       new G4Box("World", config::kWorldHalfLength, config::kWorldHalfLength,
                 config::kWorldHalfLength);
@@ -233,9 +411,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
       new G4PVPlacement(nullptr, {}, worldLogical, "World", nullptr, false, 0,
                         true);
 
-  auto* crystalSolid =
-      new G4Tubs("GAGG", 0.0, config::kCrystalRadius,
-                 0.5 * config::kCrystalLength, 0.0, twopi);
+  G4VSolid* crystalSolid = nullptr;
+  if (fGeometryMode == "experiment") {
+    crystalSolid = new G4Box(
+        "GAGG", 0.5 * config::kExperimentCrystalWidth,
+        0.5 * config::kExperimentCrystalDepth,
+        0.5 * config::kExperimentCrystalLength);
+  } else {
+    crystalSolid =
+        new G4Tubs("GAGG", 0.0, config::kCrystalRadius,
+                   0.5 * config::kCrystalLength, 0.0, twopi);
+  }
   auto* crystalLogical = new G4LogicalVolume(crystalSolid, gagg, "GAGG");
   auto* crystalVis = new G4VisAttributes(G4Colour(0.95, 0.72, 0.08, 0.45));
   crystalVis->SetForceSolid(true);
@@ -246,10 +432,47 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 
   fSideReflectorPhysical = nullptr;
   fTopReflectorPhysical = nullptr;
+  fSideAirGapPhysical = nullptr;
+  fTopAirGapPhysical = nullptr;
+  fExperimentSideAirGapPhysical = nullptr;
+  fExperimentBlackHousingPhysical = nullptr;
+  fExperimentEsrPhysical = nullptr;
+  fExperimentPmtWindowPhysical = nullptr;
   if (fGeometryMode == "paper") {
+    const auto explicitAirGap = fStageAInterfaceMode == "airgap";
+    const auto gap = explicitAirGap ? fStageAAirGap : 0.0;
+    const auto reflectorInnerRadius = config::kCrystalRadius + gap;
+    const auto reflectorOuterRadius =
+        reflectorInnerRadius + config::kReflectorThickness;
+
+    if (explicitAirGap) {
+      auto* sideAirSolid = new G4Tubs(
+          "SideAirGapSolid", config::kCrystalRadius, reflectorInnerRadius,
+          0.5 * config::kCrystalLength, 0.0, twopi);
+      auto* sideAirLogical =
+          new G4LogicalVolume(sideAirSolid, air, "SideAirGapLogical");
+      auto* airVis =
+          new G4VisAttributes(G4Colour(0.70, 0.90, 1.00, 0.18));
+      airVis->SetForceSolid(true);
+      sideAirLogical->SetVisAttributes(airVis);
+      fSideAirGapPhysical = new G4PVPlacement(
+          nullptr, {}, sideAirLogical, "SideAirGap", worldLogical, false, 0,
+          true);
+
+      auto* topAirSolid =
+          new G4Tubs("TopAirGapSolid", 0.0, reflectorOuterRadius,
+                     0.5 * gap, 0.0, twopi);
+      auto* topAirLogical =
+          new G4LogicalVolume(topAirSolid, air, "TopAirGapLogical");
+      topAirLogical->SetVisAttributes(airVis);
+      fTopAirGapPhysical = new G4PVPlacement(
+          nullptr, {0.0, 0.0, 0.5 * config::kCrystalLength + 0.5 * gap},
+          topAirLogical, "TopAirGap", worldLogical, false, 0, true);
+    }
+
     auto* sideSolid =
-        new G4Tubs("SideReflectorSolid", config::kCrystalRadius,
-                   config::kReflectorOuterRadius,
+        new G4Tubs("SideReflectorSolid", reflectorInnerRadius,
+                   reflectorOuterRadius,
                    0.5 * config::kCrystalLength, 0.0, twopi);
     auto* sideLogical =
         new G4LogicalVolume(sideSolid, reflector, "SideReflectorLogical");
@@ -263,7 +486,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 
     auto* topSolid =
         new G4Tubs("TopReflectorSolid", 0.0,
-                   config::kReflectorOuterRadius,
+                   reflectorOuterRadius,
                    0.5 * config::kReflectorThickness, 0.0, twopi);
     auto* topLogical =
         new G4LogicalVolume(topSolid, reflector, "TopReflectorLogical");
@@ -272,10 +495,91 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
     topVis->SetForceSolid(true);
     topLogical->SetVisAttributes(topVis);
     fTopReflectorPhysical = new G4PVPlacement(
-        nullptr, {0.0, 0.0, config::kTopReflectorCenterZ}, topLogical,
+        nullptr,
+        {0.0, 0.0,
+         0.5 * config::kCrystalLength + gap +
+             0.5 * config::kReflectorThickness},
+        topLogical,
         "TopReflector", worldLogical, false, 0, true);
 
     ConfigureStageASurface();
+  } else if (fGeometryMode == "experiment") {
+    const auto crystalHalfX = 0.5 * config::kExperimentCrystalWidth;
+    const auto crystalHalfY = 0.5 * config::kExperimentCrystalDepth;
+    const auto crystalHalfZ = 0.5 * config::kExperimentCrystalLength;
+    const auto gapOuterHalfX = crystalHalfX + fExperimentSideAirGap;
+    const auto gapOuterHalfY = crystalHalfY + fExperimentSideAirGap;
+    const auto housingOuterHalfX =
+        gapOuterHalfX + fExperimentBlackHousingThickness;
+    const auto housingOuterHalfY =
+        gapOuterHalfY + fExperimentBlackHousingThickness;
+
+    auto* gapOuter =
+        new G4Box("ExperimentSideAirGapOuter", gapOuterHalfX,
+                  gapOuterHalfY, crystalHalfZ);
+    auto* gapInner =
+        new G4Box("ExperimentSideAirGapInner", crystalHalfX,
+                  crystalHalfY, crystalHalfZ);
+    auto* gapSolid = new G4SubtractionSolid(
+        "ExperimentSideAirGapSolid", gapOuter, gapInner);
+    auto* gapLogical = new G4LogicalVolume(
+        gapSolid, air, "ExperimentSideAirGapLogical");
+    auto* gapVis =
+        new G4VisAttributes(G4Colour(0.65, 0.90, 1.00, 0.18));
+    gapVis->SetForceSolid(true);
+    gapLogical->SetVisAttributes(gapVis);
+    fExperimentSideAirGapPhysical = new G4PVPlacement(
+        nullptr, {}, gapLogical, "ExperimentSideAirGap", worldLogical,
+        false, 0, true);
+
+    auto* housingOuter =
+        new G4Box("ExperimentBlackHousingOuter", housingOuterHalfX,
+                  housingOuterHalfY, crystalHalfZ);
+    auto* housingInner =
+        new G4Box("ExperimentBlackHousingInner", gapOuterHalfX,
+                  gapOuterHalfY, crystalHalfZ);
+    auto* housingSolid = new G4SubtractionSolid(
+        "ExperimentBlackHousingSolid", housingOuter, housingInner);
+    auto* housingLogical = new G4LogicalVolume(
+        housingSolid, experimentBlack, "ExperimentBlackHousingLogical");
+    auto* housingVis =
+        new G4VisAttributes(G4Colour(0.05, 0.05, 0.05, 0.75));
+    housingVis->SetForceSolid(true);
+    housingLogical->SetVisAttributes(housingVis);
+    fExperimentBlackHousingPhysical = new G4PVPlacement(
+        nullptr, {}, housingLogical, "ExperimentBlackHousing", worldLogical,
+        false, 0, true);
+
+    auto* esrSolid =
+        new G4Box("ExperimentESRSolid", crystalHalfX, crystalHalfY,
+                  0.5 * fExperimentEsrThickness);
+    auto* esrLogical = new G4LogicalVolume(
+        esrSolid, experimentEsr, "ExperimentESRLogical");
+    auto* esrVis =
+        new G4VisAttributes(G4Colour(0.85, 0.90, 1.00, 0.70));
+    esrVis->SetForceSolid(true);
+    esrLogical->SetVisAttributes(esrVis);
+    fExperimentEsrPhysical = new G4PVPlacement(
+        nullptr,
+        {0.0, 0.0, crystalHalfZ + 0.5 * fExperimentEsrThickness},
+        esrLogical, "ExperimentESR", worldLogical, false, 0, true);
+
+    auto* pmtSolid =
+        new G4Box("ExperimentPMTWindowSolid", crystalHalfX, crystalHalfY,
+                  0.5 * fExperimentPmtWindowThickness);
+    auto* pmtLogical = new G4LogicalVolume(
+        pmtSolid, experimentPmtWindow, "ExperimentPMTWindowLogical");
+    auto* pmtVis =
+        new G4VisAttributes(G4Colour(0.25, 0.75, 0.85, 0.55));
+    pmtVis->SetForceSolid(true);
+    pmtLogical->SetVisAttributes(pmtVis);
+    fExperimentPmtWindowPhysical = new G4PVPlacement(
+        nullptr,
+        {0.0, 0.0,
+         -crystalHalfZ - 0.5 * fExperimentPmtWindowThickness},
+        pmtLogical, "PMTWindow", worldLogical, false, 0, true);
+
+    ConfigureExperimentSurfaces();
   } else if (HasStageALutSurface()) {
     G4Exception("DetectorConstruction::Construct", "GAGG-A4-002",
                 FatalException,
@@ -285,7 +589,13 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
   G4cout << "[geometry] mode=" << fGeometryMode
          << " reflector_density=" << reflector->GetDensity() / (g / cm3)
          << " g/cm3 gagg_bulk_absorption="
-         << (fGaggBulkAbsorption ? "on" : "off") << G4endl;
+         << (fGaggBulkAbsorption ? "on" : "off")
+         << " gagg_absorption_length_scale=" << fGaggAbsorptionLengthScale
+         << " stage_a_interface=" << fStageAInterfaceMode
+         << " stage_a_air_gap_mm=" << fStageAAirGap / mm
+         << " stage_b_side_air_gap_mm=" << fExperimentSideAirGap / mm
+         << " output_scoring=" << fOutputScoringMode
+         << G4endl;
   return fWorldPhysical;
 }
 
@@ -315,17 +625,93 @@ void DetectorConstruction::ConfigureStageASurface() {
   } else {
     fStageAOpticalSurface->SetFinish(finish);
   }
+  const auto reflectivity = GetStageAReflectivity();
+  const std::vector<G4double> surfaceReflectivity = {
+      reflectivity, reflectivity};
+  const std::vector<G4double> surfaceTransmittance = {
+      1.0 - reflectivity, 1.0 - reflectivity};
+  const std::vector<G4double> energies = {
+      config::kOpticalEnergyMin, config::kOpticalEnergyMax};
+  fStageASurfaceProperties =
+      std::make_unique<G4MaterialPropertiesTable>();
+  fStageASurfaceProperties->AddProperty("REFLECTIVITY", energies,
+                                        surfaceReflectivity);
+  fStageASurfaceProperties->AddProperty("TRANSMITTANCE", energies,
+                                         surfaceTransmittance);
+  fStageAOpticalSurface->SetMaterialPropertiesTable(
+      fStageASurfaceProperties.get());
 
+  auto* sideTarget = fStageAInterfaceMode == "airgap"
+                         ? fSideAirGapPhysical
+                         : fSideReflectorPhysical;
+  auto* topTarget = fStageAInterfaceMode == "airgap"
+                        ? fTopAirGapPhysical
+                        : fTopReflectorPhysical;
   new G4LogicalBorderSurface("GAGGToSideStageALUT", fCrystalPhysical,
-                             fSideReflectorPhysical,
+                             sideTarget,
                              fStageAOpticalSurface.get());
   new G4LogicalBorderSurface("GAGGToTopStageALUT", fCrystalPhysical,
-                             fTopReflectorPhysical,
+                             topTarget,
                              fStageAOpticalSurface.get());
 
   G4cout << "[a4] surface=" << fStageASurface
          << " model=LUT type=dielectric_LUT borders=2 data_path=" << dataPath
-         << " data_file=" << dataFile << " data_status=PASS" << G4endl;
+         << " data_file=" << dataFile
+         << " reflectivity=" << reflectivity
+         << " transmittance=" << 1.0 - reflectivity
+         << " interface=" << fStageAInterfaceMode
+         << " air_gap_mm=" << fStageAAirGap / mm
+         << " data_status=PASS" << G4endl;
+}
+
+void DetectorConstruction::ConfigureExperimentSurfaces() {
+  const std::vector<G4double> energies = {
+      config::kOpticalEnergyMin, config::kOpticalEnergyMax};
+  const std::vector<G4double> zeroEfficiency = {0.0, 0.0};
+
+  if (fExperimentEsrSurface == nullptr) {
+    fExperimentEsrSurface = std::make_unique<G4OpticalSurface>(
+        "ExperimentESRSurface", unified, polished, dielectric_metal);
+  }
+  const std::vector<G4double> esrReflectivity = {
+      config::kExperimentEsrReflectivity,
+      config::kExperimentEsrReflectivity};
+  fExperimentEsrProperties =
+      std::make_unique<G4MaterialPropertiesTable>();
+  fExperimentEsrProperties->AddProperty(
+      "REFLECTIVITY", energies, esrReflectivity);
+  fExperimentEsrProperties->AddProperty(
+      "EFFICIENCY", energies, zeroEfficiency);
+  fExperimentEsrSurface->SetMaterialPropertiesTable(
+      fExperimentEsrProperties.get());
+
+  if (fExperimentBlackSurface == nullptr) {
+    fExperimentBlackSurface = std::make_unique<G4OpticalSurface>(
+        "ExperimentBlackSurface", unified, polished, dielectric_metal);
+  }
+  const std::vector<G4double> blackReflectivity = {
+      config::kExperimentBlackReflectivity,
+      config::kExperimentBlackReflectivity};
+  fExperimentBlackProperties =
+      std::make_unique<G4MaterialPropertiesTable>();
+  fExperimentBlackProperties->AddProperty(
+      "REFLECTIVITY", energies, blackReflectivity);
+  fExperimentBlackProperties->AddProperty(
+      "EFFICIENCY", energies, zeroEfficiency);
+  fExperimentBlackSurface->SetMaterialPropertiesTable(
+      fExperimentBlackProperties.get());
+
+  new G4LogicalBorderSurface(
+      "GAGGToExperimentESR", fCrystalPhysical, fExperimentEsrPhysical,
+      fExperimentEsrSurface.get());
+  new G4LogicalBorderSurface(
+      "AirGapToExperimentBlack", fExperimentSideAirGapPhysical,
+      fExperimentBlackHousingPhysical, fExperimentBlackSurface.get());
+
+  G4cout << "[b0] surfaces model=UNIFIED esr_reflectivity="
+         << config::kExperimentEsrReflectivity
+         << " black_reflectivity=" << config::kExperimentBlackReflectivity
+         << " borders=2 status=PASS" << G4endl;
 }
 
 void DetectorConstruction::ValidateStageASurface() {
@@ -335,12 +721,16 @@ void DetectorConstruction::ValidateStageASurface() {
                         std::filesystem::is_regular_file(
                             std::filesystem::path(dataPath.c_str()) /
                             dataFile.c_str());
+  auto* sideTarget = fStageAInterfaceMode == "airgap"
+                         ? fSideAirGapPhysical
+                         : fSideReflectorPhysical;
+  auto* topTarget = fStageAInterfaceMode == "airgap"
+                        ? fTopAirGapPhysical
+                        : fTopReflectorPhysical;
   const auto* sideBorder =
-      G4LogicalBorderSurface::GetSurface(fCrystalPhysical,
-                                         fSideReflectorPhysical);
+      G4LogicalBorderSurface::GetSurface(fCrystalPhysical, sideTarget);
   const auto* topBorder =
-      G4LogicalBorderSurface::GetSurface(fCrystalPhysical,
-                                         fTopReflectorPhysical);
+      G4LogicalBorderSurface::GetSurface(fCrystalPhysical, topTarget);
   const auto* sideSurface =
       sideBorder == nullptr
           ? nullptr
@@ -359,10 +749,35 @@ void DetectorConstruction::ValidateStageASurface() {
                            sideSurface->GetModel() == LUT &&
                            sideSurface->GetType() == dielectric_LUT &&
                            sideSurface->GetFinish() == expectedFinish;
+  const auto* surfaceProperties =
+      sideSurface == nullptr ? nullptr
+                             : sideSurface->GetMaterialPropertiesTable();
+  const auto* reflectivityProperty =
+      surfaceProperties == nullptr
+          ? nullptr
+          : surfaceProperties->GetProperty("REFLECTIVITY");
+  const auto* transmittanceProperty =
+      surfaceProperties == nullptr
+          ? nullptr
+          : surfaceProperties->GetProperty("TRANSMITTANCE");
+  const auto expectedReflectivity = GetStageAReflectivity();
+  const auto opticalValuesPass =
+      reflectivityProperty != nullptr && transmittanceProperty != nullptr &&
+      RelativeClose(reflectivityProperty->Value(
+                        config::EmissionPhotonEnergy()),
+                    expectedReflectivity) &&
+      RelativeClose(transmittanceProperty->Value(
+                        config::EmissionPhotonEnergy()),
+                    1.0 - expectedReflectivity);
   const auto borderPass =
       G4LogicalBorderSurface::GetNumberOfBorderSurfaces() == 2;
+  const auto interfacePass =
+      (fStageAInterfaceMode == "direct" &&
+       fSideAirGapPhysical == nullptr && fTopAirGapPhysical == nullptr) ||
+      (fStageAInterfaceMode == "airgap" &&
+       fSideAirGapPhysical != nullptr && fTopAirGapPhysical != nullptr);
   const auto allPass = fGeometryMode == "paper" && dataPass && surfacePass &&
-                       borderPass;
+                       opticalValuesPass && borderPass && interfacePass;
 
   G4cout << "[a4] surface_validation finish=" << fStageASurface
          << " model="
@@ -377,6 +792,11 @@ void DetectorConstruction::ValidateStageASurface() {
          << " borders="
          << G4LogicalBorderSurface::GetNumberOfBorderSurfaces()
          << " data_file=" << dataFile
+         << " reflectivity=" << expectedReflectivity
+         << " transmittance=" << 1.0 - expectedReflectivity
+         << " interface=" << fStageAInterfaceMode
+         << " air_gap_mm=" << fStageAAirGap / mm
+         << " interface_status=" << (interfacePass ? "PASS" : "FAIL")
          << " data_status=" << (dataPass ? "PASS" : "FAIL")
          << " status=" << (allPass ? "PASS" : "FAIL") << G4endl;
 }
@@ -446,6 +866,10 @@ void DetectorConstruction::ValidateScintillation() {
 }
 
 void DetectorConstruction::ValidateGeometry() {
+  if (fGeometryMode == "experiment") {
+    ValidateExperimentGeometry();
+    return;
+  }
   if (fGeometryMode != "paper" || fWorldPhysical == nullptr ||
       fCrystalPhysical == nullptr || fSideReflectorPhysical == nullptr ||
       fTopReflectorPhysical == nullptr) {
@@ -454,17 +878,27 @@ void DetectorConstruction::ValidateGeometry() {
     return;
   }
 
+  const auto explicitAirGap = fStageAInterfaceMode == "airgap";
+  const auto gap = explicitAirGap ? fStageAAirGap : 0.0;
+  const auto reflectorInnerRadius = config::kCrystalRadius + gap;
+  const auto reflectorOuterRadius =
+      reflectorInnerRadius + config::kReflectorThickness;
   const auto crystalExpected =
       pi * config::kCrystalRadius * config::kCrystalRadius *
       config::kCrystalLength;
   const auto sideExpected =
-      pi * (config::kReflectorOuterRadius *
-                config::kReflectorOuterRadius -
-            config::kCrystalRadius * config::kCrystalRadius) *
+      pi * (reflectorOuterRadius * reflectorOuterRadius -
+            reflectorInnerRadius * reflectorInnerRadius) *
       config::kCrystalLength;
   const auto topExpected =
-      pi * config::kReflectorOuterRadius *
-      config::kReflectorOuterRadius * config::kReflectorThickness;
+      pi * reflectorOuterRadius * reflectorOuterRadius *
+      config::kReflectorThickness;
+  const auto sideAirExpected =
+      pi * (reflectorInnerRadius * reflectorInnerRadius -
+            config::kCrystalRadius * config::kCrystalRadius) *
+      config::kCrystalLength;
+  const auto topAirExpected =
+      pi * reflectorOuterRadius * reflectorOuterRadius * gap;
 
   const auto crystalActual =
       fCrystalPhysical->GetLogicalVolume()->GetSolid()->GetCubicVolume();
@@ -474,15 +908,35 @@ void DetectorConstruction::ValidateGeometry() {
   const auto topActual = fTopReflectorPhysical->GetLogicalVolume()
                              ->GetSolid()
                              ->GetCubicVolume();
+  const auto sideAirActual =
+      fSideAirGapPhysical == nullptr
+          ? 0.0
+          : fSideAirGapPhysical->GetLogicalVolume()
+                ->GetSolid()
+                ->GetCubicVolume();
+  const auto topAirActual =
+      fTopAirGapPhysical == nullptr
+          ? 0.0
+          : fTopAirGapPhysical->GetLogicalVolume()
+                ->GetSolid()
+                ->GetCubicVolume();
   const auto volumesPass = RelativeClose(crystalActual, crystalExpected) &&
                            RelativeClose(sideActual, sideExpected) &&
-                           RelativeClose(topActual, topExpected);
+                           RelativeClose(topActual, topExpected) &&
+                           RelativeClose(sideAirActual, sideAirExpected) &&
+                           RelativeClose(topAirActual, topAirExpected);
 
-  const auto overlaps = fCrystalPhysical->CheckOverlaps(10000, 0.0, false) ||
-                        fSideReflectorPhysical->CheckOverlaps(10000, 0.0,
-                                                              false) ||
-                        fTopReflectorPhysical->CheckOverlaps(10000, 0.0,
-                                                             false);
+  auto overlaps = fCrystalPhysical->CheckOverlaps(10000, 0.0, false) ||
+                  fSideReflectorPhysical->CheckOverlaps(10000, 0.0, false) ||
+                  fTopReflectorPhysical->CheckOverlaps(10000, 0.0, false);
+  if (fSideAirGapPhysical != nullptr) {
+    overlaps = overlaps ||
+               fSideAirGapPhysical->CheckOverlaps(10000, 0.0, false);
+  }
+  if (fTopAirGapPhysical != nullptr) {
+    overlaps =
+        overlaps || fTopAirGapPhysical->CheckOverlaps(10000, 0.0, false);
+  }
 
   auto* navigator = G4TransportationManager::GetTransportationManager()
                         ->GetNavigatorForTracking();
@@ -497,12 +951,19 @@ void DetectorConstruction::ValidateGeometry() {
       {config::kCrystalRadius + 0.5 * config::kReflectorThickness, 0.0, 0.0});
   const auto topName =
       locateName({0.0, 0.0, config::kTopReflectorCenterZ});
+  const auto sideAirName = locateName(
+      {config::kCrystalRadius + 0.5 * gap, 0.0, 0.0});
+  const auto topAirName = locateName(
+      {0.0, 0.0, 0.5 * config::kCrystalLength + 0.5 * gap});
   const auto outputName = locateName(
       {0.0, 0.0,
        -0.5 * config::kCrystalLength - 0.25 * config::kReflectorThickness});
   const auto probesPass = centerName == "GAGG" &&
                           sideName == "SideReflector" &&
                           topName == "TopReflector" && outputName == "World";
+  const auto airProbesPass =
+      !explicitAirGap ||
+      (sideAirName == "SideAirGap" && topAirName == "TopAirGap");
   const auto* reflectorMaterial =
       fSideReflectorPhysical->GetLogicalVolume()->GetMaterial();
   const auto* reflectorProperties =
@@ -523,18 +984,25 @@ void DetectorConstruction::ValidateGeometry() {
       RelativeClose(
           reflectorAbsorption->Value(config::EmissionPhotonEnergy()),
           config::kReflectorAbsorptionLength);
-  const auto allPass = volumesPass && !overlaps && probesPass && densityPass &&
-                       opticalPropertiesPass;
+  const auto allPass = volumesPass && !overlaps && probesPass &&
+                       airProbesPass && densityPass && opticalPropertiesPass;
 
   G4cout << "[a2] crystal_volume_mm3=" << crystalActual / mm3
          << " side_volume_mm3=" << sideActual / mm3
          << " top_volume_mm3=" << topActual / mm3
+         << " side_air_volume_mm3=" << sideAirActual / mm3
+         << " top_air_volume_mm3=" << topAirActual / mm3
          << " analytic_volumes=" << (volumesPass ? "PASS" : "FAIL")
          << G4endl;
   G4cout << "[a2] overlaps=" << (overlaps ? 1 : 0) << G4endl;
   G4cout << "[a2] center_probe=" << centerName
          << " side_probe=" << sideName << " top_probe=" << topName
-         << " output_probe=" << outputName << G4endl;
+         << " side_air_probe=" << sideAirName
+         << " top_air_probe=" << topAirName
+         << " output_probe=" << outputName
+         << " interface=" << fStageAInterfaceMode
+         << " probe_status=" << (airProbesPass ? "PASS" : "FAIL")
+         << G4endl;
   G4cout << "[a2] reflector_density_g_cm-3="
          << reflectorMaterial->GetDensity() / (g / cm3)
          << " check=" << (densityPass ? "PASS" : "FAIL") << G4endl;
@@ -551,6 +1019,156 @@ void DetectorConstruction::ValidateGeometry() {
          << " bulk_properties="
          << (opticalPropertiesPass ? "PASS" : "FAIL") << G4endl;
   G4cout << "[a2] geometry status=" << (allPass ? "PASS" : "FAIL")
+         << G4endl;
+}
+
+void DetectorConstruction::ValidateExperimentGeometry() {
+  if (fWorldPhysical == nullptr || fCrystalPhysical == nullptr ||
+      fExperimentSideAirGapPhysical == nullptr ||
+      fExperimentBlackHousingPhysical == nullptr ||
+      fExperimentEsrPhysical == nullptr ||
+      fExperimentPmtWindowPhysical == nullptr) {
+    G4cout << "[b0] geometry status=FAIL reason=experiment_geometry_not_built"
+           << G4endl;
+    return;
+  }
+
+  const auto width = config::kExperimentCrystalWidth;
+  const auto depth = config::kExperimentCrystalDepth;
+  const auto length = config::kExperimentCrystalLength;
+  const auto gap = fExperimentSideAirGap;
+  const auto black = fExperimentBlackHousingThickness;
+  const auto gapOuterWidth = width + 2.0 * gap;
+  const auto gapOuterDepth = depth + 2.0 * gap;
+  const auto housingOuterWidth = gapOuterWidth + 2.0 * black;
+  const auto housingOuterDepth = gapOuterDepth + 2.0 * black;
+
+  const auto crystalExpected = width * depth * length;
+  const auto gapExpected =
+      (gapOuterWidth * gapOuterDepth - width * depth) * length;
+  const auto housingExpected =
+      (housingOuterWidth * housingOuterDepth -
+       gapOuterWidth * gapOuterDepth) *
+      length;
+  const auto esrExpected =
+      width * depth * fExperimentEsrThickness;
+  const auto pmtExpected =
+      width * depth * fExperimentPmtWindowThickness;
+
+  const auto volume = [](const G4VPhysicalVolume* physical) {
+    return physical->GetLogicalVolume()->GetSolid()->GetCubicVolume();
+  };
+  const auto crystalActual = volume(fCrystalPhysical);
+  const auto gapActual = volume(fExperimentSideAirGapPhysical);
+  const auto housingActual = volume(fExperimentBlackHousingPhysical);
+  const auto esrActual = volume(fExperimentEsrPhysical);
+  const auto pmtActual = volume(fExperimentPmtWindowPhysical);
+  const auto volumesPass =
+      RelativeClose(crystalActual, crystalExpected) &&
+      RelativeClose(gapActual, gapExpected, 2.0e-3) &&
+      RelativeClose(housingActual, housingExpected, 2.0e-3) &&
+      RelativeClose(esrActual, esrExpected) &&
+      RelativeClose(pmtActual, pmtExpected);
+
+  const auto overlaps =
+      fCrystalPhysical->CheckOverlaps(10000, 0.0, false) ||
+      fExperimentSideAirGapPhysical->CheckOverlaps(10000, 0.0, false) ||
+      fExperimentBlackHousingPhysical->CheckOverlaps(10000, 0.0, false) ||
+      fExperimentEsrPhysical->CheckOverlaps(10000, 0.0, false) ||
+      fExperimentPmtWindowPhysical->CheckOverlaps(10000, 0.0, false);
+
+  auto* navigator = G4TransportationManager::GetTransportationManager()
+                        ->GetNavigatorForTracking();
+  const auto locateName = [navigator](const G4ThreeVector& point) {
+    const auto* physical =
+        navigator->LocateGlobalPointAndSetup(point, nullptr, false);
+    return physical == nullptr ? G4String("none") : physical->GetName();
+  };
+  const auto crystalHalfX = 0.5 * width;
+  const auto crystalHalfZ = 0.5 * length;
+  const auto centerName = locateName({0.0, 0.0, 0.0});
+  const auto gapName =
+      locateName({crystalHalfX + 0.5 * gap, 0.0, 0.0});
+  const auto blackName = locateName(
+      {crystalHalfX + gap + 0.5 * black, 0.0, 0.0});
+  const auto esrName = locateName(
+      {0.0, 0.0, crystalHalfZ + 0.5 * fExperimentEsrThickness});
+  const auto pmtName = locateName(
+      {0.0, 0.0,
+       -crystalHalfZ - 0.5 * fExperimentPmtWindowThickness});
+  const auto probesPass =
+      centerName == "GAGG" && gapName == "ExperimentSideAirGap" &&
+      blackName == "ExperimentBlackHousing" &&
+      esrName == "ExperimentESR" && pmtName == "PMTWindow";
+
+  const auto* esrBorder = G4LogicalBorderSurface::GetSurface(
+      fCrystalPhysical, fExperimentEsrPhysical);
+  const auto* blackBorder = G4LogicalBorderSurface::GetSurface(
+      fExperimentSideAirGapPhysical,
+      fExperimentBlackHousingPhysical);
+  const auto* esrSurface =
+      esrBorder == nullptr
+          ? nullptr
+          : dynamic_cast<const G4OpticalSurface*>(
+                esrBorder->GetSurfaceProperty());
+  const auto* blackSurface =
+      blackBorder == nullptr
+          ? nullptr
+          : dynamic_cast<const G4OpticalSurface*>(
+                blackBorder->GetSurfaceProperty());
+  const auto surfacePass =
+      esrSurface != nullptr && blackSurface != nullptr &&
+      esrSurface->GetModel() == unified &&
+      blackSurface->GetModel() == unified &&
+      esrSurface->GetType() == dielectric_metal &&
+      blackSurface->GetType() == dielectric_metal &&
+      G4LogicalBorderSurface::GetNumberOfBorderSurfaces() == 2;
+
+  const auto* pmtProperties =
+      fExperimentPmtWindowPhysical->GetLogicalVolume()
+          ->GetMaterial()
+          ->GetMaterialPropertiesTable();
+  const auto* pmtIndex =
+      pmtProperties == nullptr
+          ? nullptr
+          : pmtProperties->GetProperty("RINDEX");
+  const auto pmtPass =
+      pmtIndex != nullptr &&
+      RelativeClose(
+          pmtIndex->Value(config::EmissionPhotonEnergy()),
+          config::kExperimentPmtWindowRefractiveIndex);
+  const auto allPass = volumesPass && !overlaps && probesPass &&
+                       surfacePass && pmtPass;
+
+  G4cout << "[b0] crystal_size_mm=" << width / mm << "x"
+         << depth / mm << "x" << length / mm
+         << " crystal_volume_mm3=" << crystalActual / mm3
+         << " side_air_volume_mm3=" << gapActual / mm3
+         << " black_volume_mm3=" << housingActual / mm3
+         << " esr_volume_mm3=" << esrActual / mm3
+         << " pmt_window_volume_mm3=" << pmtActual / mm3
+         << " analytic_volumes=" << (volumesPass ? "PASS" : "FAIL")
+         << G4endl;
+  G4cout << "[b0] side_air_gap_mm=" << gap / mm
+         << " black_thickness_mm=" << black / mm
+         << " esr_thickness_mm=" << fExperimentEsrThickness / mm
+         << " pmt_window_thickness_mm="
+         << fExperimentPmtWindowThickness / mm
+         << " provenance=unmeasured_B0_placeholders" << G4endl;
+  G4cout << "[b0] center_probe=" << centerName
+         << " side_air_probe=" << gapName
+         << " black_probe=" << blackName
+         << " top_esr_probe=" << esrName
+         << " bottom_pmt_probe=" << pmtName
+         << " probes=" << (probesPass ? "PASS" : "FAIL") << G4endl;
+  G4cout << "[b0] overlaps=" << (overlaps ? 1 : 0)
+         << " unified_surfaces=" << (surfacePass ? "PASS" : "FAIL")
+         << " pmt_rindex=" << (pmtIndex == nullptr
+                                   ? -1.0
+                                   : pmtIndex->Value(
+                                         config::EmissionPhotonEnergy()))
+         << G4endl;
+  G4cout << "[b0] geometry status=" << (allPass ? "PASS" : "FAIL")
          << G4endl;
 }
 
