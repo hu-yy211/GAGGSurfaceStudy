@@ -609,6 +609,46 @@ The 100-event locked sample contains 30 zero-deposit, 42 partial-energy and
 closes terminal photon accounting. The energy spectrum and light-yield plot
 were visually checked, and full A0--B3 regression passed 32/32 tests.
 
+## B4 six-state 511 keV comparison
+
+B4 reuses the exact B3 source, gamma histories and full-energy gate in six
+separate Geant4 processes. Only `/gagg/stageB/surfaceState` changes. Every
+rough face reads the one shared `sigma_alpha=0.20 rad`; the value remains the
+predeclared B1/B2 reference and was not selected from the experimental data.
+`config/b4_comparison.json` stores the preliminary measured ratios separately
+from simulation inputs.
+
+~~~sh
+python analysis/run_b4.py \
+  --executable build/gagg_surface_study \
+  --config config/b4_comparison.json --output-dir results/b4
+python analysis/validate_b4.py \
+  --input-dir results/b4 \
+  --b3-reference results/b3/gamma_511kev_all_polished.csv \
+  --config config/b4_comparison.json
+MPLCONFIGDIR=results/.mplconfig python analysis/plot_b4.py \
+  --input-dir results/b4 --output-dir results/b4/figures \
+  --config config/b4_comparison.json
+~~~
+
+The 28 paired full-energy events give:
+
+| State | N_PMT/N_generated | Simulation, normalized | Paired 95% CI | Experiment |
+|---|---:|---:|---:|---:|
+| all polished | 0.371400 | 1.000 | 1.000--1.000 | 1.00 |
+| bottom rough | 0.445774 | 1.200 | 1.196--1.204 | 1.60 |
+| top rough | 0.444558 | 1.197 | 1.191--1.205 | 1.54 |
+| side rough | 0.254264 | 0.685 | 0.651--0.720 | 0.39 |
+| bottom polished, others rough | 0.234767 | 0.632 | 0.596--0.671 | 0.39 |
+| top polished, others rough | 0.242808 | 0.654 | 0.621--0.688 | 0.32 |
+
+The current model therefore reproduces the broad separation between the two
+single-end rough states (enhanced) and the three side/multiple-rough states
+(suppressed). It underpredicts both enhancements, underpredicts the amount of
+suppression, and reverses the last two states. The comparison gate passes
+because pairing, accounting, uncertainty calculation and parameter
+provenance pass; agreement with experiment is deliberately not a pass test.
+
 ## Directory design
 
 ~~~text
@@ -668,6 +708,8 @@ centralized in "include/GAGG/SimulationConfig.hh".
 | B3 gamma energy / source | 511 keV / z=+14.7 mm pencil beam | validation control | Stage B gamma-response gate |
 | B3 full-energy gate | 510.5--511.5 keV | analysis definition | locked before B4 comparison |
 | B3/B4 event seed base | 830001 | validation control | supports event-paired surface comparisons |
+| B4 measured ratios | 1.00, 1.60, 1.54, 0.39, 0.39, 0.32 | measured/preliminary | comparison only; never supplied to Geant4 |
+| B4 bootstrap | 5000 paired resamples, seed 840001 | analysis control | 95% confidence intervals |
 | ESR specular-lobe fraction | 1.0 | UNIFIED model choice | fixed, not fitted; makes ground ESR reflection sigma-driven |
 
 The bulk composition is stoichiometric Gd3Al2Ga3O12. Ce concentration was not

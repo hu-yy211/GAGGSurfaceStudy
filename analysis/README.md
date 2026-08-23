@@ -55,3 +55,12 @@ B3 centralizes its 511 keV pencil-beam inputs and full-energy gate in
 accounting and the literature light yield, and `plot_b3.py` writes the energy
 spectrum, scintillation-yield line and summary CSV. B3 uses all-polished
 surfaces and does not compare the six experimental states.
+
+B4 uses `config/b4_comparison.json`, `run_b4.py`, `validate_b4.py` and
+`plot_b4.py`. The runner isolates all six surface states in separate Geant4
+processes. The validator requires exact event-level source/Edep/generated
+pairing, an exact all-polished B3 repeat, shared roughness and full accounting.
+It reports 5000-resample paired-bootstrap intervals and simulation-minus-
+measurement residuals. Experimental agreement is not a pass gate. The
+plotter writes a long-form comparison table, grouped bar chart and residual
+chart.

@@ -410,4 +410,46 @@ if(BUILD_TESTING)
     ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
     PASS_REGULAR_EXPRESSION "\\[b3-plot\\].*status=PASS"
   )
+
+  add_test(
+    NAME b4_comparison_export
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/run_b4.py
+            --executable $<TARGET_FILE:gagg_surface_study>
+            --config ${PROJECT_SOURCE_DIR}/config/b4_comparison.json
+            --output-dir ${PROJECT_BINARY_DIR}/results/b4
+  )
+  set_tests_properties(b4_comparison_export PROPERTIES
+    DEPENDS b3_gamma_export
+    PASS_REGULAR_EXPRESSION "\\[b4-runner\\].*states=6.*shared_sigma=true.*status=PASS"
+    FAIL_REGULAR_EXPRESSION "status=FAIL|G4Exception|Fatal Exception"
+    TIMEOUT 1800
+  )
+
+  add_test(
+    NAME b4_comparison_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_b4.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/b4
+            --b3-reference ${PROJECT_BINARY_DIR}/results/b3/gamma_511kev_all_polished.csv
+            --config ${PROJECT_SOURCE_DIR}/config/b4_comparison.json
+  )
+  set_tests_properties(b4_comparison_validate PROPERTIES
+    DEPENDS b4_comparison_export
+    PASS_REGULAR_EXPRESSION "\\[b4-check\\] six_state_comparison status=PASS"
+  )
+
+  add_test(
+    NAME b4_plot
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/plot_b4.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/b4
+            --output-dir ${PROJECT_BINARY_DIR}/b4_plots
+            --config ${PROJECT_SOURCE_DIR}/config/b4_comparison.json
+  )
+  set_tests_properties(b4_plot PROPERTIES
+    DEPENDS b4_comparison_validate
+    ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
+    PASS_REGULAR_EXPRESSION "\\[b4-plot\\].*status=PASS"
+  )
 endif()

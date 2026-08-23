@@ -472,3 +472,29 @@ Status: B3 validation gate passed. B4 may reuse the exact gamma/event seeds in
 isolated processes for all six surface states and must require identical
 event-level source position, Edep, N_generated and full-energy IDs before
 comparing relative light output.
+
+## 2026-08-24 - B4 six-state 511 keV comparison
+
+- Locked the comparison in `config/b4_comparison.json`. The six B1 states use
+  the B3 100-event 511 keV pencil beam, event seed base 830001, 510.5--511.5
+  keV full-energy gate and one shared `sigma_alpha=0.20 rad`. The preliminary
+  measured ratios are stored as comparison data and never passed to Geant4.
+- Ran each state in an independent process to retain the B2 process-isolation
+  rule. All six states had exactly matching source position, Edep,
+  N_generated and full-energy event IDs. The all-polished result was an exact
+  event-level repeat of B3; all optical accounting closed.
+- The 28 paired full-energy events produced normalized predictions
+  1.0000, 1.2003, 1.1970, 0.6846, 0.6321 and 0.6538. Paired 95% bootstrap
+  intervals were respectively 1.0000, 1.1963--1.2043, 1.1909--1.2046,
+  0.6508--0.7197, 0.5965--0.6711 and 0.6212--0.6880.
+- Compared with preliminary measured values 1.00, 1.60, 1.54, 0.39, 0.39 and
+  0.32, the model reproduces the broad enhanced/suppressed groups but the
+  response magnitude is too weak. It also predicts bottom-polished/others-
+  rough below top-polished/others-rough, the reverse of the measured order.
+- The B4 subset passed 3/3 tests. Experimental agreement was explicitly not a
+  pass condition, and no face-specific parameter or roughness fit was added.
+
+Status: B4 comparison gate passed; this is not a claim of quantitative
+agreement. B5 must test whether the conclusions survive statistical/event-
+selection and shared-roughness sensitivity, then separate established model
+limitations from hypotheses needing measured setup parameters.

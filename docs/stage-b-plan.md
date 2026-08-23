@@ -87,12 +87,21 @@ full-energy gate was 510.5--511.5 keV, the measured light yield was
 53999.86 photons/MeV and all optical accounting closed. Full regression
 passed 32/32 tests.
 
-## B4 - Experimental relative-light comparison
+## B4 - Experimental relative-light comparison - PASSED AS COMPARISON GATE
 
 For one documented geometry/parameter set, report
 `N_PMT/N_generated` and normalize all six states to all polished. Compare
 with experiment while distinguishing predictions, measured inputs and free
 parameters. Do not tune faces independently.
+
+Status: passed on 2026-08-24 as a comparison/reporting gate, not an agreement
+claim. Six isolated 100-event runs reused the exact B3 gamma histories and one
+shared `sigma_alpha=0.20 rad`. The normalized predictions were 1.000, 1.200,
+1.197, 0.685, 0.632 and 0.654, versus preliminary measured values 1.000,
+1.600, 1.540, 0.390, 0.390 and 0.320. The broad enhancement/suppression
+groups are reproduced, but the magnitude is too weak and the final two states
+are reversed. Experimental agreement was explicitly not a validation pass
+condition; no parameter was tuned.
 
 ## B5 - Robustness and interpretation gate
 
