@@ -330,4 +330,44 @@ if(BUILD_TESTING)
     ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
     PASS_REGULAR_EXPRESSION "\\[b1-plot\\].*status=PASS"
   )
+
+  add_test(
+    NAME b2_scan_export
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/run_b2_scan.py
+            --executable $<TARGET_FILE:gagg_surface_study>
+            --config ${PROJECT_SOURCE_DIR}/config/b2_scan.json
+            --output-dir ${PROJECT_BINARY_DIR}/results/b2
+  )
+  set_tests_properties(b2_scan_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[b2-runner\\].*points=90.*status=PASS"
+    FAIL_REGULAR_EXPRESSION "status=FAIL|G4Exception|Fatal Exception"
+    TIMEOUT 600
+  )
+
+  add_test(
+    NAME b2_scan_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_b2.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/b2
+            --config ${PROJECT_SOURCE_DIR}/config/b2_scan.json
+  )
+  set_tests_properties(b2_scan_validate PROPERTIES
+    DEPENDS b2_scan_export
+    PASS_REGULAR_EXPRESSION "\\[b2-check\\].*points=90.*status=PASS"
+  )
+
+  add_test(
+    NAME b2_plot
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/plot_b2.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/b2
+            --output-dir ${PROJECT_BINARY_DIR}/b2_plots
+            --config ${PROJECT_SOURCE_DIR}/config/b2_scan.json
+  )
+  set_tests_properties(b2_plot PROPERTIES
+    DEPENDS b2_scan_validate
+    ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
+    PASS_REGULAR_EXPRESSION "\\[b2-plot\\].*status=PASS"
+  )
 endif()

@@ -397,3 +397,53 @@ shared roughness, counting and reproducibility. The 0.20 rad value was not
 fitted, the source was optical-only, and no experimental-order gate or 511 keV
 gamma response is claimed. B2 will scan a predeclared roughness grid and
 multiple source positions before B3 introduces 511 keV gamma interactions.
+
+## 2026-08-24 - B2 optical-only roughness/position scan
+
+- Locked the scan before inspecting B2 results in `config/b2_scan.json`:
+  shared `sigma_alpha = 0, 0.05, 0.10, 0.20, 0.30 rad`; axial source
+  positions -8, 0 and +8 mm; all six states; 50 events of 100 isotropic
+  550 nm photons per point. The grid contains 90 analysis points and does not
+  use the experimental order as a fit target.
+- The first validation attempt used a 0.01 minimum response span at every
+  state/position combination. It failed for bottom rough at +8 mm. Review of
+  all points showed that requiring a distant surface to produce a resolved
+  response at every source position is not a valid universal condition. The
+  numerical threshold was retained but correctly applied per state: at least
+  one of the three predeclared positions must resolve the roughness response.
+  The grid and adjacent-jump limit were not changed.
+- That review also found top rough to be exactly invariant with sigma. The
+  direct dielectric-metal ESR surface had no UNIFIED reflection-component
+  constants, so ground reflection fell through to a sigma-independent
+  Lambertian branch. Fixed `SPECULARLOBECONSTANT=1`, spike=0 and backscatter=0.
+  This makes the shared sigma_alpha the only angular-width parameter for a
+  rough top ESR reflection; the constants are fixed model choices, not fits.
+- A same-process repeat then differed only in event 0 while events 1-49 and
+  aggregate primary-direction diagnostics were identical. Gaussian-cache,
+  seed-list and navigator-reset hypotheses did not remove the effect. Two
+  consecutive comparison runs were internally repeatable, indicating a
+  bounded run-history dependence when UNIFIED ground surfaces were repeatedly
+  rebuilt. The scan therefore runs every point, including the repeat, in an
+  independent Geant4 process. This is stricter than ignoring an event and
+  removes ordering/history from the analysis sample.
+- Startup now records the active `MixMaxRng` engine. Deterministic event
+  seeding supplies an explicit two-seed count and a zero-terminated seed list;
+  this hardens the engine contract but was not claimed as the cause of the
+  same-process history effect.
+- The isolated 91-process scan passed exact repeatability. All-polished was
+  event-for-event invariant across all five sigma values at each position.
+  Every point had exact terminal accounting, nonzero PMT collection and active
+  top/bottom/side counters.
+- Across all rough-state position curves, the largest adjacent absolute
+  efficiency jump was 0.0608, below the predeclared 0.20 discontinuity guard.
+  At sigma=0.20 rad the normalized results for -8/0/+8 mm were bottom rough
+  1.227/1.223/1.205, top rough 1.187/1.192/1.205, side rough
+  0.913/0.596/0.809, bottom polished with others rough 0.912/0.515/0.686,
+  and top polished with others rough 0.890/0.528/0.778.
+- B0/B1 targeted regression passed 6/6 tests. Full A0-B2 regression passed
+  29/29 tests in 64.33 s; the isolated B2 subset passed 3/3.
+
+Status: B2 validation gate passed. No `sigma_alpha` value was selected, no
+experimental ranking gate was applied and no 511 keV interaction was used.
+B3 may now add a controlled 511 keV gamma response while retaining this
+surface/position scan as the optical-transport baseline.

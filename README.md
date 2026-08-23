@@ -9,7 +9,7 @@ collection.
   5.75 mm x 5.75 mm x 20 mm crystal with the UNIFIED model and one shared
   rough-surface sigma_alpha.
 
-The current validated milestone is B1. A0 provides a one-photon optical
+The current validated milestone is B2. A0 provides a one-photon optical
 transport baseline, Qt/OpenGL view, event-level CSV output, accounting checks
 and reproducible plots. A1 validates the literature parameters and their
 Geant4 unit conversions. A2 adds the paper's 1 mm Teflon-assumption side
@@ -29,7 +29,9 @@ A7 has not passed its Fig. 4 ordering gate; four controlled interface/scoring
 models are retained as diagnosed mismatches rather than tuned into agreement.
 Following that bounded audit, B0 starts the experimental geometry and B1 adds
 the six runtime-selectable UNIFIED surface states with one shared roughness
-parameter. B1 is an optical-only switching validation, not an experimental fit.
+parameter. B1 is an optical-only switching validation, not an experimental
+fit. B2 scans a locked roughness/position grid with isolated Geant4 processes
+so that no point inherits optical-boundary state from another point.
 
 ## Build and run
 
@@ -515,30 +517,76 @@ MPLCONFIGDIR=results/.mplconfig python analysis/plot_b1.py \
 
 The B1 validation source emits 100 isotropic 550 nm photons at the crystal
 center in each of 50 events, with identical primary directions for every
-state. At the predeclared validation-only `sigma_alpha = 0.20 rad`, the result
-was:
+state. At the predeclared validation-only `sigma_alpha = 0.20 rad`, the current
+B2 surface implementation gives:
 
 | State | N_PMT / N_generated | Normalized to all polished |
 |---|---:|---:|
 | all polished | 0.3816 | 1.000 |
-| bottom rough | 0.5518 | 1.446 |
-| top rough | 0.5392 | 1.413 |
-| side rough | 0.1138 | 0.298 |
-| bottom polished, others rough | 0.1182 | 0.310 |
-| top polished, others rough | 0.1180 | 0.309 |
+| bottom rough | 0.4562 | 1.195 |
+| top rough | 0.4522 | 1.185 |
+| side rough | 0.2070 | 0.542 |
+| bottom polished, others rough | 0.1916 | 0.502 |
+| top polished, others rough | 0.1968 | 0.516 |
 
 This is a surface-assignment and transport diagnostic. The value 0.20 rad was
 not fitted, no 511 keV interaction is present, and B1 does not claim an
 experimental prediction. The exact all-polished repeat, runtime state and
 roughness changes, shared-roughness checks, photon accounting, face counters
-and plot export all passed. The complete A0-B1 suite passed 26/26 tests in
-51.98 s.
+and plot export all passed. The `b1` tag retains the original B1 diagnostic;
+B2 corrected the top ESR UNIFIED reflection components so a ground top face
+actually responds to `sigma_alpha`.
+
+## B2 optical-only roughness/position scan
+
+B2 locks all scan inputs in `config/b2_scan.json`: shared
+`sigma_alpha = 0, 0.05, 0.10, 0.20, 0.30 rad`, axial source positions
+`z = -8, 0, +8 mm`, 50 events and 100 isotropic 550 nm photons per point.
+All six B1 states are evaluated, for 90 analysis points plus one exact repeat.
+No grid point is selected from the experimental ranking.
+
+The runner generates one inspectable Geant4 macro per point and launches every
+point in a fresh process. This isolation is required because a bounded audit
+found one history-dependent event when ground UNIFIED surfaces were repeatedly
+rebuilt in a single process. The active random engine (`MixMaxRng`) is printed
+at startup, and event seeds use an explicit two-seed count.
+
+~~~sh
+python analysis/run_b2_scan.py \
+  --executable build/gagg_surface_study \
+  --config config/b2_scan.json --output-dir results/b2
+python analysis/validate_b2.py \
+  --input-dir results/b2 --config config/b2_scan.json
+MPLCONFIGDIR=results/.mplconfig python analysis/plot_b2.py \
+  --input-dir results/b2 --output-dir results/b2/figures \
+  --config config/b2_scan.json
+~~~
+
+For orientation only, the normalized optical collection at the grid point
+`sigma_alpha = 0.20 rad` is:
+
+| State | z=-8 mm | z=0 mm | z=+8 mm |
+|---|---:|---:|---:|
+| all polished | 1.000 | 1.000 | 1.000 |
+| bottom rough | 1.227 | 1.223 | 1.205 |
+| top rough | 1.187 | 1.192 | 1.205 |
+| side rough | 0.913 | 0.596 | 0.809 |
+| bottom polished, others rough | 0.912 | 0.515 | 0.686 |
+| top polished, others rough | 0.890 | 0.528 | 0.778 |
+
+All 90 points closed photon accounting. The repeated point was identical at
+event level, all-polished results were identical across the unused roughness
+parameter, and the largest adjacent efficiency jump was 0.0608, below the
+predeclared 0.20 discontinuity guard. These are optical-source diagnostics,
+not 511 keV predictions or an experimental fit. Full A0-B2 regression passed
+29/29 tests in 64.33 s.
 
 ## Directory design
 
 ~~~text
 GAGG/
 ├── app/                    executable entry point
+├── config/                 locked scan grids and validation parameters
 ├── include/GAGG/           interfaces and central defaults
 ├── src/                    Geant4 implementation
 ├── macros/
@@ -587,6 +635,9 @@ centralized in "include/GAGG/SimulationConfig.hh".
 | B0 top ESR thickness | 0.1 mm | unmeasured placeholder | runtime-selectable |
 | B0 PMT window thickness/index | 0.5 mm / 1.52 | model placeholder | direct contact in B0 |
 | B1 rough sigma_alpha | 0.20 rad | free validation parameter | predeclared diagnostic value; one shared value; not fitted |
+| B2 sigma_alpha grid | 0, 0.05, 0.10, 0.20, 0.30 rad | free validation grid | locked before B2 results; no selected value |
+| B2 optical source positions | z=-8, 0, +8 mm | validation geometry | axial points, 2 mm from each end at extremes |
+| ESR specular-lobe fraction | 1.0 | UNIFIED model choice | fixed, not fitted; makes ground ESR reflection sigma-driven |
 
 The bulk composition is stoichiometric Gd3Al2Ga3O12. Ce concentration was not
 provided and is omitted from mass composition; supplied density and optical
@@ -611,5 +662,6 @@ groundtioair
 See "docs/stage-a-plan.md" and "docs/validation-log.md".
 
 Git commits and annotated tags are created only after a validation gate
-passes. A7 remains untagged; B0 and B1 are independently validated checkpoints.
+passes. A7 remains untagged; B0, B1 and B2 are independently validated
+checkpoints.
 See "docs/git-workflow.md" for the push convention.

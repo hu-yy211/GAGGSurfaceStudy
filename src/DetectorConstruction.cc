@@ -795,12 +795,27 @@ void DetectorConstruction::ConfigureExperimentSurfaces() {
   const std::vector<G4double> esrReflectivity = {
       config::kExperimentEsrReflectivity,
       config::kExperimentEsrReflectivity};
+  const std::vector<G4double> esrSpecularLobe = {
+      config::kExperimentEsrSpecularLobe,
+      config::kExperimentEsrSpecularLobe};
+  const std::vector<G4double> esrSpecularSpike = {
+      config::kExperimentEsrSpecularSpike,
+      config::kExperimentEsrSpecularSpike};
+  const std::vector<G4double> esrBackscatter = {
+      config::kExperimentEsrBackscatter,
+      config::kExperimentEsrBackscatter};
   fExperimentEsrProperties =
       std::make_unique<G4MaterialPropertiesTable>();
   fExperimentEsrProperties->AddProperty(
       "REFLECTIVITY", energies, esrReflectivity);
   fExperimentEsrProperties->AddProperty(
       "EFFICIENCY", energies, zeroEfficiency);
+  fExperimentEsrProperties->AddProperty(
+      "SPECULARLOBECONSTANT", energies, esrSpecularLobe);
+  fExperimentEsrProperties->AddProperty(
+      "SPECULARSPIKECONSTANT", energies, esrSpecularSpike);
+  fExperimentEsrProperties->AddProperty(
+      "BACKSCATTERCONSTANT", energies, esrBackscatter);
   fExperimentTopSurface->SetMaterialPropertiesTable(
       fExperimentEsrProperties.get());
 
@@ -923,15 +938,44 @@ void DetectorConstruction::ValidateStageBSurfaces() {
       topProperties == nullptr
           ? nullptr
           : topProperties->GetProperty("REFLECTIVITY");
+  const auto* topSpecularLobe =
+      topProperties == nullptr
+          ? nullptr
+          : topProperties->GetProperty("SPECULARLOBECONSTANT");
+  const auto* topSpecularSpike =
+      topProperties == nullptr
+          ? nullptr
+          : topProperties->GetProperty("SPECULARSPIKECONSTANT");
+  const auto* topBackscatter =
+      topProperties == nullptr
+          ? nullptr
+          : topProperties->GetProperty("BACKSCATTERCONSTANT");
   const auto reflectivityPass =
       topReflectivity != nullptr &&
       RelativeClose(
           topReflectivity->Value(config::EmissionPhotonEnergy()),
           config::kExperimentEsrReflectivity);
+  const auto reflectionComponentsPass =
+      topSpecularLobe != nullptr && topSpecularSpike != nullptr &&
+      topBackscatter != nullptr &&
+      RelativeClose(
+          topSpecularLobe->Value(config::EmissionPhotonEnergy()),
+          config::kExperimentEsrSpecularLobe) &&
+      RelativeClose(
+          topSpecularSpike->Value(config::EmissionPhotonEnergy()),
+          config::kExperimentEsrSpecularSpike) &&
+      RelativeClose(
+          topBackscatter->Value(config::EmissionPhotonEnergy()),
+          config::kExperimentEsrBackscatter) &&
+      RelativeClose(config::kExperimentEsrSpecularLobe +
+                        config::kExperimentEsrSpecularSpike +
+                        config::kExperimentEsrBackscatter,
+                    1.0);
   const auto borderPass =
       G4LogicalBorderSurface::GetNumberOfBorderSurfaces() == 4;
   const auto allPass = topPass && bottomPass && sidePass && blackPass &&
-                       sigmaPass && reflectivityPass && borderPass;
+                       sigmaPass && reflectivityPass &&
+                       reflectionComponentsPass && borderPass;
 
   G4cout << "[b1] surface_validation state=" << fStageBSurfaceState
          << " top=" << FaceFinishLabel(treatment.topRough)
@@ -943,6 +987,18 @@ void DetectorConstruction::ValidateStageBSurfaces() {
          << (topReflectivity == nullptr
                  ? -1.0
                  : topReflectivity->Value(config::EmissionPhotonEnergy()))
+         << " esr_specular_lobe="
+         << (topSpecularLobe == nullptr
+                 ? -1.0
+                 : topSpecularLobe->Value(config::EmissionPhotonEnergy()))
+         << " esr_specular_spike="
+         << (topSpecularSpike == nullptr
+                 ? -1.0
+                 : topSpecularSpike->Value(config::EmissionPhotonEnergy()))
+         << " esr_backscatter="
+         << (topBackscatter == nullptr
+                 ? -1.0
+                 : topBackscatter->Value(config::EmissionPhotonEnergy()))
          << " borders=" << G4LogicalBorderSurface::GetNumberOfBorderSurfaces()
          << " status=" << (allPass ? "PASS" : "FAIL") << G4endl;
 }

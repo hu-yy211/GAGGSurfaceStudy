@@ -25,3 +25,15 @@ value with /gagg/stageB/sigmaAlpha. b1_compare.mac uses 0.20 rad as a
 predeclared validation-only value, not a fit, and keeps identical optical
 primary directions between states. Experimental-order testing and 511 keV
 gamma interactions belong to later stages.
+
+B2 is the validated optical-only roughness/position scan. Its single source of
+truth is ../../config/b2_scan.json. Run it from the repository root with:
+
+  python analysis/run_b2_scan.py \
+    --executable build/gagg_surface_study \
+    --config config/b2_scan.json --output-dir results/b2
+
+The runner writes one inspectable macro per point under results/b2/macros and
+executes each in an isolated Geant4 process. This prevents scan-order history
+from entering the first event of a rebuilt ground surface. B2 does not select
+or fit sigma_alpha and does not contain gamma interactions.

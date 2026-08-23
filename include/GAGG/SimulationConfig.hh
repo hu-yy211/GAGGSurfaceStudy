@@ -62,6 +62,13 @@ inline constexpr G4double kExperimentBlackRefractiveIndex = 1.50;
 inline constexpr G4double kExperimentBlackAbsorptionLength = 1.0 * um;
 inline constexpr G4double kExperimentEsrReflectivity = 0.98;
 inline constexpr G4double kExperimentBlackReflectivity = 0.0;
+// A ground UNIFIED dielectric-metal surface uses sigma_alpha only through the
+// specular-lobe branch. Fixing this probability to one makes sigma_alpha the
+// sole rough-reflection shape parameter rather than falling back to a
+// sigma-independent Lambertian branch. This is a model choice, not a fit.
+inline constexpr G4double kExperimentEsrSpecularLobe = 1.0;
+inline constexpr G4double kExperimentEsrSpecularSpike = 0.0;
+inline constexpr G4double kExperimentEsrBackscatter = 0.0;
 // B1 validation-only free parameter. It is shared by every rough GAGG face
 // and is not fitted to the six experimental light-output values.
 inline constexpr G4double kStageBSigmaAlphaValidation = 0.20 * rad;

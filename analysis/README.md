@@ -40,3 +40,11 @@ nonzero independent top/bottom/side counters and an exact all-polished repeat.
 It verifies that at least one rough state changes `N_PMT`, but deliberately
 does not test the experimental ordering. The plotter writes `b1_summary.csv`,
 a normalized collection-efficiency chart and a face-interaction diagnostic.
+
+B2 centralizes the full grid in `config/b2_scan.json`. `run_b2_scan.py`
+generates one Geant4 macro per point and runs each in a fresh process;
+`validate_b2.py` requires the exact 90-file grid, event-level repeatability,
+all-polished invariance, full accounting, face-counter activity and the locked
+smoothness bounds. `plot_b2.py` writes the long-form summary, smoothness table,
+absolute-efficiency scan and position-normalized scan. No script selects a
+sigma value or tests the experimental order.

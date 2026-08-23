@@ -91,9 +91,14 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction() = default;
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event) {
   if (fEventSeedBase > 0) {
     const auto eventId = static_cast<G4long>(event->GetEventID());
-    G4long seeds[2] = {fEventSeedBase + 104729 * eventId,
-                       fEventSeedBase + 130363 * eventId + 1};
-    G4Random::setTheSeeds(seeds);
+    // CLHEP::HepRandom documents a zero-terminated seed list, while the active
+    // MixMaxRng also accepts an explicit number of supplied seeds. Satisfy both
+    // contracts so deterministic event seeding is engine-explicit.
+    G4long seeds[3] = {fEventSeedBase + 104729 * eventId,
+                       fEventSeedBase + 130363 * eventId + 1, 0};
+    // This hardens the seed interface; B2 process isolation separately handles
+    // the observed same-process rough-surface run-history effect.
+    G4Random::setTheSeeds(seeds, 2);
   }
   ValidateConfiguration();
   fEventPosition = fPosition;

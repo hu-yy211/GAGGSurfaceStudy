@@ -53,12 +53,24 @@ all-polished repeat was exact and full regression passed 26/26 tests. These
 values validate switching and diagnostics only; no 511 keV source or
 experimental-order acceptance test is active in B1.
 
-## B2 - Optical-only roughness scan
+## B2 - Optical-only roughness scan - PASSED
 
 Use fixed-count isotropic optical sources at several crystal positions. Scan
 a predeclared, physically plausible `sigma_alpha` grid without using the
 experimental ranking as a fit target. Require photon accounting, seed
 reproducibility and smooth parameter response.
+
+Status: passed on 2026-08-24. The locked grid contains five shared roughness
+values from 0 to 0.30 rad, three axial positions at -8, 0 and +8 mm, all six
+states and 5000 photons per point. Each of the 90 points runs in an isolated
+Geant4 process, and a 91st process repeats one point exactly. This isolation
+was introduced after an audit showed a one-event history dependence when
+ground surfaces were repeatedly rebuilt within one process. All-polished was
+exactly invariant across sigma, the repeat matched every event, accounting
+closed for every point and the largest adjacent absolute efficiency jump was
+0.0608 against the predeclared 0.20 guard. The top ESR uses a fixed UNIFIED
+specular-lobe fraction of one so its shared sigma_alpha is active; this model
+choice and the scan grid were not fitted. Full regression passed 29/29 tests.
 
 ## B3 - 511 keV gamma response
 

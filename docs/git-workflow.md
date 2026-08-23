@@ -23,6 +23,7 @@ Recommended commit and annotated-tag names:
 | A7 | milestone(A7): reproduce Fig. 4 qualitative ordering | a7 |
 | B0 | milestone(B0): validate experiment geometry baseline | b0 |
 | B1 | milestone(B1): validate six surface states | b1 |
+| B2 | milestone(B2): validate optical roughness scan | b2 |
 
 If A7 remains scientifically unresolved while an independently validated B0
 is authorized to proceed, retain the A7 failure evidence in the B0 checkpoint

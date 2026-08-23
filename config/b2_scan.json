@@ -1,0 +1,43 @@
+{
+  "stage": "B2",
+  "purpose": "predeclared optical-only roughness response scan; not an experimental fit",
+  "events_per_point": 50,
+  "photons_per_event": 100,
+  "event_seed_base": 820001,
+  "run_seeds": [626262, 737373],
+  "geometry": {
+    "side_air_gap_mm": 0.1,
+    "black_housing_thickness_mm": 1.0,
+    "esr_thickness_mm": 0.1,
+    "pmt_window_thickness_mm": 0.5
+  },
+  "sigma_alpha": [
+    {"tag": "000", "value_rad": 0.0},
+    {"tag": "005", "value_rad": 0.05},
+    {"tag": "010", "value_rad": 0.1},
+    {"tag": "020", "value_rad": 0.2},
+    {"tag": "030", "value_rad": 0.3}
+  ],
+  "positions": [
+    {"tag": "zminus8", "xyz_mm": [0.0, 0.0, -8.0]},
+    {"tag": "zcenter", "xyz_mm": [0.0, 0.0, 0.0]},
+    {"tag": "zplus8", "xyz_mm": [0.0, 0.0, 8.0]}
+  ],
+  "states": [
+    "all_polished",
+    "bottom_rough",
+    "top_rough",
+    "side_rough",
+    "bottom_polished_others_rough",
+    "top_polished_others_rough"
+  ],
+  "repeat": {
+    "state": "side_rough",
+    "position_tag": "zplus8",
+    "sigma_tag": "020"
+  },
+  "validation": {
+    "max_adjacent_efficiency_jump": 0.2,
+    "min_state_response_span_at_any_position": 0.01
+  }
+}

@@ -13,6 +13,7 @@
 #include "G4UImanager.hh"
 #include "G4VisExecutive.hh"
 #include "G4ios.hh"
+#include "Randomize.hh"
 
 #include <memory>
 
@@ -48,6 +49,8 @@ int main(int argc, char** argv) {
   auto runManager =
       std::unique_ptr<G4RunManager>(G4RunManagerFactory::CreateRunManager(
           G4RunManagerType::SerialOnly));
+  G4cout << "[random] engine=" << G4Random::getTheEngine()->name()
+         << G4endl;
   auto* detector = new gagg::DetectorConstruction();
   runManager->SetUserInitialization(detector);
   runManager->SetUserInitialization(new gagg::PhysicsList());
