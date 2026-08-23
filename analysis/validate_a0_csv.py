@@ -8,11 +8,21 @@ from pathlib import Path
 
 EXPECTED_COLUMNS = [
     "event_id",
+    "source_x_mm",
+    "source_y_mm",
+    "source_z_mm",
     "generated",
+    "output",
+    "crystal_absorption",
+    "reflector_absorption",
+    "other_absorption",
+    "other_world_exit",
     "world_exit",
     "bulk_absorption",
     "unclassified",
 ]
+
+COUNT_COLUMNS = EXPECTED_COLUMNS[4:]
 
 
 def main() -> int:
@@ -36,12 +46,26 @@ def main() -> int:
         )
 
     for expected_id, row in enumerate(rows):
-        values = {key: int(row[key]) for key in EXPECTED_COLUMNS}
-        if values["event_id"] != expected_id:
+        event_id = int(row["event_id"])
+        values = {key: int(row[key]) for key in COUNT_COLUMNS}
+        if event_id != expected_id:
             raise ValueError(
                 f"event id mismatch: expected {expected_id}, "
-                f"found {values['event_id']}"
+                f"found {event_id}"
             )
+        source = tuple(float(row[key]) for key in EXPECTED_COLUMNS[1:4])
+        if source != (0.0, 0.0, 0.0):
+            raise ValueError(f"unexpected A0 source position: {source}")
+        if values["world_exit"] != (
+            values["output"] + values["other_world_exit"]
+        ):
+            raise ValueError(f"world-exit subtotal failed: {values}")
+        if values["bulk_absorption"] != (
+            values["crystal_absorption"]
+            + values["reflector_absorption"]
+            + values["other_absorption"]
+        ):
+            raise ValueError(f"bulk-absorption subtotal failed: {values}")
         classified = values["world_exit"] + values["bulk_absorption"]
         if values["generated"] != 1 or classified != 1:
             raise ValueError(f"photon accounting failed: {values}")

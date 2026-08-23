@@ -87,4 +87,54 @@ if(BUILD_TESTING)
     PASS_REGULAR_EXPRESSION "\\[a2\\] geometry status=PASS"
     FAIL_REGULAR_EXPRESSION "status=FAIL|Overlap with volume|G4Exception|Fatal Exception"
   )
+
+  add_test(
+    NAME a3_transport_export
+    COMMAND $<TARGET_FILE:gagg_surface_study>
+            ${PROJECT_BINARY_DIR}/macros/validation/a3_transport.mac
+  )
+  set_tests_properties(a3_transport_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[output\\] csv=results/a3/z_p10.csv rows=100"
+    FAIL_REGULAR_EXPRESSION "unclassified=[1-9][0-9]*|status=FAIL|G4Exception|Fatal Exception"
+  )
+
+  add_test(
+    NAME a3_no_absorption_export
+    COMMAND $<TARGET_FILE:gagg_surface_study>
+            ${PROJECT_BINARY_DIR}/macros/validation/a3_no_absorption.mac
+  )
+  set_tests_properties(a3_no_absorption_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[output\\] csv=results/a3/center_no_absorption.csv rows=100"
+    FAIL_REGULAR_EXPRESSION "unclassified=[1-9][0-9]*|status=FAIL|G4Exception|Fatal Exception"
+  )
+
+  add_test(
+    NAME a3_transport_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_a3.py
+            --center-a ${PROJECT_BINARY_DIR}/results/a3/center_a.csv
+            --center-b ${PROJECT_BINARY_DIR}/results/a3/center_b.csv
+            --no-absorption ${PROJECT_BINARY_DIR}/results/a3/center_no_absorption.csv
+            --z-m10 ${PROJECT_BINARY_DIR}/results/a3/z_m10.csv
+            --z-m5 ${PROJECT_BINARY_DIR}/results/a3/z_m5.csv
+            --z-p5 ${PROJECT_BINARY_DIR}/results/a3/z_p5.csv
+            --z-p10 ${PROJECT_BINARY_DIR}/results/a3/z_p10.csv
+  )
+  set_tests_properties(a3_transport_validate PROPERTIES
+    DEPENDS "a3_transport_export;a3_no_absorption_export"
+    PASS_REGULAR_EXPRESSION "\\[a3\\] transport status=PASS"
+  )
+
+  add_test(
+    NAME a3_plot
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/plot_a3.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/a3
+            --output-dir ${PROJECT_BINARY_DIR}/a3_plots
+  )
+  set_tests_properties(a3_plot PROPERTIES
+    DEPENDS a3_transport_validate
+    ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
+    PASS_REGULAR_EXPRESSION "\\[a3-plot\\] status=PASS"
+  )
 endif()

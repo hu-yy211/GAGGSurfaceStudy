@@ -1,0 +1,16 @@
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/gagg/geometry/mode paper
+/gagg/optics/gaggBulkAbsorption false
+/gagg/source/mode isotropic
+/gagg/source/photonsPerEvent 200
+/gagg/source/position 0 0 0 mm
+/gagg/output/eventPrintModulo 0
+/run/initialize
+/gagg/geometry/validate
+
+/random/setSeeds 314159 271828
+/gagg/output/csv results/a3/center_no_absorption.csv
+/run/beamOn 100

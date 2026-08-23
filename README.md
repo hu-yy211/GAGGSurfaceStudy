@@ -9,15 +9,17 @@ collection.
   5.75 mm x 5.75 mm x 20 mm crystal with the UNIFIED model and one shared
   rough-surface sigma_alpha.
 
-The current validated milestone is A2. A0 provides a one-photon optical
+The current validated milestone is A3. A0 provides a one-photon optical
 transport baseline, Qt/OpenGL view, event-level CSV output, accounting checks
 and reproducible plots. A1 validates the literature parameters and their
 Geant4 unit conversions. A2 adds the paper's 1 mm Teflon-assumption side
-sleeve and top cap while leaving the -z crystal output face open.
+sleeve and top cap while leaving the -z crystal output face open. A3 adds a
+fixed-count isotropic 550 nm source at controlled positions and records the
+first crossing of that open face as `N_output`.
 
-There is no LUT optical surface, collection-efficiency comparison,
-scintillation production, gamma source, PMT, or fitting yet. The A2 reflector
-is geometry and bulk material only.
+There is no LUT optical surface, scintillation production, gamma source, PMT,
+or fitting yet. The current `N_output/N_generated` values validate transport
+and accounting only and must not be compared with the paper's Fig. 4 yet.
 
 ## Build and run
 
@@ -104,16 +106,64 @@ This creates:
 - `results/a0/a0_terminal_outcomes.png`
 - `results/a0/a0_photon_accounting.png`
 
-The CSV columns are `event_id`, `generated`, `world_exit`,
-`bulk_absorption`, and `unclassified`. A0 requires exactly one generated
-photon and one classified terminal outcome per event, with zero unclassified
-photons.
+The CSV retains `generated`, `world_exit`, `bulk_absorption` and
+`unclassified`, and now also records source position, `output`, GAGG
+absorption, reflector absorption, other absorption and other world exit. A0
+requires exactly one generated photon and one classified terminal outcome per
+event, with zero unclassified photons.
 
 Run only the A1 material/unit check:
 
 ~~~sh
 ./build/gagg_surface_study --validate-materials
 ~~~
+
+Run the A3 fixed-seed transport suite and create its plots:
+
+~~~sh
+./build/gagg_surface_study \
+  ./build/macros/validation/a3_transport.mac
+./build/gagg_surface_study \
+  ./build/macros/validation/a3_no_absorption.mac
+python analysis/validate_a3.py \
+  --center-a results/a3/center_a.csv \
+  --center-b results/a3/center_b.csv \
+  --no-absorption results/a3/center_no_absorption.csv \
+  --z-m10 results/a3/z_m10.csv --z-m5 results/a3/z_m5.csv \
+  --z-p5 results/a3/z_p5.csv --z-p10 results/a3/z_p10.csv
+MPLCONFIGDIR=results/.mplconfig python analysis/plot_a3.py \
+  --input-dir results/a3 --output-dir results/a3/figures
+~~~
+
+Interactive A3 trajectories:
+
+~~~sh
+./build/gagg_surface_study --interactive \
+  ./build/macros/validation/a3_vis.mac
+~~~
+
+The source is controlled without recompiling:
+
+~~~text
+/gagg/source/mode fixed|isotropic
+/gagg/source/photonsPerEvent 200
+/gagg/source/position 0 0 -5 mm
+/gagg/optics/gaggBulkAbsorption true|false
+~~~
+
+A photon is counted once when it crosses from GAGG through the open -z face
+into the world, then the track is killed. The A3 event accounting identity is:
+
+~~~text
+N_generated = N_output + N_GAGG_absorption + N_reflector_absorption
+            + N_other_absorption + N_other_world_exit + N_unclassified
+~~~
+
+For the fixed A3 validation seed, each scan point contains 20,000 photons.
+The center efficiency is 0.17065, and disabling GAGG self-absorption gives
+0.17800. The axial scan at z = -10, -5, 0, 5 and 10 mm gives 0.40250,
+0.25870, 0.17065, 0.17735 and 0.17155. The small center-to-+5 mm reversal is
+1.767 standard deviations and therefore not statistically significant.
 
 ## Directory design
 

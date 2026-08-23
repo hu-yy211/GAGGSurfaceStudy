@@ -4,5 +4,8 @@
 /tracking/verbose 0
 /random/setSeeds 12345 67890
 /gagg/geometry/mode bare
+/gagg/source/mode fixed
+/gagg/source/photonsPerEvent 1
+/gagg/source/position 0 0 0 mm
 /run/initialize
 /run/beamOn 10

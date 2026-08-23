@@ -47,12 +47,14 @@ int main(int argc, char** argv) {
   auto runManager =
       std::unique_ptr<G4RunManager>(G4RunManagerFactory::CreateRunManager(
           G4RunManagerType::SerialOnly));
-  runManager->SetUserInitialization(new gagg::DetectorConstruction());
+  auto* detector = new gagg::DetectorConstruction();
+  runManager->SetUserInitialization(detector);
   runManager->SetUserInitialization(new gagg::PhysicsList());
-  runManager->SetUserAction(new gagg::PrimaryGeneratorAction());
-  auto* runAction = new gagg::RunAction();
+  auto* primaryGenerator = new gagg::PrimaryGeneratorAction();
+  runManager->SetUserAction(primaryGenerator);
+  auto* runAction = new gagg::RunAction(primaryGenerator);
   runManager->SetUserAction(runAction);
-  auto* eventAction = new gagg::EventAction(runAction);
+  auto* eventAction = new gagg::EventAction(runAction, primaryGenerator);
   runManager->SetUserAction(eventAction);
   runManager->SetUserAction(new gagg::SteppingAction(eventAction));
 

@@ -87,3 +87,41 @@ reflector geometry has been implemented.
 
 Status: validation gate A2 passed. No LUT surface, optical collection metric,
 scintillation, gamma source or PMT has been added.
+
+## 2026-08-23 - A3 optical transport before scintillation
+
+- `/gagg/source/mode fixed|isotropic`, `/gagg/source/photonsPerEvent` and the
+  dimensioned `/gagg/source/position x y z unit` command configure the source
+  without recompiling. A0 macros explicitly retain their fixed +z source.
+- Isotropic directions use uniform azimuth and uniform cosine of polar angle;
+  polarization is randomized in the plane normal to each direction.
+- Each A3 validation run used 100 events with 200 photons per event at 550 nm.
+  Direction means were within 0.01 of zero and second moments within 0.003 of
+  1/3, passing the predefined 0.02 tolerance.
+- A photon is counted as output on its first GAGG-to-world crossing through
+  the open -z face and is then killed. Absorptions are classified separately
+  in GAGG, the side/top reflector and any other material.
+- The event CSV includes source coordinates, detailed terminal categories,
+  legacy world-exit/bulk-absorption subtotals and an unclassified remainder.
+  Every tested event satisfied exact photon accounting with zero unclassified
+  photons.
+- Repeating the center run after resetting seeds produced 100 CSV rows that
+  were exactly identical field by field.
+- At the center, 20,000 photons produced 3,413 output photons, 500 GAGG
+  absorptions, 16,076 reflector absorptions and 11 other world exits, giving
+  `N_output/N_generated = 0.17065`.
+- Disabling only GAGG bulk absorption produced zero GAGG absorptions and an
+  output efficiency of 0.17800, so collection did not decrease. The
+  on/off difference is within the recorded three-sigma comparison interval.
+- The z = -10, -5, 0, 5 and 10 mm scan returned 0.40250, 0.25870, 0.17065,
+  0.17735 and 0.17155. No adjacent upward reversal exceeded 3 sigma; the
+  largest was 1.767 sigma, and the near-output efficiency exceeded the far-end
+  efficiency.
+- Three plots were generated and visually inspected: the axial position scan,
+  center terminal outcomes and bulk-absorption control. The Qt/OpenGL scene
+  also opened successfully with 20 isotropic photon trajectories.
+- The complete A0-A3 regression suite passed 10/10 CTest tests.
+
+Status: validation gate A3 passed. These results use only Fresnel transport
+and reflector bulk absorption; no LUT optical surface, scintillation, gamma
+source or PMT exists, so the efficiencies are not Fig. 4 predictions.

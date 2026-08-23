@@ -23,7 +23,9 @@ class DetectorConstruction final : public G4VUserDetectorConstruction {
 
  private:
   std::unique_ptr<G4GenericMessenger> fMessenger;
+  std::unique_ptr<G4GenericMessenger> fOpticsMessenger;
   G4String fGeometryMode = "bare";
+  G4bool fGaggBulkAbsorption = true;
   G4VPhysicalVolume* fWorldPhysical = nullptr;
   G4VPhysicalVolume* fCrystalPhysical = nullptr;
   G4VPhysicalVolume* fSideReflectorPhysical = nullptr;

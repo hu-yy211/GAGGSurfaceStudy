@@ -21,9 +21,12 @@ def load_rows(path: Path) -> list[dict[str, int]]:
             "bulk_absorption",
             "unclassified",
         }
-        if set(reader.fieldnames or []) != required:
+        if not required.issubset(set(reader.fieldnames or [])):
             raise ValueError(f"unexpected CSV columns: {reader.fieldnames}")
-        return [{key: int(value) for key, value in row.items()} for row in reader]
+        return [
+            {key: int(row[key]) for key in required}
+            for row in reader
+        ]
 
 
 def plot_terminal_outcomes(rows: list[dict[str, int]], output: Path) -> None:

@@ -42,12 +42,18 @@ Status: passed on 2026-08-23. The `bare` and `paper` modes are selectable by
 macro. Navigator probes identify the crystal, side reflector, top reflector
 and open output region correctly. No LUT optical surface exists yet.
 
-### A3 - Optical transport before scintillation
+### A3 - Optical transport before scintillation - PASSED
 
 Use a fixed-count isotropic 550 nm source at controlled positions.
 
 Pass: event-by-event photon accounting closes; fixed seeds reproduce results;
 disabling bulk absorption cannot lower collection; position scans are smooth.
+
+Status: passed on 2026-08-23. The center run reproduced exactly row by row,
+all 20,000-photon direction samples passed first/second-moment isotropy checks,
+and all events closed with zero unclassified photons. Disabling GAGG
+self-absorption changed `N_output/N_generated` from 0.17065 to 0.17800. The
+five-point axial scan had no upward reversal larger than 3 sigma.
 
 ### A4 - LUT switching by messenger
 

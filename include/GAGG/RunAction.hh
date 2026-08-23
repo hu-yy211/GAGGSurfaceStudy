@@ -5,30 +5,41 @@
 #include "globals.hh"
 
 #include <fstream>
+#include <cstdint>
 #include <memory>
 
 class G4GenericMessenger;
 
 namespace gagg {
 
+class PrimaryGeneratorAction;
+struct EventRecord;
+
 class RunAction final : public G4UserRunAction {
  public:
-  RunAction();
+  explicit RunAction(PrimaryGeneratorAction* primaryGenerator);
   ~RunAction() override;
 
   void BeginOfRunAction(const G4Run*) override;
   void EndOfRunAction(const G4Run*) override;
 
-  void WriteEvent(G4int eventId, G4int generated, G4int worldExit,
-                  G4int bulkAbsorption, G4int unclassified);
+  void WriteEvent(const EventRecord& record);
   G4bool ShouldPrintEvent(G4int eventId) const;
 
  private:
   std::unique_ptr<G4GenericMessenger> fMessenger;
+  PrimaryGeneratorAction* fPrimaryGenerator = nullptr;
   G4String fCsvPath;
   G4int fEventPrintModulo = 1;
   std::ofstream fCsv;
   G4int fRowsWritten = 0;
+  std::int64_t fGenerated = 0;
+  std::int64_t fOutput = 0;
+  std::int64_t fCrystalAbsorption = 0;
+  std::int64_t fReflectorAbsorption = 0;
+  std::int64_t fOtherAbsorption = 0;
+  std::int64_t fOtherWorldExit = 0;
+  std::int64_t fUnclassified = 0;
 };
 
 }  // namespace gagg

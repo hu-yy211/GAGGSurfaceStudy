@@ -1,5 +1,7 @@
 #include "GAGG/EventAction.hh"
 
+#include "GAGG/EventRecord.hh"
+#include "GAGG/PrimaryGeneratorAction.hh"
 #include "GAGG/RunAction.hh"
 
 #include "G4Event.hh"
@@ -7,26 +9,45 @@
 
 namespace gagg {
 
-EventAction::EventAction(RunAction* runAction) : fRunAction(runAction) {}
+EventAction::EventAction(RunAction* runAction,
+                         const PrimaryGeneratorAction* primaryGenerator)
+    : fRunAction(runAction), fPrimaryGenerator(primaryGenerator) {}
 
 void EventAction::BeginOfEventAction(const G4Event*) {
-  fWorldExit = 0;
-  fBulkAbsorption = 0;
+  fOutput = 0;
+  fCrystalAbsorption = 0;
+  fReflectorAbsorption = 0;
+  fOtherAbsorption = 0;
+  fOtherWorldExit = 0;
 }
 
 void EventAction::EndOfEventAction(const G4Event* event) {
-  constexpr G4int generated = 1;
-  const auto classified = fWorldExit + fBulkAbsorption;
+  const auto generated = fPrimaryGenerator->GetPhotonsPerEvent();
+  const auto classified = fOutput + fCrystalAbsorption +
+                          fReflectorAbsorption + fOtherAbsorption +
+                          fOtherWorldExit;
   const auto unclassified = generated - classified;
+
+  const EventRecord record{event->GetEventID(),
+                           fPrimaryGenerator->GetPosition(),
+                           generated,
+                           fOutput,
+                           fCrystalAbsorption,
+                           fReflectorAbsorption,
+                           fOtherAbsorption,
+                           fOtherWorldExit,
+                           unclassified};
 
   if (fRunAction->ShouldPrintEvent(event->GetEventID()) || unclassified != 0) {
     G4cout << "[event] id=" << event->GetEventID()
-           << " generated=" << generated << " world_exit=" << fWorldExit
-           << " bulk_absorption=" << fBulkAbsorption
+           << " generated=" << generated << " output=" << fOutput
+           << " crystal_absorption=" << fCrystalAbsorption
+           << " reflector_absorption=" << fReflectorAbsorption
+           << " other_absorption=" << fOtherAbsorption
+           << " other_world_exit=" << fOtherWorldExit
            << " unclassified=" << unclassified << G4endl;
   }
-  fRunAction->WriteEvent(event->GetEventID(), generated, fWorldExit,
-                         fBulkAbsorption, unclassified);
+  fRunAction->WriteEvent(record);
 }
 
 }  // namespace gagg

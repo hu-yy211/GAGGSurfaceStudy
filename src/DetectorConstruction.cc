@@ -35,7 +35,9 @@ namespace gagg {
 
 DetectorConstruction::DetectorConstruction()
     : fMessenger(std::make_unique<G4GenericMessenger>(
-          this, "/gagg/geometry/", "GAGG geometry controls")) {
+          this, "/gagg/geometry/", "GAGG geometry controls")),
+      fOpticsMessenger(std::make_unique<G4GenericMessenger>(
+          this, "/gagg/optics/", "GAGG optical-material controls")) {
   auto& modeCommand = fMessenger->DeclareMethod(
       "mode", &DetectorConstruction::SetGeometryMode,
       "Select bare A0 geometry or paper A2 reflector geometry.");
@@ -48,6 +50,11 @@ DetectorConstruction::DetectorConstruction()
       "validate", &DetectorConstruction::ValidateGeometry,
       "Validate the initialized paper geometry.");
   validateCommand.SetStates(G4State_Idle);
+
+  auto& absorptionCommand = fOpticsMessenger->DeclareProperty(
+      "gaggBulkAbsorption", fGaggBulkAbsorption,
+      "Enable the literature GAGG bulk self-absorption length.");
+  absorptionCommand.SetStates(G4State_PreInit);
 }
 
 DetectorConstruction::~DetectorConstruction() = default;
@@ -79,7 +86,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
       config::kAbsorptionLength, config::kAbsorptionLength};
   auto* gaggMpt = new G4MaterialPropertiesTable();
   gaggMpt->AddProperty("RINDEX", energies, gaggIndex);
-  gaggMpt->AddProperty("ABSLENGTH", energies, absorption);
+  if (fGaggBulkAbsorption) {
+    gaggMpt->AddProperty("ABSLENGTH", energies, absorption);
+  }
   gagg->SetMaterialPropertiesTable(gaggMpt);
 
   auto* reflector = nist->FindOrBuildMaterial("G4_TEFLON");
@@ -148,7 +157,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 
   G4cout << "[geometry] mode=" << fGeometryMode
          << " reflector_density=" << reflector->GetDensity() / (g / cm3)
-         << " g/cm3" << G4endl;
+         << " g/cm3 gagg_bulk_absorption="
+         << (fGaggBulkAbsorption ? "on" : "off") << G4endl;
   return fWorldPhysical;
 }
 

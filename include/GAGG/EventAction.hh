@@ -6,21 +6,30 @@
 
 namespace gagg {
 
+class PrimaryGeneratorAction;
 class RunAction;
 
 class EventAction final : public G4UserEventAction {
  public:
-  explicit EventAction(RunAction* runAction);
+  EventAction(RunAction* runAction,
+              const PrimaryGeneratorAction* primaryGenerator);
   void BeginOfEventAction(const G4Event*) override;
   void EndOfEventAction(const G4Event*) override;
 
-  void RecordWorldExit() { ++fWorldExit; }
-  void RecordBulkAbsorption() { ++fBulkAbsorption; }
+  void RecordOutput() { ++fOutput; }
+  void RecordCrystalAbsorption() { ++fCrystalAbsorption; }
+  void RecordReflectorAbsorption() { ++fReflectorAbsorption; }
+  void RecordOtherAbsorption() { ++fOtherAbsorption; }
+  void RecordOtherWorldExit() { ++fOtherWorldExit; }
 
  private:
   RunAction* fRunAction = nullptr;
-  G4int fWorldExit = 0;
-  G4int fBulkAbsorption = 0;
+  const PrimaryGeneratorAction* fPrimaryGenerator = nullptr;
+  G4int fOutput = 0;
+  G4int fCrystalAbsorption = 0;
+  G4int fReflectorAbsorption = 0;
+  G4int fOtherAbsorption = 0;
+  G4int fOtherWorldExit = 0;
 };
 
 }  // namespace gagg
