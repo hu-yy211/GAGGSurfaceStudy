@@ -3,6 +3,7 @@
 /event/verbose 0
 /tracking/verbose 0
 /random/setSeeds 12345 67890
+/gagg/geometry/mode bare
 /gagg/output/csv a0_test_events.csv
 /gagg/output/eventPrintModulo 0
 /run/initialize

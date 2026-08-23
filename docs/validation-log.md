@@ -61,3 +61,29 @@ fraction is a transport sanity check, not a PMT collection efficiency.
 Status: validation gate A1 passed. The 1 mm reflector, its refractive index and
 its absorption length are centralized and unit-tested constants only. No A2
 reflector geometry has been implemented.
+
+## 2026-08-23 - A2 paper geometry
+
+- The paper geometry is selectable with `/gagg/geometry/mode bare|paper`
+  before initialization; all A0 macros explicitly retain `bare` mode.
+- `paper` mode adds a 1 mm side annulus from radius 12.7 to 13.7 mm over the
+  25.4 mm crystal length and a 1 mm top disk of radius 13.7 mm.
+- The reflector uses `G4_TEFLON`, matching the paper's Teflon assumption and
+  stated density of 2.2 g/cm3. Its A1 refractive index and absorption length
+  are attached as bulk optical properties; the material table was read back
+  at 550 nm and returned 1.35 and 0.1 mm.
+- The side sleeve and top cap directly touch the crystal. The -z output face
+  remains open because the paper does not provide a finite air-gap thickness.
+- Geant4 overlap checks reported OK for GAGG, SideReflector and TopReflector;
+  the independent A2 check reported zero overlaps.
+- Computed volumes were 12870.4 mm3 for GAGG, 2106.63 mm3 for the side sleeve
+  and 589.646 mm3 for the top cap, all matching their analytic values.
+- Navigator probes returned `GAGG`, `SideReflector`, `TopReflector` and
+  `World` at the center, side, top and immediately below the output face.
+- The Qt/OpenGL A2 scene opened successfully with separate colors for the
+  crystal, side sleeve and top cap.
+- The complete regression suite passed 6/6 tests, including all A0/A1 tests
+  and `a2_paper_geometry`.
+
+Status: validation gate A2 passed. No LUT surface, optical collection metric,
+scintillation, gamma source or PMT has been added.

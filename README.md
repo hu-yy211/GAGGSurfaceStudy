@@ -9,15 +9,15 @@ collection.
   5.75 mm x 5.75 mm x 20 mm crystal with the UNIFIED model and one shared
   rough-surface sigma_alpha.
 
-The current validated milestone is A1. One 550 nm optical photon is launched
-per event from the center of the paper-sized GAGG cylinder. A0 provides a
-Qt/OpenGL view, event-level CSV output, accounting checks and reproducible
-plots. A1 validates the literature parameters and their Geant4 unit
-conversions. Optical physics plus the minimum standard electromagnetic support
-required for valid process-manager initialization is active.
+The current validated milestone is A2. A0 provides a one-photon optical
+transport baseline, Qt/OpenGL view, event-level CSV output, accounting checks
+and reproducible plots. A1 validates the literature parameters and their
+Geant4 unit conversions. A2 adds the paper's 1 mm Teflon-assumption side
+sleeve and top cap while leaving the -z crystal output face open.
 
-There is no gamma source, reflector geometry, LUT surface, scintillation
-production, PMT, or fitting yet. In particular, A2 has not started.
+There is no LUT optical surface, collection-efficiency comparison,
+scintillation production, gamma source, PMT, or fitting yet. The A2 reflector
+is geometry and bulk material only.
 
 ## Build and run
 
@@ -53,6 +53,38 @@ Interactive Qt/OpenGL visualization:
 The yellow cylinder is GAGG and the green line is the 550 nm optical-photon
 trajectory. Rotate and zoom in the Qt viewer; on macOS, use Shift-Command-4 to
 capture a presentation image. Close the Qt window to end the program.
+
+Validate and visualize the A2 paper geometry:
+
+~~~sh
+./build/gagg_surface_study \
+  ./build/macros/validation/a2_geometry.mac
+./build/gagg_surface_study --interactive \
+  ./build/macros/validation/a2_vis.mac
+~~~
+
+The yellow cylinder is GAGG, the blue annulus is the 1 mm side reflector and
+the pale-blue disk is the 1 mm top cap. Geometry mode is selected before
+initialization without recompiling:
+
+~~~text
+/gagg/geometry/mode bare
+/gagg/geometry/mode paper
+~~~
+
+The implemented A2 cross-section is:
+
+~~~text
+                       +z
+            ┌─────────────────────┐
+            │ 1 mm top reflector  │  radius 13.7 mm
+        ┌───┴─────────────────────┴───┐
+        │ 1 mm │                  │ 1 mm
+        │ side │  GAGG cylinder   │ side
+        │      │  R=12.7, L=25.4  │
+        └──────┴──────────────────┴──────
+                       -z output open
+~~~
 
 Generate a 1000-event CSV and the two A0 validation plots from the project
 root:
@@ -116,14 +148,20 @@ centralized in "include/GAGG/SimulationConfig.hh".
 | emission wavelength | 550 nm | literature simplification | paper |
 | absorption coefficient | 0.0155 cm^-1 | literature | paper |
 | absorption length | 64.516 cm | derived | reciprocal |
-| reflector | 1 mm, n=1.35 | literature | A1 validated, geometry inactive |
-| reflector absorption | 100 cm^-1 = 0.1 mm length | literature assumption | A1 validated, geometry inactive |
+| reflector | 1 mm, n=1.35 | literature | A2 geometry active in `paper` mode |
+| reflector density | 2.2 g/cm3, Teflon assumption | literature | A2 validated |
+| reflector absorption | 100 cm^-1 = 0.1 mm length | literature model assumption | A2 bulk property active |
 | Stage B crystal | 5.75 x 5.75 x 20 mm3 | measured/setup | slides |
 | rough sigma_alpha | unset | free parameter | one shared value |
 
 The bulk composition is stoichiometric Gd3Al2Ga3O12. Ce concentration was not
 provided and is omitted from mass composition; supplied density and optical
 constants are used directly.
+
+For A2 the side sleeve directly touches the crystal and spans only the crystal
+length. The top cap covers the full 13.7 mm outer radius and directly touches
+both crystal and sleeve. The paper gives no finite air-gap thickness, so none
+is invented. These solids do not yet define the LUT boundary response.
 
 The Stage A qualitative target read from Fig. 4 is:
 

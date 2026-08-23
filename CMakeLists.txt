@@ -77,4 +77,14 @@ if(BUILD_TESTING)
     PASS_REGULAR_EXPRESSION "\\[a1\\] material_units status=PASS"
     FAIL_REGULAR_EXPRESSION "status=FAIL|G4Exception|Fatal Exception"
   )
+
+  add_test(
+    NAME a2_paper_geometry
+    COMMAND $<TARGET_FILE:gagg_surface_study>
+            ${PROJECT_BINARY_DIR}/macros/validation/a2_geometry.mac
+  )
+  set_tests_properties(a2_paper_geometry PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[a2\\] geometry status=PASS"
+    FAIL_REGULAR_EXPRESSION "status=FAIL|Overlap with volume|G4Exception|Fatal Exception"
+  )
 endif()

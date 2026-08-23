@@ -3,6 +3,6 @@
 /event/verbose 0
 /tracking/verbose 0
 /random/setSeeds 12345 67890
+/gagg/geometry/mode bare
 /run/initialize
 /run/beamOn 10
-

@@ -18,10 +18,15 @@ inline constexpr G4double kSelfAbsorptionCoefficient = 0.0155 / cm;
 inline constexpr G4double kAbsorptionLength =
     1.0 / kSelfAbsorptionCoefficient;
 inline constexpr G4double kReflectorThickness = 1.0 * mm;
+inline constexpr G4double kReflectorDensity = 2.2 * g / cm3;
 inline constexpr G4double kReflectorRefractiveIndex = 1.35;
 inline constexpr G4double kReflectorAbsorptionCoefficient = 100.0 / cm;
 inline constexpr G4double kReflectorAbsorptionLength =
     1.0 / kReflectorAbsorptionCoefficient;
+inline constexpr G4double kReflectorOuterRadius =
+    kCrystalRadius + kReflectorThickness;
+inline constexpr G4double kTopReflectorCenterZ =
+    0.5 * (kCrystalLength + kReflectorThickness);
 inline constexpr G4double kOpticalEnergyMin = 2.0 * eV;
 inline constexpr G4double kOpticalEnergyMax = 3.0 * eV;
 

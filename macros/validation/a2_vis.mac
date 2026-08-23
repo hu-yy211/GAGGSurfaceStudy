@@ -1,0 +1,20 @@
+/control/verbose 1
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/gagg/geometry/mode paper
+/run/initialize
+/gagg/geometry/validate
+
+/vis/open OGL 1000x800-0+0
+/vis/viewer/set/autoRefresh false
+/vis/verbose errors
+/vis/drawVolume
+/vis/viewer/set/viewpointThetaPhi 70 30 deg
+/vis/viewer/set/style surface
+/vis/viewer/set/auxiliaryEdge true
+/vis/viewer/zoom 2.0
+/vis/scene/add/axes 0 0 0 2 cm
+/vis/viewer/set/autoRefresh true
+/vis/viewer/refresh
+/vis/verbose warnings

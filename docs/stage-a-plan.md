@@ -29,7 +29,7 @@ and cover the emission energy.
 Status: passed on 2026-08-23. The reflector values are validation-only
 constants; no reflector solid or optical surface exists yet.
 
-### A2 - Paper geometry - NOT STARTED
+### A2 - Paper geometry - PASSED
 
 Add a 1 mm side sleeve and top cap, leaving the output face open. Start with
 direct crystal/reflector adjacency because the paper gives no finite air-gap
@@ -37,6 +37,10 @@ thickness even though the finish names contain "air".
 
 Pass: no overlaps, analytic volumes agree, visualization shows an open output
 face.
+
+Status: passed on 2026-08-23. The `bare` and `paper` modes are selectable by
+macro. Navigator probes identify the crystal, side reflector, top reflector
+and open output region correctly. No LUT optical surface exists yet.
 
 ### A3 - Optical transport before scintillation
 
