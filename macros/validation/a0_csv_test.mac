@@ -1,0 +1,9 @@
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/random/setSeeds 12345 67890
+/gagg/output/csv a0_test_events.csv
+/gagg/output/eventPrintModulo 0
+/run/initialize
+/run/beamOn 25

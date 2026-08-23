@@ -10,20 +10,26 @@
 
 ## Validation gates
 
-### A0 - Build and optical smoke test
+### A0 - Build, optical smoke test and diagnostics - PASSED
 
 Paper-sized GAGG plus one 550 nm photon per event.
 
 Pass: configure, compile, run ten events, zero unclassified terminal outcomes,
-and pass CTest.
+pass CTest, open the Qt/OpenGL scene, export an event-level CSV, independently
+check photon accounting and generate both diagnostic plots.
 
-### A1 - Materials and units
+Status: passed on 2026-08-23.
+
+### A1 - Materials and units - PASSED
 
 Pass: 550 nm is about 2.254 eV; 0.0155 cm^-1 is 64.516 cm; the future
 100 cm^-1 reflector coefficient is 0.1 mm; all optical grids are increasing
 and cover the emission energy.
 
-### A2 - Paper geometry
+Status: passed on 2026-08-23. The reflector values are validation-only
+constants; no reflector solid or optical surface exists yet.
+
+### A2 - Paper geometry - NOT STARTED
 
 Add a 1 mm side sleeve and top cap, leaving the output face open. Start with
 direct crystal/reflector adjacency because the paper gives no finite air-gap
@@ -84,4 +90,3 @@ assignment, LUT data, counting and event selection before changing parameters.
 - Fig. 4 provides distributions, not a numerical table.
 - LUT real-surface data are not GAGG-specific: use them for Stage A only.
 - The paper's 2% intrinsic resolution is disabled until its role is defined.
-

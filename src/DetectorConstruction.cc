@@ -9,6 +9,8 @@
 #include "G4NistManager.hh"
 #include "G4PVPlacement.hh"
 #include "G4Tubs.hh"
+#include "G4VisAttributes.hh"
+#include "G4Colour.hh"
 
 #include <vector>
 
@@ -44,6 +46,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
       new G4Box("World", config::kWorldHalfLength, config::kWorldHalfLength,
                 config::kWorldHalfLength);
   auto* worldLogical = new G4LogicalVolume(worldSolid, vacuum, "World");
+  worldLogical->SetVisAttributes(G4VisAttributes::GetInvisible());
   auto* worldPhysical =
       new G4PVPlacement(nullptr, {}, worldLogical, "World", nullptr, false, 0,
                         true);
@@ -52,6 +55,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
       new G4Tubs("GAGG", 0.0, config::kCrystalRadius,
                  0.5 * config::kCrystalLength, 0.0, twopi);
   auto* crystalLogical = new G4LogicalVolume(crystalSolid, gagg, "GAGG");
+  auto* crystalVis = new G4VisAttributes(G4Colour(0.95, 0.72, 0.08, 0.45));
+  crystalVis->SetForceSolid(true);
+  crystalLogical->SetVisAttributes(crystalVis);
   new G4PVPlacement(nullptr, {}, crystalLogical, "GAGG", worldLogical, false,
                     0, true);
   return worldPhysical;

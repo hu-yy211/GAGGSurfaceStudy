@@ -27,3 +27,37 @@
 
 Status: validation gate A0 passed. No Stage A reflector, LUT surface,
 scintillation source or gamma source has been added.
+
+## 2026-08-23 - A0 visualization, CSV and plots
+
+- CMake now requires the installed Geant4 UI and visualization components.
+- The Qt/OpenGL viewer opened successfully with the paper-sized yellow GAGG
+  cylinder, coordinate axes and a green optical-photon trajectory.
+- Event output is configurable at runtime with `/gagg/output/csv`; no rebuild
+  is needed to change the destination.
+- The CSV validator checks the exact schema, contiguous event IDs, one
+  generated photon, one terminal outcome and zero unclassified photons for
+  every event.
+- A fixed-seed 1000-event presentation run produced 975 world exits, 25 bulk
+  absorptions and zero unclassified photons. Independent CSV accounting
+  validation passed.
+- The plotting script produced a terminal-outcome bar chart and cumulative
+  photon-accounting closure plot. Both images were visually inspected.
+
+Status: the extended A0 diagnostics passed. The reported 97.5% world-exit
+fraction is a transport sanity check, not a PMT collection efficiency.
+
+## 2026-08-23 - A1 materials and units
+
+- The GAGG density is 6.63 g/cm3 and its refractive index is 1.91.
+- 550 nm converted to 2.25426 eV.
+- 0.0155 cm^-1 converted to an absorption length of 64.5161 cm.
+- The future reflector thickness is 1 mm and its refractive index is 1.35.
+- The future reflector assumption 100 cm^-1 converted to 0.1 mm.
+- The optical energy grid is strictly increasing and covers 550 nm.
+- The complete suite passed: 5/5 CTest tests (`smoke`, `a0_csv_export`,
+  `a0_csv_validate`, `a0_plot`, and `a1_material_units`).
+
+Status: validation gate A1 passed. The 1 mm reflector, its refractive index and
+its absorption length are centralized and unit-tested constants only. No A2
+reflector geometry has been implemented.
