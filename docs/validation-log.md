@@ -447,3 +447,28 @@ Status: B2 validation gate passed. No `sigma_alpha` value was selected, no
 experimental ranking gate was applied and no 511 keV interaction was used.
 B3 may now add a controlled 511 keV gamma response while retaining this
 surface/position scan as the optical-transport baseline.
+
+## 2026-08-24 - B3 controlled 511 keV gamma response
+
+- Locked the controlled run in `config/b3_gamma.json`: 100 normally incident
+  511 keV pencil-beam events from z=+14.7 mm, all-polished Stage B geometry,
+  deterministic event seed base 830001 and a 510.5--511.5 keV full-energy
+  gate. The stored `sigma_alpha=0.20 rad` is inactive for all-polished faces.
+- Enabled deferred scintillation-track processing. Gamma/electron transport
+  therefore completes before optical transport, establishing the event-paired
+  random-stream contract needed by B4 without changing the physical event
+  record.
+- The sample contained 30 zero-deposit, 42 partial-energy and 28 full-energy
+  events. Every zero-deposit event generated zero light; all events closed
+  terminal accounting with no unclassified photons.
+- The all-depositing and full-energy light yields were 53999.924 and
+  53999.860 photons/MeV, relative errors 1.40e-6 and 2.59e-6 from the
+  literature value. The full-energy collection efficiency was 0.37140028.
+- The energy-deposition histogram and scintillation-yield plot were visually
+  inspected. The B3 subset passed 3/3 tests and full A0--B3 regression passed
+  32/32 tests.
+
+Status: B3 validation gate passed. B4 may reuse the exact gamma/event seeds in
+isolated processes for all six surface states and must require identical
+event-level source position, Edep, N_generated and full-energy IDs before
+comparing relative light output.

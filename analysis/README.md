@@ -48,3 +48,10 @@ all-polished invariance, full accounting, face-counter activity and the locked
 smoothness bounds. `plot_b2.py` writes the long-form summary, smoothness table,
 absolute-efficiency scan and position-normalized scan. No script selects a
 sigma value or tests the experimental order.
+
+B3 centralizes its 511 keV pencil-beam inputs and full-energy gate in
+`config/b3_gamma.json`. `run_b3.py` generates an inspectable macro,
+`validate_b3.py` requires zero/partial/full energy classes, exact optical
+accounting and the literature light yield, and `plot_b3.py` writes the energy
+spectrum, scintillation-yield line and summary CSV. B3 uses all-polished
+surfaces and does not compare the six experimental states.

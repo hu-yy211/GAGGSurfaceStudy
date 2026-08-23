@@ -370,4 +370,44 @@ if(BUILD_TESTING)
     ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
     PASS_REGULAR_EXPRESSION "\\[b2-plot\\].*status=PASS"
   )
+
+  add_test(
+    NAME b3_gamma_export
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/run_b3.py
+            --executable $<TARGET_FILE:gagg_surface_study>
+            --config ${PROJECT_SOURCE_DIR}/config/b3_gamma.json
+            --output-dir ${PROJECT_BINARY_DIR}/results/b3
+  )
+  set_tests_properties(b3_gamma_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[b3-runner\\].*gamma_keV=511.*status=PASS"
+    FAIL_REGULAR_EXPRESSION "status=FAIL|G4Exception|Fatal Exception"
+    TIMEOUT 600
+  )
+
+  add_test(
+    NAME b3_gamma_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_b3.py
+            --input ${PROJECT_BINARY_DIR}/results/b3/gamma_511kev_all_polished.csv
+            --config ${PROJECT_SOURCE_DIR}/config/b3_gamma.json
+  )
+  set_tests_properties(b3_gamma_validate PROPERTIES
+    DEPENDS b3_gamma_export
+    PASS_REGULAR_EXPRESSION "\\[b3-check\\] gamma_511 status=PASS"
+  )
+
+  add_test(
+    NAME b3_plot
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/plot_b3.py
+            --input ${PROJECT_BINARY_DIR}/results/b3/gamma_511kev_all_polished.csv
+            --output-dir ${PROJECT_BINARY_DIR}/b3_plots
+            --config ${PROJECT_SOURCE_DIR}/config/b3_gamma.json
+  )
+  set_tests_properties(b3_plot PROPERTIES
+    DEPENDS b3_gamma_validate
+    ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
+    PASS_REGULAR_EXPRESSION "\\[b3-plot\\].*status=PASS"
+  )
 endif()

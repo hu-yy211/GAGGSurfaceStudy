@@ -72,11 +72,20 @@ closed for every point and the largest adjacent absolute efficiency jump was
 specular-lobe fraction of one so its shared sigma_alpha is active; this model
 choice and the scan grid were not fitted. Full regression passed 29/29 tests.
 
-## B3 - 511 keV gamma response
+## B3 - 511 keV gamma response - PASSED
 
 Replace the optical source with a controlled 511 keV gamma beam and validate
 zero-, partial- and full-energy event classes. Retain per-event Edep,
 N_generated, N_PMT and loss locations.
+
+Status: passed on 2026-08-24. The locked all-polished pencil-beam run used
+100 gammas at 511 keV, a source at z=+14.7 mm and deterministic event seeds.
+Scintillation photons were deferred until non-optical transport completed so
+later surface comparisons can preserve paired gamma histories. The sample
+contained 30 zero-deposit, 42 partial-energy and 28 full-energy events. The
+full-energy gate was 510.5--511.5 keV, the measured light yield was
+53999.86 photons/MeV and all optical accounting closed. Full regression
+passed 32/32 tests.
 
 ## B4 - Experimental relative-light comparison
 
@@ -84,3 +93,11 @@ For one documented geometry/parameter set, report
 `N_PMT/N_generated` and normalize all six states to all polished. Compare
 with experiment while distinguishing predictions, measured inputs and free
 parameters. Do not tune faces independently.
+
+## B5 - Robustness and interpretation gate
+
+Quantify statistical uncertainty and sensitivity to the full-energy event
+selection and the single shared roughness parameter. Compare prediction and
+measurement without promoting placeholder dimensions or per-face parameters
+to fitted values. Record which discrepancies are established by the model and
+which explanations remain hypotheses requiring measured optical/setup inputs.

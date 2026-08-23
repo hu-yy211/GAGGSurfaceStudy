@@ -581,6 +581,34 @@ predeclared 0.20 discontinuity guard. These are optical-source diagnostics,
 not 511 keV predictions or an experimental fit. Full A0-B2 regression passed
 29/29 tests in 64.33 s.
 
+## B3 controlled 511 keV gamma response
+
+B3 fixes all run inputs in `config/b3_gamma.json` and introduces gamma
+interactions into the Stage B geometry without yet comparing rough states.
+The validation source is a normally incident 511 keV pencil beam at
+`z=+14.7 mm`; the surface state is all polished and the B2 reference value
+`sigma_alpha=0.20 rad` is recorded but inactive on polished faces.
+Scintillation photons are deferred until non-optical event transport is
+complete, which preserves the gamma history for the paired B4 comparison.
+
+~~~sh
+python analysis/run_b3.py \
+  --executable build/gagg_surface_study \
+  --config config/b3_gamma.json --output-dir results/b3
+python analysis/validate_b3.py \
+  --input results/b3/gamma_511kev_all_polished.csv \
+  --config config/b3_gamma.json
+MPLCONFIGDIR=results/.mplconfig python analysis/plot_b3.py \
+  --input results/b3/gamma_511kev_all_polished.csv \
+  --output-dir results/b3/figures --config config/b3_gamma.json
+~~~
+
+The 100-event locked sample contains 30 zero-deposit, 42 partial-energy and
+28 full-energy events. The 510.5--511.5 keV full-energy subset gives
+53999.86 generated photons/MeV and `N_PMT/N_generated=0.371400`; every event
+closes terminal photon accounting. The energy spectrum and light-yield plot
+were visually checked, and full A0--B3 regression passed 32/32 tests.
+
 ## Directory design
 
 ~~~text
@@ -637,6 +665,9 @@ centralized in "include/GAGG/SimulationConfig.hh".
 | B1 rough sigma_alpha | 0.20 rad | free validation parameter | predeclared diagnostic value; one shared value; not fitted |
 | B2 sigma_alpha grid | 0, 0.05, 0.10, 0.20, 0.30 rad | free validation grid | locked before B2 results; no selected value |
 | B2 optical source positions | z=-8, 0, +8 mm | validation geometry | axial points, 2 mm from each end at extremes |
+| B3 gamma energy / source | 511 keV / z=+14.7 mm pencil beam | validation control | Stage B gamma-response gate |
+| B3 full-energy gate | 510.5--511.5 keV | analysis definition | locked before B4 comparison |
+| B3/B4 event seed base | 830001 | validation control | supports event-paired surface comparisons |
 | ESR specular-lobe fraction | 1.0 | UNIFIED model choice | fixed, not fitted; makes ground ESR reflection sigma-driven |
 
 The bulk composition is stoichiometric Gd3Al2Ga3O12. Ce concentration was not
