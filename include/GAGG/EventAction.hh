@@ -23,6 +23,9 @@ class EventAction final : public G4UserEventAction {
   void RecordOtherAbsorption() { ++fOtherAbsorption; }
   void RecordOtherWorldExit() { ++fOtherWorldExit; }
   void RecordLutInteraction() { ++fLutInteractions; }
+  void RecordTopSurfaceInteraction() { ++fTopSurfaceInteractions; }
+  void RecordBottomSurfaceInteraction() { ++fBottomSurfaceInteractions; }
+  void RecordSideSurfaceInteraction() { ++fSideSurfaceInteractions; }
   void RecordEnergyDeposit(G4double energy) { fEnergyDeposit += energy; }
   void RecordScintillationPhoton() {
     ++fScintillation;
@@ -42,6 +45,9 @@ class EventAction final : public G4UserEventAction {
   G4int fOtherAbsorption = 0;
   G4int fOtherWorldExit = 0;
   G4int fLutInteractions = 0;
+  G4int fTopSurfaceInteractions = 0;
+  G4int fBottomSurfaceInteractions = 0;
+  G4int fSideSurfaceInteractions = 0;
 };
 
 }  // namespace gagg

@@ -46,6 +46,9 @@ class RunAction final : public G4UserRunAction {
   std::int64_t fOtherAbsorption = 0;
   std::int64_t fOtherWorldExit = 0;
   std::int64_t fLutInteractions = 0;
+  std::int64_t fTopSurfaceInteractions = 0;
+  std::int64_t fBottomSurfaceInteractions = 0;
+  std::int64_t fSideSurfaceInteractions = 0;
   std::int64_t fUnclassified = 0;
 };
 

@@ -8,9 +8,16 @@
 /gagg/stageB/blackHousingThickness 1.0 mm
 /gagg/stageB/esrThickness 0.1 mm
 /gagg/stageB/pmtWindowThickness 0.5 mm
-/gagg/stageB/surfaceState all_polished
 /gagg/stageB/sigmaAlpha 0.20 rad
+/gagg/stageB/surfaceState side_rough
+/gagg/optics/gaggBulkAbsorption true
 /gagg/scoring/outputMode transmitted
+/gagg/source/particle optical
+/gagg/source/mode isotropic
+/gagg/source/photonsPerEvent 100
+/gagg/source/position 0 0 0 mm
+/gagg/source/eventSeedBase 810001
+/gagg/output/eventPrintModulo 1
 /run/initialize
 /gagg/geometry/validate
 /gagg/stageB/validate
@@ -24,6 +31,11 @@
 /vis/viewer/set/auxiliaryEdge true
 /vis/viewer/zoom 6.0
 /vis/scene/add/axes 0 0 0 5 mm
+/vis/scene/add/trajectories smooth
+/vis/modeling/trajectories/create/drawByParticleID
+/vis/modeling/trajectories/drawByParticleID-0/set opticalphoton green
+/vis/scene/endOfEventAction accumulate 1
 /vis/viewer/set/autoRefresh true
+/run/beamOn 1
 /vis/viewer/refresh
 /vis/verbose warnings

@@ -289,4 +289,45 @@ if(BUILD_TESTING)
     DEPENDS b0_transport_export
     PASS_REGULAR_EXPRESSION "\\[b0-check\\].*status=PASS"
   )
+
+  add_test(
+    NAME b1_surface_export
+    COMMAND $<TARGET_FILE:gagg_surface_study>
+            ${PROJECT_BINARY_DIR}/macros/stage_b/b1_compare.mac
+  )
+  set_tests_properties(b1_surface_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[output\\] csv=results/b1/all_polished_repeat.csv rows=50"
+    FAIL_REGULAR_EXPRESSION "unclassified=[1-9][0-9]*|status=FAIL|G4Exception|Fatal Exception"
+    TIMEOUT 300
+  )
+
+  add_test(
+    NAME b1_surface_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_b1.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/b1
+            --expect-events 50
+            --photons-per-event 100
+            --sigma-alpha 0.20
+  )
+  set_tests_properties(b1_surface_validate PROPERTIES
+    DEPENDS b1_surface_export
+    PASS_REGULAR_EXPRESSION "\\[b1-check\\].*six_state_switching=true.*status=PASS"
+  )
+
+  add_test(
+    NAME b1_plot
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/plot_b1.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/b1
+            --output-dir ${PROJECT_BINARY_DIR}/b1_plots
+            --expect-events 50
+            --photons-per-event 100
+            --sigma-alpha 0.20
+  )
+  set_tests_properties(b1_plot PROPERTIES
+    DEPENDS b1_surface_validate
+    ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
+    PASS_REGULAR_EXPRESSION "\\[b1-plot\\].*status=PASS"
+  )
 endif()

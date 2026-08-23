@@ -25,7 +25,7 @@ Status: passed on 2026-08-23. The 5000-photon baseline gave
 side gap, 1.0 mm black thickness, 0.1 mm ESR thickness and 0.5 mm PMT-window
 thickness are explicitly labeled unmeasured B0 placeholders.
 
-## B1 - Six runtime surface states
+## B1 - Six runtime surface states - PASSED
 
 Create six macro-selectable states without recompilation:
 
@@ -36,9 +36,22 @@ Create six macro-selectable states without recompilation:
 5. bottom polished, others rough
 6. top polished, others rough
 
-Use UNIFIED dielectric-dielectric GAGG interfaces. One shared runtime
-`sigma_alpha` controls every rough face. Validate face assignment with
-independent top, bottom and side boundary counters before comparing yields.
+Use UNIFIED GAGG interfaces: the idealized top ESR is dielectric-metal, while
+the bottom PMT-window and side-air interfaces are dielectric-dielectric. One
+shared runtime `sigma_alpha` controls every rough face. Validate face
+assignment with independent top, bottom and side boundary counters before
+comparing yields.
+
+Status: passed on 2026-08-23. The six states are selected with
+`/gagg/stageB/surfaceState`; `/gagg/stageB/sigmaAlpha` changes the single value
+used by every rough face and triggers geometry reinitialization. Structural
+validation checks each face's expected finish, model, type and shared value.
+The deterministic center-source run used 5000 optical photons per state and a
+predeclared validation-only `sigma_alpha = 0.20 rad`. Normalized collection was
+1.000, 1.446, 1.413, 0.298, 0.310 and 0.309 in the order listed above. The
+all-polished repeat was exact and full regression passed 26/26 tests. These
+values validate switching and diagnostics only; no 511 keV source or
+experimental-order acceptance test is active in B1.
 
 ## B2 - Optical-only roughness scan
 

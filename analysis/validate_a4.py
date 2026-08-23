@@ -23,6 +23,8 @@ EXPECTED_COLUMNS = [
     "source_particle",
     "source_energy_keV",
     "stage_a_surface",
+    "stage_b_surface_state",
+    "stage_b_sigma_alpha_rad",
     "edep_keV",
     "scintillation",
     "generated",
@@ -35,10 +37,13 @@ EXPECTED_COLUMNS = [
     "world_exit",
     "bulk_absorption",
     "lut_interactions",
+    "top_surface_interactions",
+    "bottom_surface_interactions",
+    "side_surface_interactions",
     "unclassified",
 ]
 
-COUNT_COLUMNS = EXPECTED_COLUMNS[8:]
+COUNT_COLUMNS = EXPECTED_COLUMNS[EXPECTED_COLUMNS.index("scintillation") :]
 
 
 @dataclass(frozen=True)

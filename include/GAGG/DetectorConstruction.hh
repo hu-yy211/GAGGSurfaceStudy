@@ -25,8 +25,11 @@ class DetectorConstruction final : public G4VUserDetectorConstruction {
 
   void SetGeometryMode(const G4String& mode);
   void SetStageASurface(const G4String& surface);
+  void SetStageBSurfaceState(const G4String& state);
+  void SetStageBSigmaAlpha(G4double sigmaAlpha);
   void ValidateGeometry();
   void ValidateStageASurface();
+  void ValidateStageBSurfaces();
   void ValidateScintillation();
 
   const G4String& GetStageASurfaceName() const { return fStageASurface; }
@@ -40,6 +43,10 @@ class DetectorConstruction final : public G4VUserDetectorConstruction {
   G4double GetCrystalSizeX() const;
   G4double GetCrystalSizeY() const;
   G4double GetCrystalSizeZ() const;
+  const G4String& GetStageBSurfaceState() const {
+    return fStageBSurfaceState;
+  }
+  G4double GetStageBSigmaAlpha() const { return fStageBSigmaAlpha; }
   const G4String& GetStageAInterfaceMode() const {
     return fStageAInterfaceMode;
   }
@@ -53,6 +60,7 @@ class DetectorConstruction final : public G4VUserDetectorConstruction {
   void ConfigureStageASurface();
   void ConfigureExperimentSurfaces();
   void ValidateExperimentGeometry();
+  void ResetPhysicalVolumePointers();
 
   std::unique_ptr<G4GenericMessenger> fMessenger;
   std::unique_ptr<G4GenericMessenger> fOpticsMessenger;
@@ -61,7 +69,9 @@ class DetectorConstruction final : public G4VUserDetectorConstruction {
   std::unique_ptr<G4GenericMessenger> fScoringMessenger;
   std::unique_ptr<G4OpticalSurface> fStageAOpticalSurface;
   std::unique_ptr<G4MaterialPropertiesTable> fStageASurfaceProperties;
-  std::unique_ptr<G4OpticalSurface> fExperimentEsrSurface;
+  std::unique_ptr<G4OpticalSurface> fExperimentTopSurface;
+  std::unique_ptr<G4OpticalSurface> fExperimentBottomSurface;
+  std::unique_ptr<G4OpticalSurface> fExperimentSideSurface;
   std::unique_ptr<G4OpticalSurface> fExperimentBlackSurface;
   std::unique_ptr<G4MaterialPropertiesTable> fExperimentEsrProperties;
   std::unique_ptr<G4MaterialPropertiesTable> fExperimentBlackProperties;
@@ -70,6 +80,8 @@ class DetectorConstruction final : public G4VUserDetectorConstruction {
   G4String fStageAInterfaceMode = "direct";
   G4double fStageAAirGap = config::kStageAAirGapDiagnostic;
   G4String fOutputScoringMode = "firstArrival";
+  G4String fStageBSurfaceState = "all_polished";
+  G4double fStageBSigmaAlpha = config::kStageBSigmaAlphaValidation;
   G4double fExperimentSideAirGap =
       config::kExperimentSideAirGapDefault;
   G4double fExperimentBlackHousingThickness =

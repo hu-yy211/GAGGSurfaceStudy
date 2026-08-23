@@ -1,0 +1,76 @@
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/gagg/geometry/mode experiment
+/gagg/stageA/surface none
+/gagg/stageB/sideAirGap 0.1 mm
+/gagg/stageB/blackHousingThickness 1.0 mm
+/gagg/stageB/esrThickness 0.1 mm
+/gagg/stageB/pmtWindowThickness 0.5 mm
+# B1 validation-only free parameter; not fitted to experiment.
+/gagg/stageB/sigmaAlpha 0.20 rad
+/gagg/stageB/surfaceState all_polished
+/gagg/optics/gaggBulkAbsorption true
+/gagg/scoring/outputMode transmitted
+/gagg/source/particle optical
+/gagg/source/mode isotropic
+/gagg/source/photonsPerEvent 100
+/gagg/source/position 0 0 0 mm
+/gagg/source/eventSeedBase 810001
+/gagg/output/eventPrintModulo 0
+
+/run/initialize
+/gagg/geometry/validate
+/gagg/stageB/validate
+/random/setSeeds 424242 515151
+/gagg/output/csv results/b1/all_polished.csv
+/run/beamOn 50
+
+/gagg/stageB/surfaceState bottom_rough
+/run/initialize
+/gagg/stageB/validate
+/random/setSeeds 424242 515151
+/gagg/output/csv results/b1/bottom_rough.csv
+/run/beamOn 50
+
+/gagg/stageB/surfaceState top_rough
+/run/initialize
+/gagg/stageB/validate
+/random/setSeeds 424242 515151
+/gagg/output/csv results/b1/top_rough.csv
+/run/beamOn 50
+
+/gagg/stageB/surfaceState side_rough
+/run/initialize
+/gagg/stageB/validate
+/random/setSeeds 424242 515151
+/gagg/output/csv results/b1/side_rough.csv
+/run/beamOn 50
+
+/gagg/stageB/surfaceState bottom_polished_others_rough
+/run/initialize
+/gagg/stageB/validate
+/random/setSeeds 424242 515151
+/gagg/output/csv results/b1/bottom_polished_others_rough.csv
+/run/beamOn 50
+
+/gagg/stageB/surfaceState top_polished_others_rough
+/run/initialize
+/gagg/stageB/validate
+/random/setSeeds 424242 515151
+/gagg/output/csv results/b1/top_polished_others_rough.csv
+/run/beamOn 50
+
+# Exercise Idle-state sigma switching without using the diagnostic value in
+# the comparison sample.
+/gagg/stageB/sigmaAlpha 0.25 rad
+/run/initialize
+/gagg/stageB/validate
+/gagg/stageB/sigmaAlpha 0.20 rad
+/gagg/stageB/surfaceState all_polished
+/run/initialize
+/gagg/stageB/validate
+/random/setSeeds 424242 515151
+/gagg/output/csv results/b1/all_polished_repeat.csv
+/run/beamOn 50

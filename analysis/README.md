@@ -33,3 +33,10 @@ predefined Fig. 4 order as FAIL.
 B0 uses `validate_b0.py`. It requires 50 center-source optical events with
 100 photons each, exact terminal accounting, no Stage A LUT, nonzero PMT
 transmission and nonzero ESR/black boundary activity.
+
+B1 uses `validate_b1.py` and `plot_b1.py`. The validator requires all six
+runtime surface states, one shared `sigma_alpha`, exact photon accounting,
+nonzero independent top/bottom/side counters and an exact all-polished repeat.
+It verifies that at least one rough state changes `N_PMT`, but deliberately
+does not test the experimental ordering. The plotter writes `b1_summary.csv`,
+a normalized collection-efficiency chart and a face-interaction diagnostic.

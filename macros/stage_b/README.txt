@@ -12,5 +12,16 @@ Run:
 
 B0 uses transmitted photons entering PMTWindow as N_PMT. Its gap, housing,
 ESR and window dimensions are explicit runtime-selectable placeholders, not
-fits. The GAGG faces are all polished in B0. Six surface states and the shared
-UNIFIED sigma_alpha belong to B1 and later.
+fits. The GAGG faces are all polished in B0.
+
+B1 is the validated six-state UNIFIED switching and face-counter diagnostic.
+Run:
+
+  b1_compare.mac
+  ../validation/b1_vis.mac
+
+Select states with /gagg/stageB/surfaceState and set the single shared rough
+value with /gagg/stageB/sigmaAlpha. b1_compare.mac uses 0.20 rad as a
+predeclared validation-only value, not a fit, and keeps identical optical
+primary directions between states. Experimental-order testing and 511 keV
+gamma interactions belong to later stages.

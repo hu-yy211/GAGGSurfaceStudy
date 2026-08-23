@@ -33,6 +33,10 @@ def main() -> int:
             raise ValueError("B0 transport must use optical primaries")
         if row["stage_a_surface"] != "none":
             raise ValueError("B0 must not use a Stage A LUT")
+        if row["stage_b_surface_state"] != "all_polished":
+            raise ValueError("B0 must use the all-polished Stage B state")
+        if abs(float(row["stage_b_sigma_alpha_rad"]) - 0.20) > 1.0e-12:
+            raise ValueError("unexpected B0 shared sigma_alpha metadata")
         if tuple(float(row[key]) for key in EXPECTED_COLUMNS[1:4]) != (
             0.0,
             0.0,

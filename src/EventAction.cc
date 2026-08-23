@@ -24,6 +24,9 @@ void EventAction::BeginOfEventAction(const G4Event*) {
   fOtherAbsorption = 0;
   fOtherWorldExit = 0;
   fLutInteractions = 0;
+  fTopSurfaceInteractions = 0;
+  fBottomSurfaceInteractions = 0;
+  fSideSurfaceInteractions = 0;
 }
 
 void EventAction::EndOfEventAction(const G4Event* event) {
@@ -44,6 +47,9 @@ void EventAction::EndOfEventAction(const G4Event* event) {
                            fOtherAbsorption,
                            fOtherWorldExit,
                            fLutInteractions,
+                           fTopSurfaceInteractions,
+                           fBottomSurfaceInteractions,
+                           fSideSurfaceInteractions,
                            unclassified};
 
   if (fRunAction->ShouldPrintEvent(event->GetEventID()) || unclassified != 0) {
@@ -57,6 +63,9 @@ void EventAction::EndOfEventAction(const G4Event* event) {
            << " other_absorption=" << fOtherAbsorption
            << " other_world_exit=" << fOtherWorldExit
            << " lut_interactions=" << fLutInteractions
+           << " top_surface_interactions=" << fTopSurfaceInteractions
+           << " bottom_surface_interactions=" << fBottomSurfaceInteractions
+           << " side_surface_interactions=" << fSideSurfaceInteractions
            << " unclassified=" << unclassified << G4endl;
   }
   fRunAction->WriteEvent(record);

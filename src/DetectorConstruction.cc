@@ -83,6 +83,42 @@ G4double StageASurfaceReflectivity(const G4String& name) {
   return 0.0;
 }
 
+struct StageBFaceTreatment {
+  G4bool topRough = false;
+  G4bool bottomRough = false;
+  G4bool sideRough = false;
+};
+
+StageBFaceTreatment StageBFaceTreatmentFor(const G4String& state) {
+  if (state == "all_polished") {
+    return {};
+  }
+  if (state == "bottom_rough") {
+    return {false, true, false};
+  }
+  if (state == "top_rough") {
+    return {true, false, false};
+  }
+  if (state == "side_rough") {
+    return {false, false, true};
+  }
+  if (state == "bottom_polished_others_rough") {
+    return {true, false, true};
+  }
+  if (state == "top_polished_others_rough") {
+    return {false, true, true};
+  }
+  G4ExceptionDescription description;
+  description << "Unsupported Stage B surface state: " << state;
+  G4Exception("StageBFaceTreatmentFor", "GAGG-B1-001", FatalException,
+              description);
+  return {};
+}
+
+const char* FaceFinishLabel(G4bool rough) {
+  return rough ? "rough" : "polished";
+}
+
 }  // namespace
 
 namespace gagg {
@@ -221,6 +257,32 @@ DetectorConstruction::DetectorConstruction()
   experimentPmtCommand.SetRange("thickness>0.");
   experimentPmtCommand.SetDefaultValue("0.5");
   experimentPmtCommand.SetStates(G4State_PreInit);
+
+  auto& experimentSurfaceStateCommand = fStageBMessenger->DeclareMethod(
+      "surfaceState", &DetectorConstruction::SetStageBSurfaceState,
+      "Select one of the six experimental GAGG face-treatment states.");
+  experimentSurfaceStateCommand.SetParameterName("state", false);
+  experimentSurfaceStateCommand.SetCandidates(
+      "all_polished bottom_rough top_rough side_rough "
+      "bottom_polished_others_rough top_polished_others_rough");
+  experimentSurfaceStateCommand.SetDefaultValue("all_polished");
+  experimentSurfaceStateCommand.SetStates(G4State_PreInit, G4State_Idle);
+
+  auto& experimentSigmaCommand =
+      fStageBMessenger->DeclareMethodWithUnit(
+          "sigmaAlpha", "rad", &DetectorConstruction::SetStageBSigmaAlpha,
+          "Set the one shared UNIFIED micro-facet sigma_alpha for every "
+          "rough GAGG face.");
+  experimentSigmaCommand.SetParameterName("sigma_alpha", false);
+  experimentSigmaCommand.SetRange("sigma_alpha>=0. && sigma_alpha<1.5708");
+  experimentSigmaCommand.SetDefaultValue("0.20");
+  experimentSigmaCommand.SetStates(G4State_PreInit, G4State_Idle);
+
+  auto& experimentSurfaceValidateCommand =
+      fStageBMessenger->DeclareMethod(
+          "validate", &DetectorConstruction::ValidateStageBSurfaces,
+          "Validate Stage B top, bottom and side UNIFIED face assignments.");
+  experimentSurfaceValidateCommand.SetStates(G4State_Idle);
 }
 
 DetectorConstruction::~DetectorConstruction() = default;
@@ -241,21 +303,69 @@ void DetectorConstruction::SetStageASurface(const G4String& surface) {
   fStageASurface = surface;
   if (G4StateManager::GetStateManager()->GetCurrentState() == G4State_Idle) {
     G4LogicalBorderSurface::CleanSurfaceTable();
-    fWorldPhysical = nullptr;
-    fCrystalPhysical = nullptr;
-    fSideReflectorPhysical = nullptr;
-    fTopReflectorPhysical = nullptr;
-    fSideAirGapPhysical = nullptr;
-    fTopAirGapPhysical = nullptr;
-    fExperimentSideAirGapPhysical = nullptr;
-    fExperimentBlackHousingPhysical = nullptr;
-    fExperimentEsrPhysical = nullptr;
-    fExperimentPmtWindowPhysical = nullptr;
+    ResetPhysicalVolumePointers();
     G4RunManager::GetRunManager()->ReinitializeGeometry(true);
     G4cout << "[a4] surface_change old=" << oldSurface
            << " new=" << fStageASurface
            << " geometry_reinitialization_requested=true" << G4endl;
   }
+}
+
+void DetectorConstruction::SetStageBSurfaceState(const G4String& state) {
+  StageBFaceTreatmentFor(state);
+  if (state == fStageBSurfaceState) {
+    G4cout << "[b1] surface_state_change old=" << fStageBSurfaceState
+           << " new=" << state << " geometry_reinitialized=false"
+           << " reason=unchanged" << G4endl;
+    return;
+  }
+  const auto oldState = fStageBSurfaceState;
+  fStageBSurfaceState = state;
+  if (G4StateManager::GetStateManager()->GetCurrentState() == G4State_Idle) {
+    G4LogicalBorderSurface::CleanSurfaceTable();
+    ResetPhysicalVolumePointers();
+    G4RunManager::GetRunManager()->ReinitializeGeometry(true);
+    G4cout << "[b1] surface_state_change old=" << oldState
+           << " new=" << fStageBSurfaceState
+           << " geometry_reinitialization_requested=true" << G4endl;
+  }
+}
+
+void DetectorConstruction::SetStageBSigmaAlpha(G4double sigmaAlpha) {
+  if (sigmaAlpha < 0.0 || sigmaAlpha >= halfpi) {
+    G4Exception("DetectorConstruction::SetStageBSigmaAlpha", "GAGG-B1-002",
+                FatalException,
+                "Stage B sigma_alpha must satisfy 0 <= value < pi/2");
+  }
+  if (RelativeClose(sigmaAlpha, fStageBSigmaAlpha)) {
+    G4cout << "[b1] sigma_alpha_change old_rad=" << fStageBSigmaAlpha / rad
+           << " new_rad=" << sigmaAlpha / rad
+           << " geometry_reinitialized=false reason=unchanged" << G4endl;
+    return;
+  }
+  const auto oldSigma = fStageBSigmaAlpha;
+  fStageBSigmaAlpha = sigmaAlpha;
+  if (G4StateManager::GetStateManager()->GetCurrentState() == G4State_Idle) {
+    G4LogicalBorderSurface::CleanSurfaceTable();
+    ResetPhysicalVolumePointers();
+    G4RunManager::GetRunManager()->ReinitializeGeometry(true);
+    G4cout << "[b1] sigma_alpha_change old_rad=" << oldSigma / rad
+           << " new_rad=" << fStageBSigmaAlpha / rad
+           << " geometry_reinitialization_requested=true" << G4endl;
+  }
+}
+
+void DetectorConstruction::ResetPhysicalVolumePointers() {
+  fWorldPhysical = nullptr;
+  fCrystalPhysical = nullptr;
+  fSideReflectorPhysical = nullptr;
+  fTopReflectorPhysical = nullptr;
+  fSideAirGapPhysical = nullptr;
+  fTopAirGapPhysical = nullptr;
+  fExperimentSideAirGapPhysical = nullptr;
+  fExperimentBlackHousingPhysical = nullptr;
+  fExperimentEsrPhysical = nullptr;
+  fExperimentPmtWindowPhysical = nullptr;
 }
 
 G4String DetectorConstruction::GetRealSurfaceDataPath() const {
@@ -668,11 +778,20 @@ void DetectorConstruction::ConfigureExperimentSurfaces() {
   const std::vector<G4double> energies = {
       config::kOpticalEnergyMin, config::kOpticalEnergyMax};
   const std::vector<G4double> zeroEfficiency = {0.0, 0.0};
+  const auto treatment = StageBFaceTreatmentFor(fStageBSurfaceState);
+  const auto finishFor = [](G4bool rough) {
+    return rough ? ground : polished;
+  };
 
-  if (fExperimentEsrSurface == nullptr) {
-    fExperimentEsrSurface = std::make_unique<G4OpticalSurface>(
-        "ExperimentESRSurface", unified, polished, dielectric_metal);
+  if (fExperimentTopSurface == nullptr) {
+    fExperimentTopSurface = std::make_unique<G4OpticalSurface>(
+        "ExperimentTopSurface", unified, finishFor(treatment.topRough),
+        dielectric_metal);
   }
+  fExperimentTopSurface->SetModel(unified);
+  fExperimentTopSurface->SetType(dielectric_metal);
+  fExperimentTopSurface->SetFinish(finishFor(treatment.topRough));
+  fExperimentTopSurface->SetSigmaAlpha(fStageBSigmaAlpha);
   const std::vector<G4double> esrReflectivity = {
       config::kExperimentEsrReflectivity,
       config::kExperimentEsrReflectivity};
@@ -682,8 +801,28 @@ void DetectorConstruction::ConfigureExperimentSurfaces() {
       "REFLECTIVITY", energies, esrReflectivity);
   fExperimentEsrProperties->AddProperty(
       "EFFICIENCY", energies, zeroEfficiency);
-  fExperimentEsrSurface->SetMaterialPropertiesTable(
+  fExperimentTopSurface->SetMaterialPropertiesTable(
       fExperimentEsrProperties.get());
+
+  if (fExperimentBottomSurface == nullptr) {
+    fExperimentBottomSurface = std::make_unique<G4OpticalSurface>(
+        "ExperimentBottomSurface", unified,
+        finishFor(treatment.bottomRough), dielectric_dielectric);
+  }
+  fExperimentBottomSurface->SetModel(unified);
+  fExperimentBottomSurface->SetType(dielectric_dielectric);
+  fExperimentBottomSurface->SetFinish(finishFor(treatment.bottomRough));
+  fExperimentBottomSurface->SetSigmaAlpha(fStageBSigmaAlpha);
+
+  if (fExperimentSideSurface == nullptr) {
+    fExperimentSideSurface = std::make_unique<G4OpticalSurface>(
+        "ExperimentSideSurface", unified, finishFor(treatment.sideRough),
+        dielectric_dielectric);
+  }
+  fExperimentSideSurface->SetModel(unified);
+  fExperimentSideSurface->SetType(dielectric_dielectric);
+  fExperimentSideSurface->SetFinish(finishFor(treatment.sideRough));
+  fExperimentSideSurface->SetSigmaAlpha(fStageBSigmaAlpha);
 
   if (fExperimentBlackSurface == nullptr) {
     fExperimentBlackSurface = std::make_unique<G4OpticalSurface>(
@@ -702,16 +841,110 @@ void DetectorConstruction::ConfigureExperimentSurfaces() {
       fExperimentBlackProperties.get());
 
   new G4LogicalBorderSurface(
-      "GAGGToExperimentESR", fCrystalPhysical, fExperimentEsrPhysical,
-      fExperimentEsrSurface.get());
+      "GAGGToExperimentTop", fCrystalPhysical, fExperimentEsrPhysical,
+      fExperimentTopSurface.get());
+  new G4LogicalBorderSurface(
+      "GAGGToExperimentBottom", fCrystalPhysical,
+      fExperimentPmtWindowPhysical, fExperimentBottomSurface.get());
+  new G4LogicalBorderSurface(
+      "GAGGToExperimentSide", fCrystalPhysical,
+      fExperimentSideAirGapPhysical, fExperimentSideSurface.get());
   new G4LogicalBorderSurface(
       "AirGapToExperimentBlack", fExperimentSideAirGapPhysical,
       fExperimentBlackHousingPhysical, fExperimentBlackSurface.get());
 
-  G4cout << "[b0] surfaces model=UNIFIED esr_reflectivity="
+  G4cout << "[b1] surfaces state=" << fStageBSurfaceState
+         << " model=UNIFIED top=" << FaceFinishLabel(treatment.topRough)
+         << " bottom=" << FaceFinishLabel(treatment.bottomRough)
+         << " side=" << FaceFinishLabel(treatment.sideRough)
+         << " sigma_alpha_rad=" << fStageBSigmaAlpha / rad
+         << " esr_reflectivity="
          << config::kExperimentEsrReflectivity
          << " black_reflectivity=" << config::kExperimentBlackReflectivity
-         << " borders=2 status=PASS" << G4endl;
+         << " borders=4 status=PASS" << G4endl;
+}
+
+void DetectorConstruction::ValidateStageBSurfaces() {
+  if (fGeometryMode != "experiment" || fCrystalPhysical == nullptr ||
+      fExperimentSideAirGapPhysical == nullptr ||
+      fExperimentBlackHousingPhysical == nullptr ||
+      fExperimentEsrPhysical == nullptr ||
+      fExperimentPmtWindowPhysical == nullptr) {
+    G4cout << "[b1] surface_validation status=FAIL"
+           << " reason=experiment_geometry_not_built" << G4endl;
+    return;
+  }
+
+  const auto opticalSurface =
+      [](const G4VPhysicalVolume* from, const G4VPhysicalVolume* to) {
+        const auto* border = G4LogicalBorderSurface::GetSurface(from, to);
+        return border == nullptr
+                   ? static_cast<const G4OpticalSurface*>(nullptr)
+                   : dynamic_cast<const G4OpticalSurface*>(
+                         border->GetSurfaceProperty());
+      };
+  const auto* top =
+      opticalSurface(fCrystalPhysical, fExperimentEsrPhysical);
+  const auto* bottom =
+      opticalSurface(fCrystalPhysical, fExperimentPmtWindowPhysical);
+  const auto* side =
+      opticalSurface(fCrystalPhysical, fExperimentSideAirGapPhysical);
+  const auto* black =
+      opticalSurface(fExperimentSideAirGapPhysical,
+                     fExperimentBlackHousingPhysical);
+  const auto treatment = StageBFaceTreatmentFor(fStageBSurfaceState);
+  const auto expectedFinish = [](G4bool rough) {
+    return rough ? ground : polished;
+  };
+  const auto topPass =
+      top != nullptr && top->GetModel() == unified &&
+      top->GetType() == dielectric_metal &&
+      top->GetFinish() == expectedFinish(treatment.topRough);
+  const auto bottomPass =
+      bottom != nullptr && bottom->GetModel() == unified &&
+      bottom->GetType() == dielectric_dielectric &&
+      bottom->GetFinish() == expectedFinish(treatment.bottomRough);
+  const auto sidePass =
+      side != nullptr && side->GetModel() == unified &&
+      side->GetType() == dielectric_dielectric &&
+      side->GetFinish() == expectedFinish(treatment.sideRough);
+  const auto blackPass =
+      black != nullptr && black->GetModel() == unified &&
+      black->GetType() == dielectric_metal &&
+      black->GetFinish() == polished;
+  const auto sigmaPass =
+      top != nullptr && bottom != nullptr && side != nullptr &&
+      RelativeClose(top->GetSigmaAlpha(), fStageBSigmaAlpha) &&
+      RelativeClose(bottom->GetSigmaAlpha(), fStageBSigmaAlpha) &&
+      RelativeClose(side->GetSigmaAlpha(), fStageBSigmaAlpha);
+  const auto* topProperties =
+      top == nullptr ? nullptr : top->GetMaterialPropertiesTable();
+  const auto* topReflectivity =
+      topProperties == nullptr
+          ? nullptr
+          : topProperties->GetProperty("REFLECTIVITY");
+  const auto reflectivityPass =
+      topReflectivity != nullptr &&
+      RelativeClose(
+          topReflectivity->Value(config::EmissionPhotonEnergy()),
+          config::kExperimentEsrReflectivity);
+  const auto borderPass =
+      G4LogicalBorderSurface::GetNumberOfBorderSurfaces() == 4;
+  const auto allPass = topPass && bottomPass && sidePass && blackPass &&
+                       sigmaPass && reflectivityPass && borderPass;
+
+  G4cout << "[b1] surface_validation state=" << fStageBSurfaceState
+         << " top=" << FaceFinishLabel(treatment.topRough)
+         << " bottom=" << FaceFinishLabel(treatment.bottomRough)
+         << " side=" << FaceFinishLabel(treatment.sideRough)
+         << " sigma_alpha_rad=" << fStageBSigmaAlpha / rad
+         << " rough_shared=" << (sigmaPass ? "PASS" : "FAIL")
+         << " esr_reflectivity="
+         << (topReflectivity == nullptr
+                 ? -1.0
+                 : topReflectivity->Value(config::EmissionPhotonEnergy()))
+         << " borders=" << G4LogicalBorderSurface::GetNumberOfBorderSurfaces()
+         << " status=" << (allPass ? "PASS" : "FAIL") << G4endl;
 }
 
 void DetectorConstruction::ValidateStageASurface() {
@@ -1103,6 +1336,10 @@ void DetectorConstruction::ValidateExperimentGeometry() {
 
   const auto* esrBorder = G4LogicalBorderSurface::GetSurface(
       fCrystalPhysical, fExperimentEsrPhysical);
+  const auto* bottomBorder = G4LogicalBorderSurface::GetSurface(
+      fCrystalPhysical, fExperimentPmtWindowPhysical);
+  const auto* sideBorder = G4LogicalBorderSurface::GetSurface(
+      fCrystalPhysical, fExperimentSideAirGapPhysical);
   const auto* blackBorder = G4LogicalBorderSurface::GetSurface(
       fExperimentSideAirGapPhysical,
       fExperimentBlackHousingPhysical);
@@ -1116,13 +1353,28 @@ void DetectorConstruction::ValidateExperimentGeometry() {
           ? nullptr
           : dynamic_cast<const G4OpticalSurface*>(
                 blackBorder->GetSurfaceProperty());
+  const auto* bottomSurface =
+      bottomBorder == nullptr
+          ? nullptr
+          : dynamic_cast<const G4OpticalSurface*>(
+                bottomBorder->GetSurfaceProperty());
+  const auto* sideSurface =
+      sideBorder == nullptr
+          ? nullptr
+          : dynamic_cast<const G4OpticalSurface*>(
+                sideBorder->GetSurfaceProperty());
   const auto surfacePass =
-      esrSurface != nullptr && blackSurface != nullptr &&
+      esrSurface != nullptr && bottomSurface != nullptr &&
+      sideSurface != nullptr && blackSurface != nullptr &&
       esrSurface->GetModel() == unified &&
+      bottomSurface->GetModel() == unified &&
+      sideSurface->GetModel() == unified &&
       blackSurface->GetModel() == unified &&
       esrSurface->GetType() == dielectric_metal &&
+      bottomSurface->GetType() == dielectric_dielectric &&
+      sideSurface->GetType() == dielectric_dielectric &&
       blackSurface->GetType() == dielectric_metal &&
-      G4LogicalBorderSurface::GetNumberOfBorderSurfaces() == 2;
+      G4LogicalBorderSurface::GetNumberOfBorderSurfaces() == 4;
 
   const auto* pmtProperties =
       fExperimentPmtWindowPhysical->GetLogicalVolume()

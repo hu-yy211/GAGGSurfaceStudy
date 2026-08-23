@@ -60,21 +60,40 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
   const auto* postVolume = post->GetPhysicalVolume();
   const auto surfaceTolerance =
       G4GeometryTolerance::GetInstance()->GetSurfaceTolerance();
+  const auto atGeometryBoundary = post->GetStepStatus() == fGeomBoundary;
+  const auto* borderSurface =
+      atGeometryBoundary && preVolume != nullptr && postVolume != nullptr
+          ? G4LogicalBorderSurface::GetSurface(preVolume, postVolume)
+          : nullptr;
+  auto* boundary = atGeometryBoundary ? FindBoundaryProcess() : nullptr;
+  const auto boundaryStatus =
+      boundary == nullptr ? Undefined : boundary->GetStatus();
+  const auto validBoundaryInteraction =
+      borderSurface != nullptr && boundaryStatus != Undefined &&
+      boundaryStatus != NotAtBoundary && boundaryStatus != StepTooSmall;
+  if (validBoundaryInteraction) {
+    fEventAction->RecordLutInteraction();
+    if (preVolume->GetName() == "GAGG") {
+      if (postVolume->GetName() == "ExperimentESR") {
+        fEventAction->RecordTopSurfaceInteraction();
+      } else if (postVolume->GetName() == "PMTWindow") {
+        fEventAction->RecordBottomSurfaceInteraction();
+      } else if (postVolume->GetName() == "ExperimentSideAirGap") {
+        fEventAction->RecordSideSurfaceInteraction();
+      }
+    }
+  }
 
   const auto outputFaceArrival =
-      post->GetStepStatus() == fGeomBoundary && preVolume != nullptr &&
+      atGeometryBoundary && preVolume != nullptr &&
       preVolume->GetName() == "GAGG" &&
       fDetector->IsOnOutputFace(post->GetPosition(), surfaceTolerance);
-  auto* outputBoundary =
-      outputFaceArrival ? FindBoundaryProcess() : nullptr;
-  const auto outputBoundaryStatus =
-      outputBoundary == nullptr ? Undefined : outputBoundary->GetStatus();
   const auto outputFaceCrossing =
       outputFaceArrival && postVolume != nullptr &&
       postVolume->GetName() == fDetector->GetOutputReceiverVolumeName() &&
-      (outputBoundaryStatus == FresnelRefraction ||
-       outputBoundaryStatus == Transmission ||
-       outputBoundaryStatus == SameMaterial);
+      (boundaryStatus == FresnelRefraction ||
+       boundaryStatus == Transmission ||
+       boundaryStatus == SameMaterial);
   if (outputFaceArrival &&
       fDetector->GetOutputScoringMode() == "firstArrival") {
     fEventAction->RecordOutput();
@@ -87,17 +106,8 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
     return;
   }
 
-  if (post->GetStepStatus() == fGeomBoundary && preVolume != nullptr &&
-      postVolume != nullptr &&
-      G4LogicalBorderSurface::GetSurface(preVolume, postVolume) != nullptr) {
-    auto* boundary = FindBoundaryProcess();
-    const auto status =
-        boundary == nullptr ? Undefined : boundary->GetStatus();
-    if (status != Undefined && status != NotAtBoundary &&
-        status != StepTooSmall) {
-      fEventAction->RecordLutInteraction();
-    }
-    if (status == Absorption || status == Detection) {
+  if (borderSurface != nullptr) {
+    if (boundaryStatus == Absorption || boundaryStatus == Detection) {
       fEventAction->RecordSurfaceAbsorption();
       return;
     }

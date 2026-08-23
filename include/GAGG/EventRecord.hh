@@ -19,6 +19,9 @@ struct EventRecord {
   G4int otherAbsorption = 0;
   G4int otherWorldExit = 0;
   G4int lutInteractions = 0;
+  G4int topSurfaceInteractions = 0;
+  G4int bottomSurfaceInteractions = 0;
+  G4int sideSurfaceInteractions = 0;
   G4int unclassified = 0;
 
   G4int WorldExit() const { return output + otherWorldExit; }

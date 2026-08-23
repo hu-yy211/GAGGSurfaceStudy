@@ -365,3 +365,35 @@ without introducing an arbitrary fit.
 Status: B0 validation gate passed. B1 will add the six runtime-selectable
 GAGG face states and one shared rough-surface `sigma_alpha`; it must not tune
 individual faces.
+
+## 2026-08-23 - B1 six runtime surface states
+
+- Added the six experimental surface states as runtime messenger choices. A
+  state change rebuilds the experiment geometry; no recompilation is needed.
+- Added one shared `/gagg/stageB/sigmaAlpha` parameter. Top, bottom and side
+  rough faces all read this same value; there are no independent per-face
+  tuning controls. Runtime switching from 0.20 to 0.25 rad and back passed the
+  structural surface validator.
+- Added explicit UNIFIED GAGG-to-ESR, GAGG-to-PMT-window and GAGG-to-side-air
+  borders. Structural validation checks each state's expected polished/ground
+  assignments, dielectric type, model, shared roughness and all four border
+  surfaces including the air-to-black absorber.
+- Extended each event row with surface-state and shared-roughness metadata plus
+  independent top, bottom and side boundary-interaction counters. Terminal
+  photon accounting remains independent of these diagnostic counters.
+- Used 50 events of 100 isotropic center-origin 550 nm photons per state. The
+  event seed base was held fixed, so primary directions were identical for all
+  states. The exact repeated all-polished run also reproduced every event.
+- At the predeclared validation-only `sigma_alpha = 0.20 rad`, total
+  `N_PMT/N_generated` was 0.3816, 0.5518, 0.5392, 0.1138, 0.1182 and 0.1180
+  for all polished, bottom rough, top rough, side rough, bottom polished with
+  others rough, and top polished with others rough. Normalized values were
+  1.000, 1.446, 1.413, 0.298, 0.310 and 0.309.
+- B0/B1 targeted regression passed 6/6 tests. The complete A0-B1 regression
+  passed 26/26 tests in 51.98 s.
+
+Status: B1 validation gate passed. This result validates state mapping,
+shared roughness, counting and reproducibility. The 0.20 rad value was not
+fitted, the source was optical-only, and no experimental-order gate or 511 keV
+gamma response is claimed. B2 will scan a predeclared roughness grid and
+multiple source positions before B3 introduces 511 keV gamma interactions.

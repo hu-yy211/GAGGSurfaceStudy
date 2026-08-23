@@ -9,7 +9,7 @@ collection.
   5.75 mm x 5.75 mm x 20 mm crystal with the UNIFIED model and one shared
   rough-surface sigma_alpha.
 
-The current validated milestone is B0. A0 provides a one-photon optical
+The current validated milestone is B1. A0 provides a one-photon optical
 transport baseline, Qt/OpenGL view, event-level CSV output, accounting checks
 and reproducible plots. A1 validates the literature parameters and their
 Geant4 unit conversions. A2 adds the paper's 1 mm Teflon-assumption side
@@ -27,8 +27,9 @@ There is no radioactive-decay source, detector energy resolution, PMT, or
 fitting yet. A6 validates gamma energy deposition and scintillation production.
 A7 has not passed its Fig. 4 ordering gate; four controlled interface/scoring
 models are retained as diagnosed mismatches rather than tuned into agreement.
-Following that bounded audit, B0 starts the experimental geometry without
-introducing roughness fitting or the six-state comparison yet.
+Following that bounded audit, B0 starts the experimental geometry and B1 adds
+the six runtime-selectable UNIFIED surface states with one shared roughness
+parameter. B1 is an optical-only switching validation, not an experimental fit.
 
 ## Build and run
 
@@ -427,11 +428,17 @@ efficiencies by only a few (10^{-3}), so its thickness was not tuned.
 Run and summarize the bounded model grid:
 
 ~~~sh
-./build/gagg_surface_study +  ./build/macros/validation/a7_model_direct_transmitted.mac
-./build/gagg_surface_study +  ./build/macros/validation/a7_model_direct_first_arrival.mac
-./build/gagg_surface_study +  ./build/macros/validation/a7_model_airgap_transmitted.mac
-./build/gagg_surface_study +  ./build/macros/validation/a7_model_airgap_first_arrival.mac
-python analysis/summarize_a7_models.py +  --input-dir results/a7/models --expect-events 50 +  --output results/a7/models/model_summary.csv
+./build/gagg_surface_study \
+  ./build/macros/validation/a7_model_direct_transmitted.mac
+./build/gagg_surface_study \
+  ./build/macros/validation/a7_model_direct_first_arrival.mac
+./build/gagg_surface_study \
+  ./build/macros/validation/a7_model_airgap_transmitted.mac
+./build/gagg_surface_study \
+  ./build/macros/validation/a7_model_airgap_first_arrival.mac
+python analysis/summarize_a7_models.py \
+  --input-dir results/a7/models --expect-events 50 \
+  --output results/a7/models/model_summary.csv
 ~~~
 
 ## B0 experimental geometry and optical baseline
@@ -464,10 +471,15 @@ actually transmit into `PMTWindow`, stored in the existing `output` column.
 Run the geometry and 5000-photon optical baseline:
 
 ~~~sh
-./build/gagg_surface_study +  ./build/macros/validation/b0_geometry.mac
-./build/gagg_surface_study +  ./build/macros/validation/b0_transport.mac
-python analysis/validate_b0.py +  --input results/b0/b0_transport.csv +  --expect-events 50 --photons-per-event 100
-./build/gagg_surface_study --interactive +  ./build/macros/validation/b0_vis.mac
+./build/gagg_surface_study \
+  ./build/macros/validation/b0_geometry.mac
+./build/gagg_surface_study \
+  ./build/macros/validation/b0_transport.mac
+python analysis/validate_b0.py \
+  --input results/b0/b0_transport.csv \
+  --expect-events 50 --photons-per-event 100
+./build/gagg_surface_study --interactive \
+  ./build/macros/validation/b0_vis.mac
 ~~~
 
 The validated baseline delivered 1845/5000 photons to the PMT window,
@@ -475,6 +487,52 @@ The validated baseline delivered 1845/5000 photons to the PMT window,
 classification, the direction sample passed isotropy checks, all analytic
 geometry/position/overlap checks passed, and the full suite passed 23/23
 CTest tests in 44.05 s.
+
+## B1 six runtime surface states
+
+B1 assigns independent UNIFIED borders to the GAGG top, bottom and sides. The
+top ESR is represented as dielectric-metal; the bottom PMT-window and side-air
+interfaces are dielectric-dielectric. The `/gagg/stageB/surfaceState` messenger
+switches all six experimental states without recompilation. Every rough face
+uses the same `/gagg/stageB/sigmaAlpha`; separate per-face roughness parameters
+do not exist. The CSV records the active state and shared value together with
+independent top, bottom and side boundary-interaction counters.
+
+Run the deterministic six-state optical-only comparison and make the figures:
+
+~~~sh
+./build/gagg_surface_study \
+  ./build/macros/stage_b/b1_compare.mac
+python analysis/validate_b1.py \
+  --input-dir results/b1 --expect-events 50 \
+  --photons-per-event 100 --sigma-alpha 0.20
+MPLCONFIGDIR=results/.mplconfig python analysis/plot_b1.py \
+  --input-dir results/b1 --output-dir results/b1/figures \
+  --expect-events 50 --photons-per-event 100 --sigma-alpha 0.20
+./build/gagg_surface_study --interactive \
+  ./build/macros/validation/b1_vis.mac
+~~~
+
+The B1 validation source emits 100 isotropic 550 nm photons at the crystal
+center in each of 50 events, with identical primary directions for every
+state. At the predeclared validation-only `sigma_alpha = 0.20 rad`, the result
+was:
+
+| State | N_PMT / N_generated | Normalized to all polished |
+|---|---:|---:|
+| all polished | 0.3816 | 1.000 |
+| bottom rough | 0.5518 | 1.446 |
+| top rough | 0.5392 | 1.413 |
+| side rough | 0.1138 | 0.298 |
+| bottom polished, others rough | 0.1182 | 0.310 |
+| top polished, others rough | 0.1180 | 0.309 |
+
+This is a surface-assignment and transport diagnostic. The value 0.20 rad was
+not fitted, no 511 keV interaction is present, and B1 does not claim an
+experimental prediction. The exact all-polished repeat, runtime state and
+roughness changes, shared-roughness checks, photon accounting, face counters
+and plot export all passed. The complete A0-B1 suite passed 26/26 tests in
+51.98 s.
 
 ## Directory design
 
@@ -528,7 +586,7 @@ centralized in "include/GAGG/SimulationConfig.hh".
 | B0 black structure thickness | 1.0 mm | unmeasured placeholder | runtime-selectable; ideal absorber |
 | B0 top ESR thickness | 0.1 mm | unmeasured placeholder | runtime-selectable |
 | B0 PMT window thickness/index | 0.5 mm / 1.52 | model placeholder | direct contact in B0 |
-| rough sigma_alpha | unset | free parameter | one shared value |
+| B1 rough sigma_alpha | 0.20 rad | free validation parameter | predeclared diagnostic value; one shared value; not fitted |
 
 The bulk composition is stoichiometric Gd3Al2Ga3O12. Ce concentration was not
 provided and is omitted from mass composition; supplied density and optical
@@ -553,5 +611,5 @@ groundtioair
 See "docs/stage-a-plan.md" and "docs/validation-log.md".
 
 Git commits and annotated tags are created only after a validation gate
-passes. A7 remains untagged; B0 is the next eligible validated checkpoint.
+passes. A7 remains untagged; B0 and B1 are independently validated checkpoints.
 See "docs/git-workflow.md" for the push convention.

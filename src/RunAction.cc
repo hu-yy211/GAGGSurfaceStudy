@@ -47,6 +47,9 @@ void RunAction::BeginOfRunAction(const G4Run*) {
   fOtherAbsorption = 0;
   fOtherWorldExit = 0;
   fLutInteractions = 0;
+  fTopSurfaceInteractions = 0;
+  fBottomSurfaceInteractions = 0;
+  fSideSurfaceInteractions = 0;
   fUnclassified = 0;
   G4cout << "[config] geometry_mode=" << fDetector->GetGeometryMode()
          << " crystal_size_x="
@@ -94,6 +97,10 @@ void RunAction::BeginOfRunAction(const G4Run*) {
          << " gamma_energy_keV=" << config::kStageAGammaEnergy / keV
          << " gamma_source_z_mm=" << config::kStageAGammaSourceZ / mm
          << " direction=minus_z" << G4endl;
+  G4cout << "[b1-run] surface_state="
+         << fDetector->GetStageBSurfaceState()
+         << " sigma_alpha_rad=" << fDetector->GetStageBSigmaAlpha() / rad
+         << G4endl;
 
   if (fCsvPath.empty()) {
     return;
@@ -109,11 +116,14 @@ void RunAction::BeginOfRunAction(const G4Run*) {
     return;
   }
   fCsv << "event_id,source_x_mm,source_y_mm,source_z_mm,source_particle,"
-          "source_energy_keV,stage_a_surface,edep_keV,scintillation,"
+          "source_energy_keV,stage_a_surface,stage_b_surface_state,"
+          "stage_b_sigma_alpha_rad,edep_keV,scintillation,"
           "generated,output,"
           "crystal_absorption,reflector_absorption,other_absorption,"
           "surface_absorption,other_world_exit,world_exit,bulk_absorption,"
-          "lut_interactions,unclassified\n";
+          "lut_interactions,top_surface_interactions,"
+          "bottom_surface_interactions,side_surface_interactions,"
+          "unclassified\n";
   G4cout << "[output] csv_open=" << fCsvPath << G4endl;
 }
 
@@ -138,6 +148,9 @@ void RunAction::EndOfRunAction(const G4Run* run) {
          << " other_absorption=" << fOtherAbsorption
          << " other_world_exit=" << fOtherWorldExit
          << " lut_interactions=" << fLutInteractions
+         << " top_surface_interactions=" << fTopSurfaceInteractions
+         << " bottom_surface_interactions=" << fBottomSurfaceInteractions
+         << " side_surface_interactions=" << fSideSurfaceInteractions
          << " unclassified=" << fUnclassified << G4endl;
   G4cout << "[a5] edep_keV=" << fEnergyDeposit / keV
          << " scintillation=" << fScintillation
@@ -167,6 +180,9 @@ void RunAction::WriteEvent(const EventRecord& record) {
   fOtherAbsorption += record.otherAbsorption;
   fOtherWorldExit += record.otherWorldExit;
   fLutInteractions += record.lutInteractions;
+  fTopSurfaceInteractions += record.topSurfaceInteractions;
+  fBottomSurfaceInteractions += record.bottomSurfaceInteractions;
+  fSideSurfaceInteractions += record.sideSurfaceInteractions;
   fUnclassified += record.unclassified;
 
   if (fCsv.is_open()) {
@@ -177,13 +193,19 @@ void RunAction::WriteEvent(const EventRecord& record) {
          << fPrimaryGenerator->GetParticleMode() << ','
          << fPrimaryGenerator->GetSourceEnergy() / keV << ','
          << fDetector->GetStageASurfaceName() << ','
+         << fDetector->GetStageBSurfaceState() << ','
+         << fDetector->GetStageBSigmaAlpha() / rad << ','
          << record.energyDeposit / keV << ',' << record.scintillation << ','
          << record.generated << ',' << record.output << ','
          << record.crystalAbsorption << ','
          << record.reflectorAbsorption << ',' << record.otherAbsorption << ','
          << record.surfaceAbsorption << ',' << record.otherWorldExit << ','
          << record.WorldExit() << ',' << record.BulkAbsorption() << ','
-         << record.lutInteractions << ',' << record.unclassified << '\n';
+         << record.lutInteractions << ','
+         << record.topSurfaceInteractions << ','
+         << record.bottomSurfaceInteractions << ','
+         << record.sideSurfaceInteractions << ','
+         << record.unclassified << '\n';
     ++fRowsWritten;
   }
 }
