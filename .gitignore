@@ -1,0 +1,44 @@
+# macOS
+.DS_Store
+.AppleDouble
+
+# CMake and compiled outputs
+/build/
+/build-*/
+/cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+DartConfiguration.tcl
+Testing/
+compile_commands.json
+install_manifest.txt
+
+# Generated simulation and analysis output
+/results/**
+!/results/.gitkeep
+!/results/README.md
+*.csv
+*.root
+*.log
+*.out
+*.heprep
+*.wrl
+*.vrml
+
+# Python and plotting caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mplconfig/
+.venv/
+venv/
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
