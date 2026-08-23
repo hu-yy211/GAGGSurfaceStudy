@@ -9,17 +9,20 @@ collection.
   5.75 mm x 5.75 mm x 20 mm crystal with the UNIFIED model and one shared
   rough-surface sigma_alpha.
 
-The current validated milestone is A3. A0 provides a one-photon optical
+The current validated milestone is A4. A0 provides a one-photon optical
 transport baseline, Qt/OpenGL view, event-level CSV output, accounting checks
 and reproducible plots. A1 validates the literature parameters and their
 Geant4 unit conversions. A2 adds the paper's 1 mm Teflon-assumption side
 sleeve and top cap while leaving the -z crystal output face open. A3 adds a
 fixed-count isotropic 550 nm source at controlled positions and records the
-first crossing of that open face as `N_output`.
+first crossing of that open face as `N_output`. A4 attaches the four paper
+LBNL LUT finishes to the GAGG-to-side/top borders and switches them at runtime
+through geometry reinitialization.
 
-There is no LUT optical surface, scintillation production, gamma source, PMT,
-or fitting yet. The current `N_output/N_generated` values validate transport
-and accounting only and must not be compared with the paper's Fig. 4 yet.
+There is no scintillation production, gamma source, PMT, or fitting yet. The
+current A4 `N_output/N_generated` values validate LUT loading, switching and
+accounting only. Fig. 4 ordering is deliberately deferred until A7, after A5
+scintillation and A6 gamma-interaction validation.
 
 ## Build and run
 
@@ -156,7 +159,8 @@ into the world, then the track is killed. The A3 event accounting identity is:
 
 ~~~text
 N_generated = N_output + N_GAGG_absorption + N_reflector_absorption
-            + N_other_absorption + N_other_world_exit + N_unclassified
+            + N_surface_absorption + N_other_absorption
+            + N_other_world_exit + N_unclassified
 ~~~
 
 For the fixed A3 validation seed, each scan point contains 20,000 photons.
@@ -164,6 +168,54 @@ The center efficiency is 0.17065, and disabling GAGG self-absorption gives
 0.17800. The axial scan at z = -10, -5, 0, 5 and 10 mm gives 0.40250,
 0.25870, 0.17065, 0.17735 and 0.17155. The small center-to-+5 mm reversal is
 1.767 standard deviations and therefore not statistically significant.
+
+## A4 LUT switching and plots
+
+Run all four LBNL LUT finishes in one executable process. The macro resets the
+random seed for each 10,000-photon run and finally switches back to
+`polishedvm2000air` for an exact event-row reproducibility check:
+
+~~~sh
+./build/gagg_surface_study \
+  ./build/macros/stage_a/a4_compare.mac
+python analysis/validate_a4.py --input-dir results/a4
+MPLCONFIGDIR=results/.mplconfig python analysis/plot_a4.py \
+  --input-dir results/a4 --output-dir results/a4/figures
+~~~
+
+This creates one event CSV per finish plus:
+
+- `results/a4/figures/a4_surface_summary.csv`
+- `results/a4/figures/a4_surface_efficiency.png`
+- `results/a4/figures/a4_terminal_outcomes.png`
+
+Open the A4 `groundtioair` scene with 20 green optical-photon trajectories:
+
+~~~sh
+./build/gagg_surface_study --interactive \
+  ./build/macros/validation/a4_vis.mac
+~~~
+
+The active surface is selected without recompilation:
+
+~~~text
+/gagg/stageA/surface polishedvm2000air
+/gagg/stageA/surface polishedtioair
+/gagg/stageA/surface groundvm2000air
+/gagg/stageA/surface groundtioair
+~~~
+
+When changing the finish after initialization, the command requests geometry
+reinitialization. Use `/run/initialize` before `/gagg/stageA/validate` (or let
+the next `/run/beamOn` initialize it). The validator confirms two directional
+borders, `model=LUT`, `type=dielectric_LUT`, the exact finish, the required
+RealSurface file and a nonzero `lut_interactions` count.
+
+The fixed A4 functional run returned 0.8818, 0.8586, 0.8826 and 0.8657 for
+`polishedvm2000air`, `polishedtioair`, `groundvm2000air` and `groundtioair`,
+respectively. This is not the paper's order and is not treated as an A4
+failure: the source is still a point-like fixed-count optical source rather
+than 662 keV gamma-induced scintillation. No parameter was tuned.
 
 ## Directory design
 
@@ -201,6 +253,8 @@ centralized in "include/GAGG/SimulationConfig.hh".
 | reflector | 1 mm, n=1.35 | literature | A2 geometry active in `paper` mode |
 | reflector density | 2.2 g/cm3, Teflon assumption | literature | A2 validated |
 | reflector absorption | 100 cm^-1 = 0.1 mm length | literature model assumption | A2 bulk property active |
+| Stage A LUT data | RealSurface 2.2 | installed Geant4 dataset | A4 active |
+| Stage A finishes | four named LBNL LUT finishes | literature model choice | A4 runtime-selectable |
 | Stage B crystal | 5.75 x 5.75 x 20 mm3 | measured/setup | slides |
 | rough sigma_alpha | unset | free parameter | one shared value |
 
@@ -208,10 +262,11 @@ The bulk composition is stoichiometric Gd3Al2Ga3O12. Ce concentration was not
 provided and is omitted from mass composition; supplied density and optical
 constants are used directly.
 
-For A2 the side sleeve directly touches the crystal and spans only the crystal
+For A2/A4 the side sleeve directly touches the crystal and spans only the crystal
 length. The top cap covers the full 13.7 mm outer radius and directly touches
 both crystal and sleeve. The paper gives no finite air-gap thickness, so none
-is invented. These solids do not yet define the LUT boundary response.
+is invented. A4 assigns the selected LUT as directional GAGG-to-reflector
+border surfaces on the side and top only; the -z output face remains open.
 
 The Stage A qualitative target read from Fig. 4 is:
 

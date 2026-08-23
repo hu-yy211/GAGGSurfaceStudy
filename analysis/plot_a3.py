@@ -57,6 +57,7 @@ def main() -> int:
         "Output",
         "GAGG absorption",
         "Reflector absorption",
+        "Surface absorption",
         "Other absorption",
         "Other world exit",
     ]
@@ -64,6 +65,7 @@ def main() -> int:
         center.output,
         center.crystal_absorption,
         center.reflector_absorption,
+        center.surface_absorption,
         center.other_absorption,
         center.other_world_exit,
     ]
@@ -71,7 +73,14 @@ def main() -> int:
     bars = axis.bar(
         labels,
         values,
-        color=["#2878B5", "#D95F02", "#7A5195", "#777777", "#6A994E"],
+        color=[
+            "#2878B5",
+            "#D95F02",
+            "#7A5195",
+            "#BC5090",
+            "#777777",
+            "#6A994E",
+        ],
     )
     axis.set_ylabel("Optical photons")
     axis.set_title("A3 center-source terminal outcomes")

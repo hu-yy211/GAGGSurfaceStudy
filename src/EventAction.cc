@@ -17,15 +17,17 @@ void EventAction::BeginOfEventAction(const G4Event*) {
   fOutput = 0;
   fCrystalAbsorption = 0;
   fReflectorAbsorption = 0;
+  fSurfaceAbsorption = 0;
   fOtherAbsorption = 0;
   fOtherWorldExit = 0;
+  fLutInteractions = 0;
 }
 
 void EventAction::EndOfEventAction(const G4Event* event) {
   const auto generated = fPrimaryGenerator->GetPhotonsPerEvent();
   const auto classified = fOutput + fCrystalAbsorption +
-                          fReflectorAbsorption + fOtherAbsorption +
-                          fOtherWorldExit;
+                          fReflectorAbsorption + fSurfaceAbsorption +
+                          fOtherAbsorption + fOtherWorldExit;
   const auto unclassified = generated - classified;
 
   const EventRecord record{event->GetEventID(),
@@ -34,8 +36,10 @@ void EventAction::EndOfEventAction(const G4Event* event) {
                            fOutput,
                            fCrystalAbsorption,
                            fReflectorAbsorption,
+                           fSurfaceAbsorption,
                            fOtherAbsorption,
                            fOtherWorldExit,
+                           fLutInteractions,
                            unclassified};
 
   if (fRunAction->ShouldPrintEvent(event->GetEventID()) || unclassified != 0) {
@@ -43,8 +47,10 @@ void EventAction::EndOfEventAction(const G4Event* event) {
            << " generated=" << generated << " output=" << fOutput
            << " crystal_absorption=" << fCrystalAbsorption
            << " reflector_absorption=" << fReflectorAbsorption
+           << " surface_absorption=" << fSurfaceAbsorption
            << " other_absorption=" << fOtherAbsorption
            << " other_world_exit=" << fOtherWorldExit
+           << " lut_interactions=" << fLutInteractions
            << " unclassified=" << unclassified << G4endl;
   }
   fRunAction->WriteEvent(record);

@@ -13,18 +13,21 @@ EXPECTED_COLUMNS = [
     "source_x_mm",
     "source_y_mm",
     "source_z_mm",
+    "stage_a_surface",
     "generated",
     "output",
     "crystal_absorption",
     "reflector_absorption",
     "other_absorption",
+    "surface_absorption",
     "other_world_exit",
     "world_exit",
     "bulk_absorption",
+    "lut_interactions",
     "unclassified",
 ]
 
-COUNT_COLUMNS = EXPECTED_COLUMNS[4:]
+COUNT_COLUMNS = EXPECTED_COLUMNS[5:]
 
 
 @dataclass(frozen=True)
@@ -36,8 +39,10 @@ class Summary:
     output: int
     crystal_absorption: int
     reflector_absorption: int
+    surface_absorption: int
     other_absorption: int
     other_world_exit: int
+    lut_interactions: int
 
     @property
     def efficiency(self) -> float:
@@ -75,6 +80,8 @@ def load_summary(path: Path, expected_z_mm: float) -> Summary:
         )
         if source != (0.0, 0.0, expected_z_mm):
             raise ValueError(f"unexpected source in {path}: {source}")
+        if row["stage_a_surface"] != "none":
+            raise ValueError(f"unexpected A3 surface in {path}")
 
         values = {key: int(row[key]) for key in COUNT_COLUMNS}
         if expected_generated is None:
@@ -93,11 +100,17 @@ def load_summary(path: Path, expected_z_mm: float) -> Summary:
             raise ValueError(
                 f"bulk-absorption subtotal failed in {path}: {values}"
             )
-        classified = values["world_exit"] + values["bulk_absorption"]
+        classified = (
+            values["world_exit"]
+            + values["bulk_absorption"]
+            + values["surface_absorption"]
+        )
         if classified + values["unclassified"] != values["generated"]:
             raise ValueError(f"photon accounting failed in {path}: {values}")
         if values["unclassified"] != 0:
             raise ValueError(f"unclassified photon in {path}: {values}")
+        if values["surface_absorption"] != 0 or values["lut_interactions"] != 0:
+            raise ValueError(f"A3 unexpectedly invoked LUT transport in {path}")
 
         for key, value in values.items():
             totals[key] += value
@@ -111,8 +124,10 @@ def load_summary(path: Path, expected_z_mm: float) -> Summary:
         output=totals["output"],
         crystal_absorption=totals["crystal_absorption"],
         reflector_absorption=totals["reflector_absorption"],
+        surface_absorption=totals["surface_absorption"],
         other_absorption=totals["other_absorption"],
         other_world_exit=totals["other_world_exit"],
+        lut_interactions=totals["lut_interactions"],
     )
 
 

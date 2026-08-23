@@ -19,8 +19,10 @@ class EventAction final : public G4UserEventAction {
   void RecordOutput() { ++fOutput; }
   void RecordCrystalAbsorption() { ++fCrystalAbsorption; }
   void RecordReflectorAbsorption() { ++fReflectorAbsorption; }
+  void RecordSurfaceAbsorption() { ++fSurfaceAbsorption; }
   void RecordOtherAbsorption() { ++fOtherAbsorption; }
   void RecordOtherWorldExit() { ++fOtherWorldExit; }
+  void RecordLutInteraction() { ++fLutInteractions; }
 
  private:
   RunAction* fRunAction = nullptr;
@@ -28,8 +30,10 @@ class EventAction final : public G4UserEventAction {
   G4int fOutput = 0;
   G4int fCrystalAbsorption = 0;
   G4int fReflectorAbsorption = 0;
+  G4int fSurfaceAbsorption = 0;
   G4int fOtherAbsorption = 0;
   G4int fOtherWorldExit = 0;
+  G4int fLutInteractions = 0;
 };
 
 }  // namespace gagg

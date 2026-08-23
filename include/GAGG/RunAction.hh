@@ -13,11 +13,13 @@ class G4GenericMessenger;
 namespace gagg {
 
 class PrimaryGeneratorAction;
+class DetectorConstruction;
 struct EventRecord;
 
 class RunAction final : public G4UserRunAction {
  public:
-  explicit RunAction(PrimaryGeneratorAction* primaryGenerator);
+  RunAction(PrimaryGeneratorAction* primaryGenerator,
+            const DetectorConstruction* detector);
   ~RunAction() override;
 
   void BeginOfRunAction(const G4Run*) override;
@@ -29,6 +31,7 @@ class RunAction final : public G4UserRunAction {
  private:
   std::unique_ptr<G4GenericMessenger> fMessenger;
   PrimaryGeneratorAction* fPrimaryGenerator = nullptr;
+  const DetectorConstruction* fDetector = nullptr;
   G4String fCsvPath;
   G4int fEventPrintModulo = 1;
   std::ofstream fCsv;
@@ -37,8 +40,10 @@ class RunAction final : public G4UserRunAction {
   std::int64_t fOutput = 0;
   std::int64_t fCrystalAbsorption = 0;
   std::int64_t fReflectorAbsorption = 0;
+  std::int64_t fSurfaceAbsorption = 0;
   std::int64_t fOtherAbsorption = 0;
   std::int64_t fOtherWorldExit = 0;
+  std::int64_t fLutInteractions = 0;
   std::int64_t fUnclassified = 0;
 };
 

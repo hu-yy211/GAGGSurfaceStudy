@@ -137,4 +137,39 @@ if(BUILD_TESTING)
     ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
     PASS_REGULAR_EXPRESSION "\\[a3-plot\\] status=PASS"
   )
+
+  add_test(
+    NAME a4_surface_export
+    COMMAND $<TARGET_FILE:gagg_surface_study>
+            ${PROJECT_BINARY_DIR}/macros/stage_a/a4_compare.mac
+  )
+  set_tests_properties(a4_surface_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[output\\] csv=results/a4/polishedvm2000air_repeat.csv rows=50"
+    FAIL_REGULAR_EXPRESSION "unclassified=[1-9][0-9]*|status=FAIL|G4Exception|Fatal Exception"
+    TIMEOUT 300
+  )
+
+  add_test(
+    NAME a4_surface_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_a4.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/a4
+  )
+  set_tests_properties(a4_surface_validate PROPERTIES
+    DEPENDS a4_surface_export
+    PASS_REGULAR_EXPRESSION "\\[a4-check\\] lut_switching status=PASS"
+  )
+
+  add_test(
+    NAME a4_plot
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/plot_a4.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/a4
+            --output-dir ${PROJECT_BINARY_DIR}/a4_plots
+  )
+  set_tests_properties(a4_plot PROPERTIES
+    DEPENDS a4_surface_validate
+    ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
+    PASS_REGULAR_EXPRESSION "\\[a4-plot\\] status=PASS"
+  )
 endif()

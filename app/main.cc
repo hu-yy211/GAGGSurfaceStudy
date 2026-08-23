@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
   runManager->SetUserInitialization(new gagg::PhysicsList());
   auto* primaryGenerator = new gagg::PrimaryGeneratorAction();
   runManager->SetUserAction(primaryGenerator);
-  auto* runAction = new gagg::RunAction(primaryGenerator);
+  auto* runAction = new gagg::RunAction(primaryGenerator, detector);
   runManager->SetUserAction(runAction);
   auto* eventAction = new gagg::EventAction(runAction, primaryGenerator);
   runManager->SetUserAction(eventAction);

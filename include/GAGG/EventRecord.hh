@@ -13,8 +13,10 @@ struct EventRecord {
   G4int output = 0;
   G4int crystalAbsorption = 0;
   G4int reflectorAbsorption = 0;
+  G4int surfaceAbsorption = 0;
   G4int otherAbsorption = 0;
   G4int otherWorldExit = 0;
+  G4int lutInteractions = 0;
   G4int unclassified = 0;
 
   G4int WorldExit() const { return output + otherWorldExit; }

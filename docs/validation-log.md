@@ -125,3 +125,44 @@ scintillation, gamma source or PMT has been added.
 Status: validation gate A3 passed. These results use only Fresnel transport
 and reflector bulk absorption; no LUT optical surface, scintillation, gamma
 source or PMT exists, so the efficiencies are not Fig. 4 predictions.
+
+## 2026-08-23 - A4 LUT switching by messenger
+
+- `/gagg/stageA/surface` accepts `none` plus the four required LBNL LUT
+  finishes. The four active finishes are switched at PreInit or Idle without
+  recompilation.
+- At Idle, a finish change clears the old logical-border table and requests
+  `ReinitializeGeometry(true)`. The comparison macro explicitly initializes
+  the new geometry before validating or running it.
+- The active finish is assigned to the directional GAGG-to-side-reflector and
+  GAGG-to-top-reflector borders. Both borders share one `G4OpticalSurface`
+  configured as `model=LUT` and `type=dielectric_LUT`; the -z output face has
+  no LUT surface.
+- `G4REALSURFACEDATA` resolved to RealSurface 2.2. Geant4 successfully read
+  `PolishedVM2000.z`, `PolishedTiO.z`, `GroundVM2000.z` and `GroundTiO.z`.
+  The A4 surface validator confirmed the expected file, finish, model, type
+  and exactly two border surfaces after every initialization.
+- The event CSV now records `stage_a_surface`, `surface_absorption` and
+  `lut_interactions`. A0/A3 require these LUT diagnostics to be inactive;
+  A4 requires a nonzero interaction count. Terminal accounting includes
+  surface absorption and remained exact with zero unclassified photons.
+- Each finish used 50 events with 200 fixed-count isotropic 550 nm photons per
+  event. `polishedvm2000air`, `polishedtioair`, `groundvm2000air` and
+  `groundtioair` produced efficiencies 0.8818, 0.8586, 0.8826 and 0.8657 and
+  31,234, 41,232, 32,989 and 38,783 LUT interactions, respectively.
+- LBNL LUT non-reflections entered the 0.1 mm bulk-absorption reflector in
+  this geometry; boundary-process `surface_absorption` was zero and is not
+  required to be positive. No parameter was changed in response.
+- Resetting the seed after switching back to `polishedvm2000air` reproduced
+  the original 50 CSV event rows exactly.
+- The efficiency/error-bar plot and normalized terminal-outcome plot were
+  generated and visually inspected. The Qt/OpenGL A4 macro opened with the
+  `groundtioair` LUT loaded, two validated borders and 20 green trajectories;
+  its single event closed with 46 LUT interactions and zero unclassified
+  photons.
+- The complete A0-A4 regression suite passed 13/13 CTest tests.
+
+Status: validation gate A4 passed. The observed functional comparison does
+not match the paper's Fig. 4 ordering, but A4 deliberately does not test that
+ordering. Scintillation, a 662 keV gamma source, full-energy event selection
+and the Fig. 4 validation criterion remain A5-A7 work.

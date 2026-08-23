@@ -1,0 +1,34 @@
+/control/verbose 1
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/random/setSeeds 314159 271828
+/gagg/geometry/mode paper
+/gagg/optics/gaggBulkAbsorption true
+/gagg/stageA/surface groundtioair
+/gagg/source/mode isotropic
+/gagg/source/photonsPerEvent 20
+/gagg/source/position 0 0 0 mm
+/gagg/output/eventPrintModulo 1
+/run/initialize
+/gagg/stageA/validate
+
+/vis/open OGL 1000x800-0+0
+/vis/viewer/set/autoRefresh false
+/vis/verbose errors
+/vis/drawVolume
+/vis/viewer/set/viewpointThetaPhi 70 30 deg
+/vis/viewer/set/style surface
+/vis/viewer/set/auxiliaryEdge true
+/vis/viewer/zoom 2.0
+/vis/scene/add/axes 0 0 0 2 cm
+/vis/scene/add/trajectories smooth
+/vis/modeling/trajectories/create/drawByParticleID
+/vis/modeling/trajectories/drawByParticleID-0/set opticalphoton green
+/vis/scene/endOfEventAction accumulate 1
+/tracking/storeTrajectory 1
+/vis/viewer/set/autoRefresh true
+/vis/verbose warnings
+
+/run/beamOn 1
+/vis/viewer/refresh

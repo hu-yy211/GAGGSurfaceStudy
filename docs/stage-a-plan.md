@@ -55,14 +55,22 @@ and all events closed with zero unclassified photons. Disabling GAGG
 self-absorption changed `N_output/N_generated` from 0.17065 to 0.17800. The
 five-point axial scan had no upward reversal larger than 3 sigma.
 
-### A4 - LUT switching by messenger
+### A4 - LUT switching by messenger - PASSED
 
 Implement "/gagg/stageA/surface" with polishedvm2000air,
 polishedtioair, groundvm2000air and groundtioair. Apply changes by geometry
 reinitialization, never recompilation.
 
-Pass: four macros use one executable, the run header reports the selected
-finish, and installed G4REALSURFACEDATA is loaded.
+Pass: one macro switches all four finishes in one executable, every run header
+reports the selected finish, and installed G4REALSURFACEDATA is loaded.
+
+Status: passed on 2026-08-23. Two directional GAGG-to-reflector border
+surfaces share the selected LBNL LUT. Switching at Idle requests full geometry
+reinitialization; the comparison macro initializes and validates the rebuilt
+border table before every run. All four runs had nonzero LUT interactions,
+closed photon accounting and zero unclassified photons. Switching back to
+`polishedvm2000air` reproduced all 50 event rows exactly. The A4 output order
+is recorded but is not a pass criterion before A7.
 
 ### A5 - Scintillation validation
 

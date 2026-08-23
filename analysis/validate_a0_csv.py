@@ -11,18 +11,21 @@ EXPECTED_COLUMNS = [
     "source_x_mm",
     "source_y_mm",
     "source_z_mm",
+    "stage_a_surface",
     "generated",
     "output",
     "crystal_absorption",
     "reflector_absorption",
     "other_absorption",
+    "surface_absorption",
     "other_world_exit",
     "world_exit",
     "bulk_absorption",
+    "lut_interactions",
     "unclassified",
 ]
 
-COUNT_COLUMNS = EXPECTED_COLUMNS[4:]
+COUNT_COLUMNS = EXPECTED_COLUMNS[5:]
 
 
 def main() -> int:
@@ -56,6 +59,8 @@ def main() -> int:
         source = tuple(float(row[key]) for key in EXPECTED_COLUMNS[1:4])
         if source != (0.0, 0.0, 0.0):
             raise ValueError(f"unexpected A0 source position: {source}")
+        if row["stage_a_surface"] != "none":
+            raise ValueError(f"unexpected A0 surface: {row['stage_a_surface']}")
         if values["world_exit"] != (
             values["output"] + values["other_world_exit"]
         ):
@@ -66,9 +71,15 @@ def main() -> int:
             + values["other_absorption"]
         ):
             raise ValueError(f"bulk-absorption subtotal failed: {values}")
-        classified = values["world_exit"] + values["bulk_absorption"]
+        classified = (
+            values["world_exit"]
+            + values["bulk_absorption"]
+            + values["surface_absorption"]
+        )
         if values["generated"] != 1 or classified != 1:
             raise ValueError(f"photon accounting failed: {values}")
+        if values["surface_absorption"] != 0 or values["lut_interactions"] != 0:
+            raise ValueError(f"A0 unexpectedly invoked LUT transport: {values}")
         if values["unclassified"] != 0:
             raise ValueError(f"unclassified photon: {values}")
 

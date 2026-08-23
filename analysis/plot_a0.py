@@ -19,6 +19,7 @@ def load_rows(path: Path) -> list[dict[str, int]]:
             "generated",
             "world_exit",
             "bulk_absorption",
+            "surface_absorption",
             "unclassified",
         }
         if not required.issubset(set(reader.fieldnames or [])):
@@ -30,13 +31,19 @@ def load_rows(path: Path) -> list[dict[str, int]]:
 
 
 def plot_terminal_outcomes(rows: list[dict[str, int]], output: Path) -> None:
-    labels = ["World exit", "Bulk absorption", "Unclassified"]
+    labels = [
+        "World exit",
+        "Bulk absorption",
+        "Surface absorption",
+        "Unclassified",
+    ]
     values = [
         sum(row["world_exit"] for row in rows),
         sum(row["bulk_absorption"] for row in rows),
+        sum(row["surface_absorption"] for row in rows),
         sum(row["unclassified"] for row in rows),
     ]
-    colors = ["#2878B5", "#D95F02", "#777777"]
+    colors = ["#2878B5", "#D95F02", "#7A5195", "#777777"]
     total = sum(row["generated"] for row in rows)
 
     fig, axis = plt.subplots(figsize=(8.2, 5.2))
@@ -68,7 +75,11 @@ def plot_accounting(rows: list[dict[str, int]], output: Path) -> None:
 
     for row in rows:
         generated_total += row["generated"]
-        classified_total += row["world_exit"] + row["bulk_absorption"]
+        classified_total += (
+            row["world_exit"]
+            + row["bulk_absorption"]
+            + row["surface_absorption"]
+        )
         unclassified_total += row["unclassified"]
         event_ids.append(row["event_id"] + 1)
         generated.append(generated_total)

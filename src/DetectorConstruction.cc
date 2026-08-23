@@ -4,13 +4,17 @@
 
 #include "G4Box.hh"
 #include "G4Colour.hh"
+#include "G4Exception.hh"
 #include "G4GenericMessenger.hh"
+#include "G4LogicalBorderSurface.hh"
 #include "G4LogicalVolume.hh"
 #include "G4Material.hh"
 #include "G4MaterialPropertiesTable.hh"
 #include "G4Navigator.hh"
 #include "G4NistManager.hh"
+#include "G4OpticalSurface.hh"
 #include "G4PVPlacement.hh"
+#include "G4RunManager.hh"
 #include "G4StateManager.hh"
 #include "G4TransportationManager.hh"
 #include "G4Tubs.hh"
@@ -19,6 +23,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
+#include <filesystem>
 #include <vector>
 
 namespace {
@@ -29,6 +35,42 @@ bool RelativeClose(G4double actual, G4double expected,
          relativeTolerance * std::max(std::abs(expected), 1.0);
 }
 
+G4OpticalSurfaceFinish StageASurfaceFinish(const G4String& name) {
+  if (name == "polishedvm2000air") {
+    return polishedvm2000air;
+  }
+  if (name == "polishedtioair") {
+    return polishedtioair;
+  }
+  if (name == "groundvm2000air") {
+    return groundvm2000air;
+  }
+  if (name == "groundtioair") {
+    return groundtioair;
+  }
+  G4ExceptionDescription description;
+  description << "Unsupported Stage A LUT surface: " << name;
+  G4Exception("StageASurfaceFinish", "GAGG-A4-001", FatalException,
+              description);
+  return polishedvm2000air;
+}
+
+G4String StageASurfaceDataFile(const G4String& name) {
+  if (name == "polishedvm2000air") {
+    return "PolishedVM2000.z";
+  }
+  if (name == "polishedtioair") {
+    return "PolishedTiO.z";
+  }
+  if (name == "groundvm2000air") {
+    return "GroundVM2000.z";
+  }
+  if (name == "groundtioair") {
+    return "GroundTiO.z";
+  }
+  return "none";
+}
+
 }  // namespace
 
 namespace gagg {
@@ -37,7 +79,9 @@ DetectorConstruction::DetectorConstruction()
     : fMessenger(std::make_unique<G4GenericMessenger>(
           this, "/gagg/geometry/", "GAGG geometry controls")),
       fOpticsMessenger(std::make_unique<G4GenericMessenger>(
-          this, "/gagg/optics/", "GAGG optical-material controls")) {
+          this, "/gagg/optics/", "GAGG optical-material controls")),
+      fStageAMessenger(std::make_unique<G4GenericMessenger>(
+          this, "/gagg/stageA/", "Stage A LUT surface controls")) {
   auto& modeCommand = fMessenger->DeclareMethod(
       "mode", &DetectorConstruction::SetGeometryMode,
       "Select bare A0 geometry or paper A2 reflector geometry.");
@@ -55,6 +99,20 @@ DetectorConstruction::DetectorConstruction()
       "gaggBulkAbsorption", fGaggBulkAbsorption,
       "Enable the literature GAGG bulk self-absorption length.");
   absorptionCommand.SetStates(G4State_PreInit);
+
+  auto& surfaceCommand = fStageAMessenger->DeclareMethod(
+      "surface", &DetectorConstruction::SetStageASurface,
+      "Select the Stage A LBNL LUT finish; none disables the LUT boundary.");
+  surfaceCommand.SetParameterName("finish", false);
+  surfaceCommand.SetCandidates(
+      "none polishedvm2000air polishedtioair groundvm2000air groundtioair");
+  surfaceCommand.SetDefaultValue("none");
+  surfaceCommand.SetStates(G4State_PreInit, G4State_Idle);
+
+  auto& validateSurfaceCommand = fStageAMessenger->DeclareMethod(
+      "validate", &DetectorConstruction::ValidateStageASurface,
+      "Validate the active Stage A LUT surface and border assignments.");
+  validateSurfaceCommand.SetStates(G4State_Idle);
 }
 
 DetectorConstruction::~DetectorConstruction() = default;
@@ -63,45 +121,80 @@ void DetectorConstruction::SetGeometryMode(const G4String& mode) {
   fGeometryMode = mode;
 }
 
+void DetectorConstruction::SetStageASurface(const G4String& surface) {
+  if (surface == fStageASurface) {
+    G4cout << "[a4] surface_change old=" << fStageASurface
+           << " new=" << surface << " geometry_reinitialized=false"
+           << " reason=unchanged" << G4endl;
+    return;
+  }
+
+  const auto oldSurface = fStageASurface;
+  fStageASurface = surface;
+  if (G4StateManager::GetStateManager()->GetCurrentState() == G4State_Idle) {
+    G4LogicalBorderSurface::CleanSurfaceTable();
+    fWorldPhysical = nullptr;
+    fCrystalPhysical = nullptr;
+    fSideReflectorPhysical = nullptr;
+    fTopReflectorPhysical = nullptr;
+    G4RunManager::GetRunManager()->ReinitializeGeometry(true);
+    G4cout << "[a4] surface_change old=" << oldSurface
+           << " new=" << fStageASurface
+           << " geometry_reinitialization_requested=true" << G4endl;
+  }
+}
+
+G4String DetectorConstruction::GetRealSurfaceDataPath() const {
+  const auto* path = std::getenv("G4REALSURFACEDATA");
+  return path == nullptr ? G4String() : G4String(path);
+}
+
 G4VPhysicalVolume* DetectorConstruction::Construct() {
   auto* nist = G4NistManager::Instance();
   const std::vector<G4double> energies = {
       config::kOpticalEnergyMin, config::kOpticalEnergyMax};
 
   auto* vacuum = nist->FindOrBuildMaterial("G4_Galactic");
-  const std::vector<G4double> vacuumIndex = {1.0, 1.0};
-  auto* vacuumMpt = new G4MaterialPropertiesTable();
-  vacuumMpt->AddProperty("RINDEX", energies, vacuumIndex);
-  vacuum->SetMaterialPropertiesTable(vacuumMpt);
-
-  auto* gagg = new G4Material("GAGG_Ce", config::kCrystalDensity, 4);
-  gagg->AddElement(nist->FindOrBuildElement("Gd"), 3);
-  gagg->AddElement(nist->FindOrBuildElement("Al"), 2);
-  gagg->AddElement(nist->FindOrBuildElement("Ga"), 3);
-  gagg->AddElement(nist->FindOrBuildElement("O"), 12);
-
-  const std::vector<G4double> gaggIndex = {
-      config::kGaggRefractiveIndex, config::kGaggRefractiveIndex};
-  const std::vector<G4double> absorption = {
-      config::kAbsorptionLength, config::kAbsorptionLength};
-  auto* gaggMpt = new G4MaterialPropertiesTable();
-  gaggMpt->AddProperty("RINDEX", energies, gaggIndex);
-  if (fGaggBulkAbsorption) {
-    gaggMpt->AddProperty("ABSLENGTH", energies, absorption);
+  if (vacuum->GetMaterialPropertiesTable() == nullptr) {
+    const std::vector<G4double> vacuumIndex = {1.0, 1.0};
+    auto* vacuumMpt = new G4MaterialPropertiesTable();
+    vacuumMpt->AddProperty("RINDEX", energies, vacuumIndex);
+    vacuum->SetMaterialPropertiesTable(vacuumMpt);
   }
-  gagg->SetMaterialPropertiesTable(gaggMpt);
+
+  auto* gagg = G4Material::GetMaterial("GAGG_Ce", false);
+  if (gagg == nullptr) {
+    gagg = new G4Material("GAGG_Ce", config::kCrystalDensity, 4);
+    gagg->AddElement(nist->FindOrBuildElement("Gd"), 3);
+    gagg->AddElement(nist->FindOrBuildElement("Al"), 2);
+    gagg->AddElement(nist->FindOrBuildElement("Ga"), 3);
+    gagg->AddElement(nist->FindOrBuildElement("O"), 12);
+
+    const std::vector<G4double> gaggIndex = {
+        config::kGaggRefractiveIndex, config::kGaggRefractiveIndex};
+    const std::vector<G4double> absorption = {
+        config::kAbsorptionLength, config::kAbsorptionLength};
+    auto* gaggMpt = new G4MaterialPropertiesTable();
+    gaggMpt->AddProperty("RINDEX", energies, gaggIndex);
+    if (fGaggBulkAbsorption) {
+      gaggMpt->AddProperty("ABSLENGTH", energies, absorption);
+    }
+    gagg->SetMaterialPropertiesTable(gaggMpt);
+  }
 
   auto* reflector = nist->FindOrBuildMaterial("G4_TEFLON");
-  const std::vector<G4double> reflectorIndex = {
-      config::kReflectorRefractiveIndex,
-      config::kReflectorRefractiveIndex};
-  const std::vector<G4double> reflectorAbsorption = {
-      config::kReflectorAbsorptionLength,
-      config::kReflectorAbsorptionLength};
-  auto* reflectorMpt = new G4MaterialPropertiesTable();
-  reflectorMpt->AddProperty("RINDEX", energies, reflectorIndex);
-  reflectorMpt->AddProperty("ABSLENGTH", energies, reflectorAbsorption);
-  reflector->SetMaterialPropertiesTable(reflectorMpt);
+  if (reflector->GetMaterialPropertiesTable() == nullptr) {
+    const std::vector<G4double> reflectorIndex = {
+        config::kReflectorRefractiveIndex,
+        config::kReflectorRefractiveIndex};
+    const std::vector<G4double> reflectorAbsorption = {
+        config::kReflectorAbsorptionLength,
+        config::kReflectorAbsorptionLength};
+    auto* reflectorMpt = new G4MaterialPropertiesTable();
+    reflectorMpt->AddProperty("RINDEX", energies, reflectorIndex);
+    reflectorMpt->AddProperty("ABSLENGTH", energies, reflectorAbsorption);
+    reflector->SetMaterialPropertiesTable(reflectorMpt);
+  }
 
   auto* worldSolid =
       new G4Box("World", config::kWorldHalfLength, config::kWorldHalfLength,
@@ -153,6 +246,12 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
     fTopReflectorPhysical = new G4PVPlacement(
         nullptr, {0.0, 0.0, config::kTopReflectorCenterZ}, topLogical,
         "TopReflector", worldLogical, false, 0, true);
+
+    ConfigureStageASurface();
+  } else if (HasStageALutSurface()) {
+    G4Exception("DetectorConstruction::Construct", "GAGG-A4-002",
+                FatalException,
+                "A Stage A LUT surface requires /gagg/geometry/mode paper");
   }
 
   G4cout << "[geometry] mode=" << fGeometryMode
@@ -160,6 +259,98 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
          << " g/cm3 gagg_bulk_absorption="
          << (fGaggBulkAbsorption ? "on" : "off") << G4endl;
   return fWorldPhysical;
+}
+
+void DetectorConstruction::ConfigureStageASurface() {
+  if (!HasStageALutSurface()) {
+    G4cout << "[a4] surface=none model=none borders=0 data_status=SKIP"
+           << G4endl;
+    return;
+  }
+
+  const auto dataPath = GetRealSurfaceDataPath();
+  const auto dataFile = StageASurfaceDataFile(fStageASurface);
+  const auto fullPath =
+      std::filesystem::path(dataPath.c_str()) / dataFile.c_str();
+  if (dataPath.empty() || !std::filesystem::is_regular_file(fullPath)) {
+    G4ExceptionDescription description;
+    description << "G4REALSURFACEDATA does not provide " << dataFile
+                << "; resolved path=" << fullPath.string();
+    G4Exception("DetectorConstruction::ConfigureStageASurface",
+                "GAGG-A4-003", FatalException, description);
+  }
+
+  const auto finish = StageASurfaceFinish(fStageASurface);
+  if (fStageAOpticalSurface == nullptr) {
+    fStageAOpticalSurface = std::make_unique<G4OpticalSurface>(
+        "StageALUTOpticalSurface", LUT, finish, dielectric_LUT);
+  } else {
+    fStageAOpticalSurface->SetFinish(finish);
+  }
+
+  new G4LogicalBorderSurface("GAGGToSideStageALUT", fCrystalPhysical,
+                             fSideReflectorPhysical,
+                             fStageAOpticalSurface.get());
+  new G4LogicalBorderSurface("GAGGToTopStageALUT", fCrystalPhysical,
+                             fTopReflectorPhysical,
+                             fStageAOpticalSurface.get());
+
+  G4cout << "[a4] surface=" << fStageASurface
+         << " model=LUT type=dielectric_LUT borders=2 data_path=" << dataPath
+         << " data_file=" << dataFile << " data_status=PASS" << G4endl;
+}
+
+void DetectorConstruction::ValidateStageASurface() {
+  const auto dataPath = GetRealSurfaceDataPath();
+  const auto dataFile = StageASurfaceDataFile(fStageASurface);
+  const auto dataPass = HasStageALutSurface() && !dataPath.empty() &&
+                        std::filesystem::is_regular_file(
+                            std::filesystem::path(dataPath.c_str()) /
+                            dataFile.c_str());
+  const auto* sideBorder =
+      G4LogicalBorderSurface::GetSurface(fCrystalPhysical,
+                                         fSideReflectorPhysical);
+  const auto* topBorder =
+      G4LogicalBorderSurface::GetSurface(fCrystalPhysical,
+                                         fTopReflectorPhysical);
+  const auto* sideSurface =
+      sideBorder == nullptr
+          ? nullptr
+          : dynamic_cast<const G4OpticalSurface*>(
+                sideBorder->GetSurfaceProperty());
+  const auto* topSurface =
+      topBorder == nullptr
+          ? nullptr
+          : dynamic_cast<const G4OpticalSurface*>(
+                topBorder->GetSurfaceProperty());
+  const auto expectedFinish = HasStageALutSurface()
+                                  ? StageASurfaceFinish(fStageASurface)
+                                  : polished;
+  const auto surfacePass = sideSurface != nullptr && topSurface != nullptr &&
+                           sideSurface == topSurface &&
+                           sideSurface->GetModel() == LUT &&
+                           sideSurface->GetType() == dielectric_LUT &&
+                           sideSurface->GetFinish() == expectedFinish;
+  const auto borderPass =
+      G4LogicalBorderSurface::GetNumberOfBorderSurfaces() == 2;
+  const auto allPass = fGeometryMode == "paper" && dataPass && surfacePass &&
+                       borderPass;
+
+  G4cout << "[a4] surface_validation finish=" << fStageASurface
+         << " model="
+         << (sideSurface == nullptr || sideSurface->GetModel() != LUT
+                 ? "invalid"
+                 : "LUT")
+         << " type="
+         << (sideSurface == nullptr ||
+                     sideSurface->GetType() != dielectric_LUT
+                 ? "invalid"
+                 : "dielectric_LUT")
+         << " borders="
+         << G4LogicalBorderSurface::GetNumberOfBorderSurfaces()
+         << " data_file=" << dataFile
+         << " data_status=" << (dataPass ? "PASS" : "FAIL")
+         << " status=" << (allPass ? "PASS" : "FAIL") << G4endl;
 }
 
 void DetectorConstruction::ValidateGeometry() {

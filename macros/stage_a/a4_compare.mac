@@ -1,0 +1,46 @@
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/gagg/geometry/mode paper
+/gagg/optics/gaggBulkAbsorption true
+/gagg/stageA/surface polishedvm2000air
+/gagg/source/mode isotropic
+/gagg/source/photonsPerEvent 200
+/gagg/source/position 0 0 0 mm
+/gagg/output/eventPrintModulo 0
+/run/initialize
+/gagg/geometry/validate
+/gagg/stageA/validate
+
+/random/setSeeds 314159 271828
+/gagg/output/csv results/a4/polishedvm2000air.csv
+/run/beamOn 50
+
+/gagg/stageA/surface polishedtioair
+/run/initialize
+/gagg/stageA/validate
+/random/setSeeds 314159 271828
+/gagg/output/csv results/a4/polishedtioair.csv
+/run/beamOn 50
+
+/gagg/stageA/surface groundvm2000air
+/run/initialize
+/gagg/stageA/validate
+/random/setSeeds 314159 271828
+/gagg/output/csv results/a4/groundvm2000air.csv
+/run/beamOn 50
+
+/gagg/stageA/surface groundtioair
+/run/initialize
+/gagg/stageA/validate
+/random/setSeeds 314159 271828
+/gagg/output/csv results/a4/groundtioair.csv
+/run/beamOn 50
+
+/gagg/stageA/surface polishedvm2000air
+/run/initialize
+/gagg/stageA/validate
+/random/setSeeds 314159 271828
+/gagg/output/csv results/a4/polishedvm2000air_repeat.csv
+/run/beamOn 50
