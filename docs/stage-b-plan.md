@@ -103,10 +103,21 @@ groups are reproduced, but the magnitude is too weak and the final two states
 are reversed. Experimental agreement was explicitly not a validation pass
 condition; no parameter was tuned.
 
-## B5 - Robustness and interpretation gate
+## B5 - Robustness and interpretation gate - PASSED
 
 Quantify statistical uncertainty and sensitivity to the full-energy event
 selection and the single shared roughness parameter. Compare prediction and
 measurement without promoting placeholder dimensions or per-face parameters
 to fitted values. Record which discrepancies are established by the model and
 which explanations remain hypotheses requiring measured optical/setup inputs.
+
+Status: passed on 2026-08-24. The 511 keV comparison was evaluated at shared
+`sigma_alpha=0.10, 0.20, 0.30 rad`; the middle point reuses B4 and 12 new
+isolated runs cover the other values. All histories paired exactly and the
+0.25/0.5/1.0 keV full-energy half-widths selected the same 28 events. Four of
+five rough states exceeded the 0.01 response-reporting threshold; bottom rough
+was nearly insensitive (span 0.003). All five non-reference measurements lay
+outside their shared-sigma prediction envelopes. This rules out statistical
+uncertainty, the tested peak window and a shared sigma choice in the scanned
+range as sufficient explanations, but does not identify which unmeasured
+setup parameter is responsible. See `docs/b5-findings.md`.

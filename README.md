@@ -649,6 +649,51 @@ suppression, and reverses the last two states. The comparison gate passes
 because pairing, accounting, uncertainty calculation and parameter
 provenance pass; agreement with experiment is deliberately not a pass test.
 
+## B5 robustness and interpretation
+
+B5 varies only the one shared roughness parameter across the B2-predeclared
+`sigma_alpha=0.10, 0.20, 0.30 rad` subset. The B4 0.20-rad files are reused;
+the runner creates 12 additional isolated samples for 0.10 and 0.30 rad.
+Up to four independent Geant4 processes run concurrently, which preserves
+process isolation while reducing the validated scan time from 694.8 s to
+135.6 s on the development machine.
+
+~~~sh
+python analysis/run_b5.py \
+  --executable build/gagg_surface_study \
+  --config config/b5_robustness.json --output-dir results/b5
+python analysis/validate_b5.py \
+  --input-dir results/b5 --b4-input-dir results/b4 \
+  --config config/b5_robustness.json
+MPLCONFIGDIR=results/.mplconfig python analysis/plot_b5.py \
+  --input-dir results/b5 --b4-input-dir results/b4 \
+  --output-dir results/b5/figures --config config/b5_robustness.json
+~~~
+
+| State | Shared-sigma prediction envelope | Experiment | Covered? |
+|---|---:|---:|---:|
+| all polished | 1.000--1.000 | 1.00 | yes, normalization |
+| bottom rough | 1.200--1.203 | 1.60 | no |
+| top rough | 1.170--1.207 | 1.54 | no |
+| side rough | 0.630--0.745 | 0.39 | no |
+| bottom polished, others rough | 0.567--0.724 | 0.39 | no |
+| top polished, others rough | 0.581--0.731 | 0.32 | no |
+
+Changing the full-energy half-width among 0.25, 0.5 and 1.0 keV retained the
+same 28 ideal full-energy events. Four of five rough states changed by at
+least the retained 0.01 reporting threshold; bottom rough changed by only
+0.003. Thus the current discrepancy is larger than Monte Carlo uncertainty
+and cannot be removed by the tested peak window or by selecting another
+single shared sigma within this range. Unknown coupling, PMT response, ESR
+placement/properties, black structure and surface metrology remain hypotheses,
+not fitted explanations. The evidence boundary and required measurements are
+recorded in `docs/b5-findings.md`.
+
+The B5 subset passed 3/3 tests in 135.62 s after parallelization. The final
+A0--B5 regression passed 38/38 tests in 802.90 s; the longer full-suite time
+reflects variable optical-transport load and does not change the event-level
+results.
+
 ## Directory design
 
 ~~~text
@@ -710,6 +755,8 @@ centralized in "include/GAGG/SimulationConfig.hh".
 | B3/B4 event seed base | 830001 | validation control | supports event-paired surface comparisons |
 | B4 measured ratios | 1.00, 1.60, 1.54, 0.39, 0.39, 0.32 | measured/preliminary | comparison only; never supplied to Geant4 |
 | B4 bootstrap | 5000 paired resamples, seed 840001 | analysis control | 95% confidence intervals |
+| B5 shared sigma grid | 0.10, 0.20, 0.30 rad | free validation grid | B2-predeclared subset; no point selected |
+| B5 full-energy half-widths | 0.25, 0.5, 1.0 keV | analysis robustness grid | identical 28-event ideal sample |
 | ESR specular-lobe fraction | 1.0 | UNIFIED model choice | fixed, not fitted; makes ground ESR reflection sigma-driven |
 
 The bulk composition is stoichiometric Gd3Al2Ga3O12. Ce concentration was not

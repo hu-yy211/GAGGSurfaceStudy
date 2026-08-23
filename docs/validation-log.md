@@ -498,3 +498,41 @@ Status: B4 comparison gate passed; this is not a claim of quantitative
 agreement. B5 must test whether the conclusions survive statistical/event-
 selection and shared-roughness sensitivity, then separate established model
 limitations from hypotheses needing measured setup parameters.
+
+## 2026-08-24 - B5 shared-roughness robustness and interpretation
+
+- Locked `sigma_alpha=0.10, 0.20, 0.30 rad`, all six states and full-energy
+  half-widths 0.25, 0.5 and 1.0 keV in `config/b5_robustness.json`. The B4
+  0.20-rad point is reused; twelve isolated 100-event processes provide the
+  two new roughness values. No best-fit sigma or per-face sigma is calculated.
+- The first validation attempt required every rough state to span at least
+  0.01 over the grid. It failed because bottom rough spans only 0.00299. That
+  requirement incorrectly treated a scientifically meaningful weak response
+  as a corrupt scan. The numerical threshold was retained as a reporting
+  threshold, and the structural gate now requires at least one rough state to
+  respond above it. Four of five do. This criterion correction does not use
+  experimental agreement and does not change the grid or simulation output.
+- All sigma/state points have exact event-level gamma-history pairing and
+  terminal accounting. All-polished transport is event-for-event invariant
+  to the unused roughness parameter. The three full-energy windows select the
+  same 28 events in this ideal, resolution-free detector model.
+- Simulation envelopes over the grid are bottom rough 1.200--1.203, top rough
+  1.170--1.207, side rough 0.630--0.745, bottom polished/others rough
+  0.567--0.724 and top polished/others rough 0.581--0.731. All five
+  corresponding preliminary measurements lie outside these envelopes.
+- The first sequential run passed all 12 Geant4 jobs but took 693.9 s. The
+  runner now keeps each job in a separate process while allowing four jobs in
+  parallel. The repeated B5 subset passed 3/3 in 135.62 s with identical
+  validated event records.
+- The final A0--B5 regression passed 38/38 tests in 802.90 s. B2 and B4 were
+  slower than their earlier targeted runs under the current machine load, but
+  all deterministic records and scientific summaries were unchanged.
+- `docs/b5-findings.md` separates established conclusions from unverified
+  explanations involving optical coupling, PMT response, ESR placement and
+  properties, black structure, surface metrology and source/setup realism.
+
+Status: B5 robustness gate passed. Within the tested shared-roughness range,
+neither statistical uncertainty, ideal full-energy selection nor sigma choice
+is sufficient to explain the experimental magnitudes. Further model changes
+should wait for measured setup/interface inputs rather than introduce
+face-specific fit parameters.

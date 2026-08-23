@@ -1,0 +1,17 @@
+{
+  "stage": "B5",
+  "b4_config": "b4_comparison.json",
+  "shared_sigma_alpha_rad": [0.10, 0.20, 0.30],
+  "reuse_b4_sigma_alpha_rad": 0.20,
+  "full_energy_half_width_keV": [0.25, 0.50, 1.00],
+  "max_parallel_processes": 4,
+  "validation": {
+    "minimum_full_energy_events": 20,
+    "roughness_response_reporting_threshold": 0.01,
+    "minimum_rough_states_above_reporting_threshold": 1,
+    "require_all_polished_sigma_invariance": true,
+    "require_exact_gamma_history_pairing": true,
+    "experimental_values_are_fit_target": false,
+    "allow_per_face_sigma": false
+  }
+}

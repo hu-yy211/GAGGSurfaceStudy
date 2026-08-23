@@ -64,3 +64,12 @@ It reports 5000-resample paired-bootstrap intervals and simulation-minus-
 measurement residuals. Experimental agreement is not a pass gate. The
 plotter writes a long-form comparison table, grouped bar chart and residual
 chart.
+
+B5 uses `config/b5_robustness.json`, `run_b5.py`, `validate_b5.py` and
+`plot_b5.py`. It reuses the six B4 samples at 0.20 rad and runs twelve new
+isolated points at 0.10 and 0.30 rad, with four Geant4 subprocesses allowed in
+parallel. The validator requires exact gamma-history pairing, all-polished
+invariance, full accounting and an active shared-roughness response. The 0.01
+threshold reports whether each state resolves a response; a physically weak
+state is not treated as an invalid scan. The plotter writes the shared-sigma
+table and six-panel sensitivity figure. No best-fit sigma is calculated.

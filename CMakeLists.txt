@@ -452,4 +452,47 @@ if(BUILD_TESTING)
     ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
     PASS_REGULAR_EXPRESSION "\\[b4-plot\\].*status=PASS"
   )
+
+  add_test(
+    NAME b5_robustness_export
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/run_b5.py
+            --executable $<TARGET_FILE:gagg_surface_study>
+            --config ${PROJECT_SOURCE_DIR}/config/b5_robustness.json
+            --output-dir ${PROJECT_BINARY_DIR}/results/b5
+  )
+  set_tests_properties(b5_robustness_export PROPERTIES
+    DEPENDS b4_comparison_export
+    PASS_REGULAR_EXPRESSION "\\[b5-runner\\].*points=12.*shared_sigma=true.*status=PASS"
+    FAIL_REGULAR_EXPRESSION "status=FAIL|G4Exception|Fatal Exception"
+    TIMEOUT 1800
+  )
+
+  add_test(
+    NAME b5_robustness_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_b5.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/b5
+            --b4-input-dir ${PROJECT_BINARY_DIR}/results/b4
+            --config ${PROJECT_SOURCE_DIR}/config/b5_robustness.json
+  )
+  set_tests_properties(b5_robustness_validate PROPERTIES
+    DEPENDS b5_robustness_export
+    PASS_REGULAR_EXPRESSION "\\[b5-check\\] robustness status=PASS"
+  )
+
+  add_test(
+    NAME b5_plot
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/plot_b5.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/b5
+            --b4-input-dir ${PROJECT_BINARY_DIR}/results/b4
+            --output-dir ${PROJECT_BINARY_DIR}/b5_plots
+            --config ${PROJECT_SOURCE_DIR}/config/b5_robustness.json
+  )
+  set_tests_properties(b5_plot PROPERTIES
+    DEPENDS b5_robustness_validate
+    ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
+    PASS_REGULAR_EXPRESSION "\\[b5-plot\\].*status=PASS"
+  )
 endif()
