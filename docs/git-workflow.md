@@ -27,6 +27,7 @@ Recommended commit and annotated-tag names:
 | B3 | milestone(B3): validate 511 keV gamma response | b3 |
 | B4 | milestone(B4): compare six-state relative light | b4 |
 | B5 | milestone(B5): validate robustness and interpretation | b5 |
+| B6 | milestone(B6): localize optical loss mechanisms | b6 |
 
 If A7 remains scientifically unresolved while an independently validated B0
 is authorized to proceed, retain the A7 failure evidence in the B0 checkpoint

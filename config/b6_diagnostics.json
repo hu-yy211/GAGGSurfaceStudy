@@ -1,0 +1,37 @@
+{
+  "stage": "B6",
+  "b5_config": "b5_robustness.json",
+  "comparison_sigma_alpha_rad": 0.20,
+  "terminal_channels": [
+    "output",
+    "crystal_absorption",
+    "reflector_absorption",
+    "other_absorption",
+    "top_surface_absorption",
+    "bottom_surface_absorption",
+    "side_surface_absorption",
+    "black_surface_absorption",
+    "other_surface_absorption",
+    "other_world_exit"
+  ],
+  "surface_absorption_locations": [
+    "top_surface_absorption",
+    "bottom_surface_absorption",
+    "side_surface_absorption",
+    "black_surface_absorption",
+    "other_surface_absorption"
+  ],
+  "face_interaction_channels": [
+    "top_surface_interactions",
+    "bottom_surface_interactions",
+    "side_surface_interactions"
+  ],
+  "validation": {
+    "minimum_full_energy_events": 20,
+    "require_exact_terminal_balance": true,
+    "require_exact_surface_absorption_subtotal": true,
+    "require_nonzero_top_and_black_absorption": true,
+    "require_zero_stage_a_reflector_absorption": true,
+    "experimental_values_are_fit_target": false
+  }
+}

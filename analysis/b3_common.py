@@ -8,7 +8,11 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from validate_a0_csv import COUNT_COLUMNS, EXPECTED_COLUMNS
+from validate_a0_csv import (
+    COUNT_COLUMNS,
+    EXPECTED_COLUMNS,
+    validate_surface_absorption_subtotal,
+)
 
 
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "b3_gamma.json"
@@ -173,6 +177,7 @@ def load_gamma_sample(
             + values["other_absorption"]
         ):
             raise ValueError(f"bulk-absorption subtotal failed in {path}")
+        validate_surface_absorption_subtotal(values, path)
         classified = (
             values["world_exit"]
             + values["bulk_absorption"]

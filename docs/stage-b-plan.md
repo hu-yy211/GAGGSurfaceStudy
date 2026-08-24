@@ -121,3 +121,19 @@ outside their shared-sigma prediction envelopes. This rules out statistical
 uncertainty, the tested peak window and a shared sigma choice in the scanned
 range as sufficient explanations, but does not identify which unmeasured
 setup parameter is responsible. See `docs/b5-findings.md`.
+
+## B6 - Location-resolved loss budget - PASSED
+
+Extend the event schema with top, bottom, side, black-structure and other
+surface-absorption subtotals while preserving the original terminal category.
+For the event-paired B4/B5 full-energy samples, require exact surface-subtotal,
+terminal-budget and state-minus-reference closure. Report the loss channel
+that dominates each surface-state response without adding optical parameters.
+
+Status: passed on 2026-08-24. At sigma=0.20 rad, end-face roughness reduces
+GAGG self-absorption by 0.154--0.162 of generated light and increases black
+loss by 0.104--0.110, leaving a net PMT gain near 0.074. Side/multiple
+roughness increases black-structure absorption by 0.413--0.433, producing a
+net PMT loss of 0.117--0.137. All 18 sigma/state budgets and every differential
+budget close exactly. Final A0--B6 regression passed 40/40 tests. See
+`docs/b6-findings.md`.

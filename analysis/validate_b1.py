@@ -6,7 +6,11 @@ import csv
 from dataclasses import dataclass
 from pathlib import Path
 
-from validate_a0_csv import COUNT_COLUMNS, EXPECTED_COLUMNS
+from validate_a0_csv import (
+    COUNT_COLUMNS,
+    EXPECTED_COLUMNS,
+    validate_surface_absorption_subtotal,
+)
 
 
 STATES = (
@@ -96,6 +100,7 @@ def load_state(
             + values["other_absorption"]
         ):
             raise ValueError(f"bulk-absorption subtotal failed in {path}")
+        validate_surface_absorption_subtotal(values, path)
         classified = (
             values["world_exit"]
             + values["bulk_absorption"]

@@ -44,6 +44,11 @@ void RunAction::BeginOfRunAction(const G4Run*) {
   fCrystalAbsorption = 0;
   fReflectorAbsorption = 0;
   fSurfaceAbsorption = 0;
+  fTopSurfaceAbsorption = 0;
+  fBottomSurfaceAbsorption = 0;
+  fSideSurfaceAbsorption = 0;
+  fBlackSurfaceAbsorption = 0;
+  fOtherSurfaceAbsorption = 0;
   fOtherAbsorption = 0;
   fOtherWorldExit = 0;
   fLutInteractions = 0;
@@ -120,7 +125,10 @@ void RunAction::BeginOfRunAction(const G4Run*) {
           "stage_b_sigma_alpha_rad,edep_keV,scintillation,"
           "generated,output,"
           "crystal_absorption,reflector_absorption,other_absorption,"
-          "surface_absorption,other_world_exit,world_exit,bulk_absorption,"
+          "surface_absorption,top_surface_absorption,"
+          "bottom_surface_absorption,side_surface_absorption,"
+          "black_surface_absorption,other_surface_absorption,"
+          "other_world_exit,world_exit,bulk_absorption,"
           "lut_interactions,top_surface_interactions,"
           "bottom_surface_interactions,side_surface_interactions,"
           "unclassified\n";
@@ -145,6 +153,11 @@ void RunAction::EndOfRunAction(const G4Run* run) {
          << " crystal_absorption=" << fCrystalAbsorption
          << " reflector_absorption=" << fReflectorAbsorption
          << " surface_absorption=" << fSurfaceAbsorption
+         << " top_surface_absorption=" << fTopSurfaceAbsorption
+         << " bottom_surface_absorption=" << fBottomSurfaceAbsorption
+         << " side_surface_absorption=" << fSideSurfaceAbsorption
+         << " black_surface_absorption=" << fBlackSurfaceAbsorption
+         << " other_surface_absorption=" << fOtherSurfaceAbsorption
          << " other_absorption=" << fOtherAbsorption
          << " other_world_exit=" << fOtherWorldExit
          << " lut_interactions=" << fLutInteractions
@@ -177,6 +190,11 @@ void RunAction::WriteEvent(const EventRecord& record) {
   fCrystalAbsorption += record.crystalAbsorption;
   fReflectorAbsorption += record.reflectorAbsorption;
   fSurfaceAbsorption += record.surfaceAbsorption;
+  fTopSurfaceAbsorption += record.topSurfaceAbsorption;
+  fBottomSurfaceAbsorption += record.bottomSurfaceAbsorption;
+  fSideSurfaceAbsorption += record.sideSurfaceAbsorption;
+  fBlackSurfaceAbsorption += record.blackSurfaceAbsorption;
+  fOtherSurfaceAbsorption += record.otherSurfaceAbsorption;
   fOtherAbsorption += record.otherAbsorption;
   fOtherWorldExit += record.otherWorldExit;
   fLutInteractions += record.lutInteractions;
@@ -199,7 +217,13 @@ void RunAction::WriteEvent(const EventRecord& record) {
          << record.generated << ',' << record.output << ','
          << record.crystalAbsorption << ','
          << record.reflectorAbsorption << ',' << record.otherAbsorption << ','
-         << record.surfaceAbsorption << ',' << record.otherWorldExit << ','
+         << record.surfaceAbsorption << ','
+         << record.topSurfaceAbsorption << ','
+         << record.bottomSurfaceAbsorption << ','
+         << record.sideSurfaceAbsorption << ','
+         << record.blackSurfaceAbsorption << ','
+         << record.otherSurfaceAbsorption << ','
+         << record.otherWorldExit << ','
          << record.WorldExit() << ',' << record.BulkAbsorption() << ','
          << record.lutInteractions << ','
          << record.topSurfaceInteractions << ','

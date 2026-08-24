@@ -16,6 +16,11 @@ struct EventRecord {
   G4int crystalAbsorption = 0;
   G4int reflectorAbsorption = 0;
   G4int surfaceAbsorption = 0;
+  G4int topSurfaceAbsorption = 0;
+  G4int bottomSurfaceAbsorption = 0;
+  G4int sideSurfaceAbsorption = 0;
+  G4int blackSurfaceAbsorption = 0;
+  G4int otherSurfaceAbsorption = 0;
   G4int otherAbsorption = 0;
   G4int otherWorldExit = 0;
   G4int lutInteractions = 0;

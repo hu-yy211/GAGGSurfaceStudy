@@ -73,3 +73,12 @@ invariance, full accounting and an active shared-roughness response. The 0.01
 threshold reports whether each state resolves a response; a physically weak
 state is not treated as an invalid scan. The plotter writes the shared-sigma
 table and six-panel sensitivity figure. No best-fit sigma is calculated.
+
+B6 uses `config/b6_diagnostics.json`, `validate_b6.py` and `plot_b6.py`.
+The event schema now resolves surface absorption at the top ESR, bottom PMT
+interface, side-air interface, outer black structure and other surfaces. The
+validator requires those locations to sum to aggregate surface absorption and
+all terminal fractions to sum to generated light. It also requires exact
+state-minus-all-polished differential closure. The plotter writes the
+18-point loss table, a stacked terminal budget, a differential loss chart and
+a logarithmic face-interaction chart. B6 introduces no fit parameter.

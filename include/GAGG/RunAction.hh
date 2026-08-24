@@ -43,6 +43,11 @@ class RunAction final : public G4UserRunAction {
   std::int64_t fCrystalAbsorption = 0;
   std::int64_t fReflectorAbsorption = 0;
   std::int64_t fSurfaceAbsorption = 0;
+  std::int64_t fTopSurfaceAbsorption = 0;
+  std::int64_t fBottomSurfaceAbsorption = 0;
+  std::int64_t fSideSurfaceAbsorption = 0;
+  std::int64_t fBlackSurfaceAbsorption = 0;
+  std::int64_t fOtherSurfaceAbsorption = 0;
   std::int64_t fOtherAbsorption = 0;
   std::int64_t fOtherWorldExit = 0;
   std::int64_t fLutInteractions = 0;

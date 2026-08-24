@@ -15,7 +15,11 @@ from b2_common import (
     point_filename,
     repeat_filename,
 )
-from validate_a0_csv import COUNT_COLUMNS, EXPECTED_COLUMNS
+from validate_a0_csv import (
+    COUNT_COLUMNS,
+    EXPECTED_COLUMNS,
+    validate_surface_absorption_subtotal,
+)
 
 
 @dataclass(frozen=True)
@@ -91,6 +95,7 @@ def load_point(
             + values["other_absorption"]
         ):
             raise ValueError(f"bulk-absorption subtotal failed in {path}")
+        validate_surface_absorption_subtotal(values, path)
         classified = (
             values["world_exit"]
             + values["bulk_absorption"]

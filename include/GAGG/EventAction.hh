@@ -19,7 +19,26 @@ class EventAction final : public G4UserEventAction {
   void RecordOutput() { ++fOutput; }
   void RecordCrystalAbsorption() { ++fCrystalAbsorption; }
   void RecordReflectorAbsorption() { ++fReflectorAbsorption; }
-  void RecordSurfaceAbsorption() { ++fSurfaceAbsorption; }
+  void RecordTopSurfaceAbsorption() {
+    ++fSurfaceAbsorption;
+    ++fTopSurfaceAbsorption;
+  }
+  void RecordBottomSurfaceAbsorption() {
+    ++fSurfaceAbsorption;
+    ++fBottomSurfaceAbsorption;
+  }
+  void RecordSideSurfaceAbsorption() {
+    ++fSurfaceAbsorption;
+    ++fSideSurfaceAbsorption;
+  }
+  void RecordBlackSurfaceAbsorption() {
+    ++fSurfaceAbsorption;
+    ++fBlackSurfaceAbsorption;
+  }
+  void RecordOtherSurfaceAbsorption() {
+    ++fSurfaceAbsorption;
+    ++fOtherSurfaceAbsorption;
+  }
   void RecordOtherAbsorption() { ++fOtherAbsorption; }
   void RecordOtherWorldExit() { ++fOtherWorldExit; }
   void RecordLutInteraction() { ++fLutInteractions; }
@@ -42,6 +61,11 @@ class EventAction final : public G4UserEventAction {
   G4int fCrystalAbsorption = 0;
   G4int fReflectorAbsorption = 0;
   G4int fSurfaceAbsorption = 0;
+  G4int fTopSurfaceAbsorption = 0;
+  G4int fBottomSurfaceAbsorption = 0;
+  G4int fSideSurfaceAbsorption = 0;
+  G4int fBlackSurfaceAbsorption = 0;
+  G4int fOtherSurfaceAbsorption = 0;
   G4int fOtherAbsorption = 0;
   G4int fOtherWorldExit = 0;
   G4int fLutInteractions = 0;

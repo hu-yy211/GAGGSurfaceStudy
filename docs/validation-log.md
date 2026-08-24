@@ -536,3 +536,38 @@ neither statistical uncertainty, ideal full-energy selection nor sigma choice
 is sufficient to explain the experimental magnitudes. Further model changes
 should wait for measured setup/interface inputs rather than introduce
 face-specific fit parameters.
+
+## 2026-08-24 - B6 location-resolved loss diagnostics
+
+- Extended the event CSV with top, bottom, side, black-structure and other
+  surface-absorption counters. The original `surface_absorption` remains the
+  terminal category; all five new fields are exact location subtotals. Initial
+  smoke/A0/B0 schema and accounting validation passed 7/7 without changing
+  transport results.
+- Regenerated the B3--B5 data with the extended schema. The B3--B6 targeted
+  suite passed 11/11 in 152.98 s. The six B4 normalized efficiencies and all
+  B5 envelopes were unchanged, confirming that the new counters are passive.
+- All 18 shared-sigma/state full-energy loss budgets close to one. Every
+  state-minus-all-polished differential budget also closes exactly, and both
+  top ESR and outer black absorption are active in every point.
+- At sigma=0.20 rad, bottom and top rough reduce GAGG self-absorption by
+  0.1616 and 0.1541 while increasing black loss by 0.1101 and 0.1039. Their
+  net PMT gains are 0.0744 and 0.0732.
+- Side rough and the two multiple-rough states increase black-structure loss
+  by 0.4129--0.4330. This is the largest changed terminal channel; net PMT
+  losses are 0.1171--0.1366.
+- All-polished transport makes 40.17 side interactions per generated photon;
+  end-rough states make 18.63--19.78 and side/multiple-rough states about 3.4.
+  The shorter optical path explains the corresponding drop in crystal
+  self-absorption.
+- `docs/b6-findings.md` records the evidence and ranks bottom coupling/PMT
+  angular response, ESR contact, real source geometry and surface metrology as
+  the next measured inputs. The black boundary is already ideally absorbing,
+  so increasing black absorption is not a remaining tuning direction.
+
+Status: B6 diagnostic gate passed. The broad trend is now mechanistically
+explained within the model, while the experimental magnitude discrepancy is
+localized to photon redirection/detection assumptions rather than an unknown
+terminal accounting loss.
+
+Final validation: A0--B6 regression passed 40/40 tests in 214.37 s.

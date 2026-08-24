@@ -6,6 +6,8 @@ import csv
 from dataclasses import dataclass
 from pathlib import Path
 
+from validate_a0_csv import validate_surface_absorption_subtotal
+
 
 EXPECTED_COLUMNS = [
     "event_id",
@@ -25,6 +27,11 @@ EXPECTED_COLUMNS = [
     "reflector_absorption",
     "other_absorption",
     "surface_absorption",
+    "top_surface_absorption",
+    "bottom_surface_absorption",
+    "side_surface_absorption",
+    "black_surface_absorption",
+    "other_surface_absorption",
     "other_world_exit",
     "world_exit",
     "bulk_absorption",
@@ -120,6 +127,7 @@ def load_gamma_sample(path: Path, expected_events: int = 100) -> GammaSummary:
             + values["other_absorption"]
         ):
             raise ValueError(f"bulk-absorption subtotal failed: {values}")
+        validate_surface_absorption_subtotal(values, path)
         classified = (
             values["world_exit"]
             + values["bulk_absorption"]

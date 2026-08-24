@@ -21,6 +21,11 @@ void EventAction::BeginOfEventAction(const G4Event*) {
   fCrystalAbsorption = 0;
   fReflectorAbsorption = 0;
   fSurfaceAbsorption = 0;
+  fTopSurfaceAbsorption = 0;
+  fBottomSurfaceAbsorption = 0;
+  fSideSurfaceAbsorption = 0;
+  fBlackSurfaceAbsorption = 0;
+  fOtherSurfaceAbsorption = 0;
   fOtherAbsorption = 0;
   fOtherWorldExit = 0;
   fLutInteractions = 0;
@@ -44,6 +49,11 @@ void EventAction::EndOfEventAction(const G4Event* event) {
                            fCrystalAbsorption,
                            fReflectorAbsorption,
                            fSurfaceAbsorption,
+                           fTopSurfaceAbsorption,
+                           fBottomSurfaceAbsorption,
+                           fSideSurfaceAbsorption,
+                           fBlackSurfaceAbsorption,
+                           fOtherSurfaceAbsorption,
                            fOtherAbsorption,
                            fOtherWorldExit,
                            fLutInteractions,
@@ -60,6 +70,11 @@ void EventAction::EndOfEventAction(const G4Event* event) {
            << " crystal_absorption=" << fCrystalAbsorption
            << " reflector_absorption=" << fReflectorAbsorption
            << " surface_absorption=" << fSurfaceAbsorption
+           << " top_surface_absorption=" << fTopSurfaceAbsorption
+           << " bottom_surface_absorption=" << fBottomSurfaceAbsorption
+           << " side_surface_absorption=" << fSideSurfaceAbsorption
+           << " black_surface_absorption=" << fBlackSurfaceAbsorption
+           << " other_surface_absorption=" << fOtherSurfaceAbsorption
            << " other_absorption=" << fOtherAbsorption
            << " other_world_exit=" << fOtherWorldExit
            << " lut_interactions=" << fLutInteractions

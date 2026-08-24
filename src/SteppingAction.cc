@@ -108,7 +108,23 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
 
   if (borderSurface != nullptr) {
     if (boundaryStatus == Absorption || boundaryStatus == Detection) {
-      fEventAction->RecordSurfaceAbsorption();
+      const auto preName =
+          preVolume == nullptr ? G4String("none") : preVolume->GetName();
+      const auto postName =
+          postVolume == nullptr ? G4String("none") : postVolume->GetName();
+      if (preName == "GAGG" && postName == "ExperimentESR") {
+        fEventAction->RecordTopSurfaceAbsorption();
+      } else if (preName == "GAGG" && postName == "PMTWindow") {
+        fEventAction->RecordBottomSurfaceAbsorption();
+      } else if (preName == "GAGG" &&
+                 postName == "ExperimentSideAirGap") {
+        fEventAction->RecordSideSurfaceAbsorption();
+      } else if (preName == "ExperimentSideAirGap" &&
+                 postName == "ExperimentBlackHousing") {
+        fEventAction->RecordBlackSurfaceAbsorption();
+      } else {
+        fEventAction->RecordOtherSurfaceAbsorption();
+      }
       return;
     }
   }

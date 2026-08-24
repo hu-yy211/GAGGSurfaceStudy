@@ -7,6 +7,8 @@ import math
 from dataclasses import dataclass
 from pathlib import Path
 
+from validate_a0_csv import validate_surface_absorption_subtotal
+
 
 SURFACES = (
     "polishedvm2000air",
@@ -33,6 +35,11 @@ EXPECTED_COLUMNS = [
     "reflector_absorption",
     "other_absorption",
     "surface_absorption",
+    "top_surface_absorption",
+    "bottom_surface_absorption",
+    "side_surface_absorption",
+    "black_surface_absorption",
+    "other_surface_absorption",
     "other_world_exit",
     "world_exit",
     "bulk_absorption",
@@ -119,6 +126,7 @@ def load_summary(
             + values["other_absorption"]
         ):
             raise ValueError(f"bulk-absorption subtotal failed in {path}")
+        validate_surface_absorption_subtotal(values, path)
         classified = (
             values["world_exit"]
             + values["bulk_absorption"]

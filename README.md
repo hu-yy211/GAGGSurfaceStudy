@@ -124,6 +124,11 @@ absorption, reflector absorption, other absorption and other world exit. A0
 requires exactly one generated photon and one classified terminal outcome per
 event, with zero unclassified photons.
 
+B6 adds location subtotals for `surface_absorption`: top ESR, bottom PMT
+interface, side-air interface, outer black structure and other configured
+surfaces. These are diagnostic subtotals, not additional terminal outcomes;
+their sum is required to equal `surface_absorption` for every event.
+
 Run only the A1 material/unit check:
 
 ~~~sh
@@ -694,6 +699,44 @@ A0--B5 regression passed 38/38 tests in 802.90 s; the longer full-suite time
 reflects variable optical-transport load and does not change the event-level
 results.
 
+## B6 location-resolved loss budget
+
+B6 does not change any optical parameter. It extends each event record with
+five surface-absorption locations, then decomposes the event-paired B4/B5
+full-energy samples into PMT collection, GAGG self-absorption, ESR loss,
+black-structure loss and small remaining outcomes.
+
+~~~sh
+python analysis/validate_b6.py \
+  --input-dir results/b5 --b4-input-dir results/b4 \
+  --config config/b6_diagnostics.json
+MPLCONFIGDIR=results/.mplconfig python analysis/plot_b6.py \
+  --input-dir results/b5 --b4-input-dir results/b4 \
+  --output-dir results/b6/figures --config config/b6_diagnostics.json
+~~~
+
+At shared `sigma_alpha=0.20 rad`, the main terminal fractions are:
+
+| State | PMT | GAGG absorption | Top ESR | Black structure |
+|---|---:|---:|---:|---:|
+| all polished | 0.3714 | 0.2959 | 0.0383 | 0.2932 |
+| bottom rough | 0.4458 | 0.1343 | 0.0143 | 0.4032 |
+| top rough | 0.4446 | 0.1418 | 0.0153 | 0.3971 |
+| side rough | 0.2543 | 0.0305 | 0.0055 | 0.7061 |
+| bottom polished, others rough | 0.2348 | 0.0296 | 0.0055 | 0.7261 |
+| top polished, others rough | 0.2428 | 0.0309 | 0.0055 | 0.7169 |
+
+End-face roughness shortens trapped paths and reduces crystal self-absorption,
+but redirects much of that recovered light to the black structure; the net PMT
+gain is only about 0.074. Side/multiple roughness drives black absorption up
+by 0.413--0.433 and is therefore the direct cause of the simulated light
+suppression. Since the black boundary is already an ideal zero-reflectivity
+absorber, the remaining experiment/model gap cannot be solved by making it
+darker. Detailed evidence and next measurements are in `docs/b6-findings.md`.
+
+The B3--B6 targeted suite passed 11/11 tests in 152.98 s. Final A0--B6
+regression passed 40/40 tests in 214.37 s.
+
 ## Directory design
 
 ~~~text
@@ -757,6 +800,7 @@ centralized in "include/GAGG/SimulationConfig.hh".
 | B4 bootstrap | 5000 paired resamples, seed 840001 | analysis control | 95% confidence intervals |
 | B5 shared sigma grid | 0.10, 0.20, 0.30 rad | free validation grid | B2-predeclared subset; no point selected |
 | B5 full-energy half-widths | 0.25, 0.5, 1.0 keV | analysis robustness grid | identical 28-event ideal sample |
+| B6 surface-loss locations | top, bottom, side, black, other | diagnostic counters | exact subtotals; no physics change |
 | ESR specular-lobe fraction | 1.0 | UNIFIED model choice | fixed, not fitted; makes ground ESR reflection sigma-driven |
 
 The bulk composition is stoichiometric Gd3Al2Ga3O12. Ce concentration was not

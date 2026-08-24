@@ -24,6 +24,11 @@ EXPECTED_COLUMNS = [
     "reflector_absorption",
     "other_absorption",
     "surface_absorption",
+    "top_surface_absorption",
+    "bottom_surface_absorption",
+    "side_surface_absorption",
+    "black_surface_absorption",
+    "other_surface_absorption",
     "other_world_exit",
     "world_exit",
     "bulk_absorption",
@@ -35,6 +40,21 @@ EXPECTED_COLUMNS = [
 ]
 
 COUNT_COLUMNS = EXPECTED_COLUMNS[EXPECTED_COLUMNS.index("scintillation") :]
+SURFACE_ABSORPTION_COLUMNS = (
+    "top_surface_absorption",
+    "bottom_surface_absorption",
+    "side_surface_absorption",
+    "black_surface_absorption",
+    "other_surface_absorption",
+)
+
+
+def validate_surface_absorption_subtotal(values: dict[str, int], context) -> None:
+    subtotal = sum(values[key] for key in SURFACE_ABSORPTION_COLUMNS)
+    if subtotal != values["surface_absorption"]:
+        raise ValueError(
+            f"surface-absorption subtotal failed in {context}: {values}"
+        )
 
 
 def main() -> int:
@@ -86,6 +106,7 @@ def main() -> int:
             + values["other_absorption"]
         ):
             raise ValueError(f"bulk-absorption subtotal failed: {values}")
+        validate_surface_absorption_subtotal(values, args.input)
         classified = (
             values["world_exit"]
             + values["bulk_absorption"]

@@ -5,7 +5,11 @@ import argparse
 import csv
 from pathlib import Path
 
-from validate_a0_csv import COUNT_COLUMNS, EXPECTED_COLUMNS
+from validate_a0_csv import (
+    COUNT_COLUMNS,
+    EXPECTED_COLUMNS,
+    validate_surface_absorption_subtotal,
+)
 
 
 def main() -> int:
@@ -58,6 +62,7 @@ def main() -> int:
             + values["other_absorption"]
         ):
             raise ValueError("B0 bulk-absorption subtotal failed")
+        validate_surface_absorption_subtotal(values, args.input)
         classified = (
             values["world_exit"]
             + values["bulk_absorption"]

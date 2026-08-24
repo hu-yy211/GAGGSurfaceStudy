@@ -15,6 +15,7 @@ from validate_a6 import (
     FULL_ENERGY_HALF_WIDTH_KEV,
     GAMMA_ENERGY_KEV,
 )
+from validate_a0_csv import validate_surface_absorption_subtotal
 
 
 SURFACES = (
@@ -117,6 +118,7 @@ def _validate_accounting(values: dict[str, int], path: Path) -> None:
         + values["other_absorption"]
     ):
         raise ValueError(f"bulk-absorption subtotal failed in {path}")
+    validate_surface_absorption_subtotal(values, path)
     classified = (
         values["world_exit"]
         + values["bulk_absorption"]

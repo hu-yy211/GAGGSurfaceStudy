@@ -495,4 +495,32 @@ if(BUILD_TESTING)
     ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
     PASS_REGULAR_EXPRESSION "\\[b5-plot\\].*status=PASS"
   )
+
+  add_test(
+    NAME b6_loss_diagnostics_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_b6.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/b5
+            --b4-input-dir ${PROJECT_BINARY_DIR}/results/b4
+            --config ${PROJECT_SOURCE_DIR}/config/b6_diagnostics.json
+  )
+  set_tests_properties(b6_loss_diagnostics_validate PROPERTIES
+    DEPENDS b5_robustness_validate
+    PASS_REGULAR_EXPRESSION "\\[b6-check\\] loss_diagnostics status=PASS"
+  )
+
+  add_test(
+    NAME b6_plot
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/plot_b6.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/b5
+            --b4-input-dir ${PROJECT_BINARY_DIR}/results/b4
+            --output-dir ${PROJECT_BINARY_DIR}/b6_plots
+            --config ${PROJECT_SOURCE_DIR}/config/b6_diagnostics.json
+  )
+  set_tests_properties(b6_plot PROPERTIES
+    DEPENDS b6_loss_diagnostics_validate
+    ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
+    PASS_REGULAR_EXPRESSION "\\[b6-plot\\].*status=PASS"
+  )
 endif()
