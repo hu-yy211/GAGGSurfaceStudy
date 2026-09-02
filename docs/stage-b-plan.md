@@ -160,10 +160,11 @@ boundary (0.79688). Neither reproduces the six measurements, so the result is
 evidence that roughness angle alone is insufficient, not a calibrated
 roughness measurement.
 
-B7.5 fixes sigma=0.70 rad and compares only bottom rough with top rough using
-100000 exactly paired events per state. It selected 187 full-energy events.
-Normalized outputs were 2.08368 and 3.06248, respectively; bottom/top was
-0.680389 (95% bootstrap interval 0.676611--0.684050). The experimental
-bottom/top ratio is about 1.03896, so the simulated end-face ordering is
-opposite to the measurement. Status: focused comparison passed structurally
-on 2026-09-02; no plot was produced.
+B7.5 fixes sigma=0.70 rad and adds `top_bottom_rough`: both end faces rough,
+four sides polished. It compares this new state with bottom rough and top
+rough using 100000 exactly paired events per state. All samples selected 187
+full-energy events. Normalized outputs were 2.08368, 3.06248 and 2.00237 for
+bottom, top and both-end rough, respectively. Both-end/bottom was 0.960977
+(95% interval 0.956261--0.965825), and both-end/top was 0.653838
+(0.651925--0.655914). Status: corrected focused comparison passed
+structurally on 2026-09-02; no plot was produced.

@@ -101,6 +101,9 @@ StageBFaceTreatment StageBFaceTreatmentFor(const G4String& state) {
   if (state == "top_rough") {
     return {true, false, false};
   }
+  if (state == "top_bottom_rough") {
+    return {true, true, false};
+  }
   if (state == "side_rough") {
     return {false, false, true};
   }
@@ -280,10 +283,10 @@ DetectorConstruction::DetectorConstruction()
 
   auto& experimentSurfaceStateCommand = fStageBMessenger->DeclareMethod(
       "surfaceState", &DetectorConstruction::SetStageBSurfaceState,
-      "Select one of the six experimental GAGG face-treatment states.");
+      "Select an experimental or focused-study GAGG face-treatment state.");
   experimentSurfaceStateCommand.SetParameterName("state", false);
   experimentSurfaceStateCommand.SetCandidates(
-      "all_polished bottom_rough top_rough side_rough "
+      "all_polished bottom_rough top_rough top_bottom_rough side_rough "
       "bottom_polished_others_rough top_polished_others_rough");
   experimentSurfaceStateCommand.SetDefaultValue("all_polished");
   experimentSurfaceStateCommand.SetStates(G4State_PreInit, G4State_Idle);

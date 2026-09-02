@@ -2,13 +2,14 @@
   "stage": "B7.5",
   "b7_3_config": "b7_3_full_energy_response.json",
   "events": 100000,
-  "states": ["bottom_rough", "top_rough"],
+  "states": ["bottom_rough", "top_rough", "top_bottom_rough"],
   "shared_sigma_alpha_rad": 0.70,
-  "max_parallel_processes": 2,
+  "max_parallel_processes": 3,
   "measured_normalized_light_output": {
     "all_polished": 1.00,
     "bottom_rough": 1.60,
-    "top_rough": 1.54
+    "top_rough": 1.54,
+    "top_bottom_rough": null
   },
   "validation": {
     "minimum_full_energy_events": 50,

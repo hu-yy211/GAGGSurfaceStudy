@@ -434,7 +434,7 @@ if(BUILD_TESTING)
             --output-dir ${PROJECT_BINARY_DIR}/results/b7_5_endface_sigma070
   )
   set_tests_properties(b7_5_endface_export PROPERTIES
-    PASS_REGULAR_EXPRESSION "\\[b7.5-runner\\].*points=2.*sigma_rad=0.7.*status=PASS"
+    PASS_REGULAR_EXPRESSION "\\[b7.5-runner\\].*points=3.*sigma_rad=0.7.*status=PASS"
     FAIL_REGULAR_EXPRESSION "unclassified=[1-9][0-9]*|status=FAIL|G4Exception|Fatal Exception"
     TIMEOUT 3600
     LABELS "slow;b7"
@@ -450,7 +450,7 @@ if(BUILD_TESTING)
   )
   set_tests_properties(b7_5_endface_validate PROPERTIES
     DEPENDS "b7_5_endface_export;b7_3_full_energy_export"
-    PASS_REGULAR_EXPRESSION "\\[b7.5-comparison\\].*no_plot=true.*status=PASS"
+    PASS_REGULAR_EXPRESSION "\\[b7.5-new-state\\].*no_plot=true.*status=PASS"
     LABELS "slow;b7"
   )
 

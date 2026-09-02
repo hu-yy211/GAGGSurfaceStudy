@@ -684,10 +684,13 @@ only missing physical parameter and does not justify per-face fitting.
 
 ## 2026-09-02 - B7.5 sigma=0.70 end-face comparison
 
-- Ran only `bottom_rough` and `top_rough` at shared sigma=0.70 rad, with
-  100000 effective annihilation-pair events per state. No side/multiple-rough
-  state and no new plot were produced.
-- Reused the B7.3 100k all-polished reference. All three samples had exact
+- Corrected the initial two-control interpretation by adding
+  `top_bottom_rough`: top and bottom GAGG-air boundaries ground, all four side
+  boundaries polished. The shared sigma remains 0.70 rad. No plot was made.
+- Reused the already validated 100k `bottom_rough`, `top_rough` and B7.3
+  all-polished files, then ran only the new state for 100000 events. SHA-256
+  checks confirmed that the two control CSVs were not modified.
+- All four samples had exact
   event-history pairing and selected the same 187 full-energy events;
   generated light was 5,160,063 photons in each state and optical terminal
   accounting closed.
@@ -695,11 +698,15 @@ only missing physical parameter and does not justify per-face fitting.
   normalized response 2.083677 (95% bootstrap interval 2.073532--2.093680).
 - Top rough: `N_PMT=1,509,780`, mean 8073.690, efficiency 0.2925895,
   normalized response 3.062478 (95% bootstrap interval 3.038424--3.086668).
-- The paired bottom/top ratio was 0.680389 (95% interval
-  0.676611--0.684050). The mean paired difference was -2580.439 optical
-  photons per full-energy event with standard error 19.422.
+- Top and bottom rough: `N_PMT=987,152`, mean 5278.888, efficiency 0.1913062,
+  normalized response 2.002365 (95% interval 1.988255--2.017187).
+- Both-end/bottom was 0.960977 (95% interval 0.956261--0.965825), and
+  both-end/top was 0.653838 (0.651925--0.655914). Both intervals lie below 1.
+- The corrected focused regression passed 5/5 in 174.02 s: smoke, three-state
+  100k export, paired validation, and the original B1 six-state export and
+  validation. Independent production and CTest CSVs were byte-identical for
+  all three states.
 
-Status: B7.5 focused validation passed. The current geometry plus UNIFIED
-roughness predicts top rough substantially brighter than bottom rough. The
-preliminary experiment has bottom/top=1.60/1.54=1.03896, so this discrepancy
-is a model-mechanism problem rather than an unresolved sigma value.
+Status: corrected B7.5 focused validation passed. Simultaneously roughening
+both end faces does not increase collection above either single-end case; it
+is 3.90% below bottom rough and 34.62% below top rough in the paired totals.

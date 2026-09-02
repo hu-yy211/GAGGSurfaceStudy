@@ -850,28 +850,32 @@ states also remain too bright. B7.4 therefore validates the scan machinery
 but rejects shared `sigma_alpha` alone as an adequate explanation of all six
 experimental responses.
 
-B7.5 isolates the two single-end-face states at the B7.4 positive-grid
-candidate `sigma_alpha=0.70 rad`. It runs 100000 events for `bottom_rough`
-and `top_rough`, reuses the paired B7.3 all-polished reference, and writes
-event CSVs plus numerical summaries only; no new plot is generated.
+B7.5 adds the focused state `top_bottom_rough` at the B7.4 positive-grid
+candidate `sigma_alpha=0.70 rad`. In this state the GAGG-air top and bottom
+boundaries are ground while all four side boundaries remain polished. It is
+compared with the existing `bottom_rough` and `top_rough` controls using
+100000 exactly paired events per state. Numerical CSV summaries are written;
+no new plot is generated.
 
 ~~~sh
 python analysis/run_b7_5.py --executable build/gagg_surface_study \
   --config config/b7_5_endface_sigma070.json \
-  --output-dir results/b7_5_endface_sigma070_100k --jobs 2
+  --output-dir results/b7_5_endface_sigma070_100k --jobs 3
 python analysis/validate_b7_5.py \
   --config config/b7_5_endface_sigma070.json \
   --input-dir results/b7_5_endface_sigma070_100k \
   --reference results/b7_3_full_energy_100k/annihilation_pair_all_polished.csv
 ~~~
 
-All three samples selected the same 187 full-energy events. Bottom rough gave
+All four samples, including the reused all-polished reference, selected the
+same 187 full-energy events. Bottom rough gave
 mean `N_PMT=5493.25`, collection efficiency 0.199075 and normalized response
 2.08368. Top rough gave mean `N_PMT=8073.69`, efficiency 0.292589 and
-normalized response 3.06248. The paired bottom/top photon ratio is 0.680389
-(95% bootstrap interval 0.676611--0.684050), while the preliminary experiment
-gives 1.60/1.54=1.03896. Thus the current model predicts a strong top-rough
-advantage, whereas the experiment shows a small bottom-rough advantage.
+normalized response 3.06248. Top-and-bottom rough gave mean `N_PMT=5278.89`,
+efficiency 0.191306 and normalized response 2.00237. Its paired response is
+0.960977 of bottom rough (95% interval 0.956261--0.965825) and 0.653838 of
+top rough (0.651925--0.655914). Simultaneous end-face roughening therefore
+does not produce the highest collection rate in this model.
 
 ## Directory design
 

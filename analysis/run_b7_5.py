@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run only bottom-rough and top-rough at sigma_alpha=0.70 rad."""
+"""Run the three B7.5 end-face states at sigma_alpha=0.70 rad."""
 
 from __future__ import annotations
 
@@ -10,6 +10,13 @@ import re
 import subprocess
 
 from b7_5_common import B75Config, DEFAULT_CONFIG_PATH, load_config
+
+
+EXPECTED_FINISHES = {
+    "bottom_rough": ("polished", "rough", "polished"),
+    "top_rough": ("rough", "polished", "polished"),
+    "top_bottom_rough": ("rough", "rough", "polished"),
+}
 
 
 def geant_path(path: Path) -> str:
@@ -67,15 +74,31 @@ def main() -> int:
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--jobs", type=int)
+    parser.add_argument(
+        "--state",
+        action="append",
+        choices=tuple(EXPECTED_FINISHES),
+        help="Run only a selected state; repeat to select multiple states.",
+    )
     parser.add_argument("--generate-only", action="store_true")
     args = parser.parse_args()
     config = load_config(args.config)
-    jobs = [write_macro(config, args.output_dir, state) for state in config.states]
-    workers = config.max_parallel_processes if args.jobs is None else args.jobs
+    selected_states = config.states if args.state is None else tuple(args.state)
+    if len(set(selected_states)) != len(selected_states):
+        raise ValueError("B7.5 states must not be repeated")
+    jobs = [write_macro(config, args.output_dir, state) for state in selected_states]
+    workers = (
+        min(config.max_parallel_processes, len(jobs))
+        if args.jobs is None
+        else args.jobs
+    )
     if not 1 <= workers <= len(jobs):
         raise ValueError("B7.5 --jobs lies outside the valid range")
     if args.generate_only:
-        print("[b7.5-runner] points=2 sigma_rad=0.7 generate_only=true status=PASS")
+        print(
+            f"[b7.5-runner] points={len(jobs)} sigma_rad=0.7 "
+            "generate_only=true status=PASS"
+        )
         return 0
     executable = args.executable.resolve()
 
@@ -94,6 +117,13 @@ def main() -> int:
         ]
         if re.search(r"unclassified=[1-9][0-9]*", output):
             failures.append("nonzero unclassified optical photons")
+        top, bottom, side = EXPECTED_FINISHES[state]
+        surface_pattern = (
+            rf"\[b1\] surface_validation state={state} top={top} "
+            rf"bottom={bottom} side={side} .*status=PASS"
+        )
+        if re.search(surface_pattern, output) is None:
+            failures.append("incorrect or missing face-treatment validation")
         marker = f"[output] csv={output_path.resolve()} rows={config.response.events}"
         if completed.returncode != 0 or failures or marker not in completed.stdout:
             raise RuntimeError(
@@ -106,7 +136,7 @@ def main() -> int:
     with ThreadPoolExecutor(max_workers=workers) as executor:
         tuple(executor.map(execute, jobs))
     print(
-        f"[b7.5-runner] points=2 events_per_point={config.response.events} "
+        f"[b7.5-runner] points={len(jobs)} events_per_point={config.response.events} "
         f"sigma_rad={config.sigma:g} exact_seed_pairing=true no_plot=true status=PASS"
     )
     return 0

@@ -98,7 +98,8 @@ normalized responses. Agreement is reported but is not a structural pass
 gate; the code forbids per-face sigma values.
 
 B7.5 uses `b7_5_common.py`, `run_b7_5.py` and `validate_b7_5.py` to compare
-only bottom rough and top rough at sigma=0.70 rad with 100000 paired events.
-It reuses the B7.3 all-polished reference and writes
+bottom rough, top rough and the added `top_bottom_rough` state at
+sigma=0.70 rad with 100000 paired events. It reuses the B7.3 all-polished
+reference and writes
 `b7_5_endface_summary.csv` plus `b7_5_endface_comparison.csv`. There is no
 B7.5 plotting program by design.
