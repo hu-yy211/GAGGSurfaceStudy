@@ -571,3 +571,28 @@ localized to photon redirection/detection assumptions rather than an unknown
 terminal accounting loss.
 
 Final validation: A0--B6 regression passed 40/40 tests in 214.37 s.
+
+## 2026-09-02 - B7.1 square-face source-position sampling
+
+- Created the dedicated `stage-b/face-source-sigma-scan` branch in the
+  `/Users/huyy/code/GAGG-B` worktree from the validated `b6` tag. The
+  post-B6 Na-22 decay/audit work remains isolated on
+  `archive/post-b6-na22-audit` in the original worktree.
+- Added `/gagg/source/faceSize`; zero preserves the existing point/circular
+  source, while 2.5 mm samples x and y independently and uniformly within
+  +/-1.25 mm around the configured source centre. A nonzero `faceSize` and
+  `beamRadius` are rejected as ambiguous.
+- Ran 5000 deterministic samples at source centre `(0,0,30) mm`. Observed
+  x/y ranges were `[-1.248967,1.249723]` and
+  `[-1.249803,1.249929]` mm. Means were 0.01460/0.00652 mm and variances
+  0.52133/0.52252 mm2 versus the uniform expectation 0.52083 mm2.
+- The x-y correlation was -0.0251 and the 5x5-grid reduced chi-square was
+  1.36375. Range, moments, correlation, edge coverage and grid uniformity
+  all passed. The plot was visually inspected.
+- B7.1 tests passed 2/2. Existing smoke, A6 gamma export/validation and B3
+  gamma export/validation passed 5/5, confirming that `faceSize=0` preserves
+  earlier source behaviour.
+
+Status: B7.1 validation gate passed. The test uses one 1 keV fixed-direction
+gamma only for inexpensive spatial validation. Back-to-back 511 keV emission
+and isotropic pair-axis validation belong exclusively to B7.2.

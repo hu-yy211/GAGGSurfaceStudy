@@ -50,6 +50,9 @@ inline constexpr G4double kStageAGammaSourceZ =
 inline constexpr G4double kExperimentCrystalWidth = 5.75 * mm;
 inline constexpr G4double kExperimentCrystalDepth = 5.75 * mm;
 inline constexpr G4double kExperimentCrystalLength = 20.0 * mm;
+// B7 effective annihilation-source face. The source remains disabled unless
+// /gagg/source/faceSize is set by a Stage-B macro.
+inline constexpr G4double kB7FaceSourceSize = 2.5 * mm;
 
 // B0 geometry placeholders. These remain runtime-selectable and must be
 // replaced by measurements before quantitative Stage B comparison.

@@ -37,3 +37,12 @@ The runner writes one inspectable macro per point under results/b2/macros and
 executes each in an isolated Geant4 process. This prevents scan-order history
 from entering the first event of a rebuilt ground surface. B2 does not select
 or fit sigma_alpha and does not contain gamma interactions.
+
+B7.1 validates the 2.5 mm x 2.5 mm effective source-face position sampler:
+
+  ../validation/b7_face_source.mac
+
+The `/gagg/source/faceSize 2.5 mm` command samples x and y uniformly around
+the configured source centre. The validation macro uses a single 1 keV
+fixed-direction gamma only to test positions. It does not yet implement the
+back-to-back 511 keV, 4pi pair-axis source planned for B7.2.

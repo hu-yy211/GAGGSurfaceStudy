@@ -1,0 +1,27 @@
+# B7.1: validate only the uniform 2.5 mm x 2.5 mm source-face positions.
+# A single low-energy fixed-direction gamma keeps this test inexpensive;
+# B7.2 will add the back-to-back 511 keV pair and 4pi direction sampling.
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+
+/gagg/geometry/mode experiment
+/gagg/stageA/surface none
+/gagg/stageB/surfaceState all_polished
+/gagg/stageB/sigmaAlpha 0.20 rad
+/run/initialize
+
+/gagg/source/particle gamma
+/gagg/source/mode fixed
+/gagg/source/kineticEnergy 1 keV
+/gagg/source/position 0 0 30 mm
+/gagg/source/beamRadius 0 mm
+/gagg/source/faceSize 2.5 mm
+/gagg/source/eventSeedBase 740001
+
+/gagg/output/eventPrintModulo 0
+/gagg/output/csv results/b7_1_face_source/positions.csv
+/random/setSeeds 223607 244949
+/run/printProgress 1000
+/run/beamOn 5000

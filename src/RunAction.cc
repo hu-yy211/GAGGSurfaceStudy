@@ -76,6 +76,7 @@ void RunAction::BeginOfRunAction(const G4Run*) {
          << " configured_optical_photons_per_event="
          << fPrimaryGenerator->GetPhotonsPerEvent()
          << " beam_radius_mm=" << fPrimaryGenerator->GetBeamRadius() / mm
+         << " face_size_mm=" << fPrimaryGenerator->GetFaceSize() / mm
          << " event_seed_base=" << fPrimaryGenerator->GetEventSeedBase()
          << " position_mm=" << fPrimaryGenerator->GetPosition() / mm
          << G4endl;

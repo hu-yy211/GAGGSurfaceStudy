@@ -737,6 +737,32 @@ darker. Detailed evidence and next measurements are in `docs/b6-findings.md`.
 The B3--B6 targeted suite passed 11/11 tests in 152.98 s. Final A0--B6
 regression passed 40/40 tests in 214.37 s.
 
+## B7 effective annihilation-source face
+
+B7.1 adds a backward-compatible square gamma-source position sampler. The
+existing point and circular beam remain active when `/gagg/source/faceSize`
+is zero. The B7 effective-source value is 2.5 mm, centred at `(0,0,30) mm`:
+
+~~~sh
+./build/gagg_surface_study build/macros/validation/b7_face_source.mac
+MPLCONFIGDIR=build/.mplconfig python analysis/validate_b7_face_source.py \
+  --input results/b7_1_face_source/positions.csv \
+  --output-dir results/b7_1_face_source/figures \
+  --expect-events 5000 --face-size-mm 2.5
+~~~
+
+The 5000-event deterministic validation sampled x in
+`[-1.248967, 1.249723] mm` and y in `[-1.249803, 1.249929] mm`. The means
+were 0.01460 and 0.00652 mm; the variances were 0.52133 and 0.52252 mm2,
+compared with the uniform-square expectation 0.52083 mm2. The 5x5-grid
+reduced chi-square was 1.36375 and every predeclared range, moment,
+correlation, edge-coverage and grid-uniformity check passed.
+
+This B7.1 macro deliberately uses one fixed-direction 1 keV gamma only to
+make the position test inexpensive. It is not a source-physics result. B7.2
+must add two back-to-back 511 keV gammas with an isotropically sampled pair
+axis while reusing this validated position sampler.
+
 ## Directory design
 
 ~~~text
@@ -801,6 +827,7 @@ centralized in "include/GAGG/SimulationConfig.hh".
 | B5 shared sigma grid | 0.10, 0.20, 0.30 rad | free validation grid | B2-predeclared subset; no point selected |
 | B5 full-energy half-widths | 0.25, 0.5, 1.0 keV | analysis robustness grid | identical 28-event ideal sample |
 | B6 surface-loss locations | top, bottom, side, black, other | diagnostic counters | exact subtotals; no physics change |
+| B7 effective source face | 2.5 x 2.5 mm2, centred at (0,0,30) mm | explicit model assumption | B7.1 uniform x-y sampling validated; directions deferred to B7.2 |
 | ESR specular-lobe fraction | 1.0 | UNIFIED model choice | fixed, not fitted; makes ground ESR reflection sigma-driven |
 
 The bulk composition is stoichiometric Gd3Al2Ga3O12. Ce concentration was not

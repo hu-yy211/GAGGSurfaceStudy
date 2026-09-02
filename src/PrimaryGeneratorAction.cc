@@ -62,6 +62,15 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
   beamRadiusCommand.SetDefaultValue("0.");
   beamRadiusCommand.SetStates(G4State_PreInit, G4State_Idle);
 
+  auto& faceSizeCommand = fMessenger->DeclareMethodWithUnit(
+      "faceSize", "mm", &PrimaryGeneratorAction::SetFaceSize,
+      "Set the side length of a uniform square gamma-source face; zero "
+      "keeps the existing point/circular-beam source.");
+  faceSizeCommand.SetParameterName("size", false);
+  faceSizeCommand.SetRange("size>=0.");
+  faceSizeCommand.SetDefaultValue("0.");
+  faceSizeCommand.SetStates(G4State_PreInit, G4State_Idle);
+
   auto& eventSeedCommand = fMessenger->DeclareMethod(
       "eventSeedBase", &PrimaryGeneratorAction::SetEventSeedBase,
       "Set a positive deterministic per-event seed base; zero keeps the "
@@ -74,7 +83,7 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
   fPositionCommand = std::make_unique<G4UIcmdWith3VectorAndUnit>(
       "/gagg/source/position", this);
   fPositionCommand->SetGuidance(
-      "Set the common optical-photon source position.");
+      "Set the source centre; face sampling, when enabled, is relative to it.");
   fPositionCommand->SetParameterName("x", "y", "z", false, false);
   fPositionCommand->SetDefaultUnit("mm");
   fPositionCommand->SetUnitCandidates("nm um mm cm m");
@@ -102,7 +111,11 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event) {
   }
   ValidateConfiguration();
   fEventPosition = fPosition;
-  if (fParticleMode == "gamma" && fBeamRadius > 0.0) {
+  if (fParticleMode == "gamma" && fFaceSize > 0.0) {
+    fEventPosition +=
+        G4ThreeVector(fFaceSize * (G4UniformRand() - 0.5),
+                      fFaceSize * (G4UniformRand() - 0.5), 0.0);
+  } else if (fParticleMode == "gamma" && fBeamRadius > 0.0) {
     const auto radius = fBeamRadius * std::sqrt(G4UniformRand());
     const auto phi = twopi * G4UniformRand();
     fEventPosition +=
@@ -169,6 +182,14 @@ void PrimaryGeneratorAction::SetBeamRadius(G4double radius) {
   fBeamRadius = radius;
 }
 
+void PrimaryGeneratorAction::SetFaceSize(G4double size) {
+  if (size < 0.0) {
+    G4Exception("PrimaryGeneratorAction::SetFaceSize", "GAGG-B7-001",
+                FatalException, "faceSize must be non-negative");
+  }
+  fFaceSize = size;
+}
+
 void PrimaryGeneratorAction::SetEventSeedBase(G4long seed) {
   if (seed < 0) {
     G4Exception("PrimaryGeneratorAction::SetEventSeedBase", "GAGG-A7-002",
@@ -231,13 +252,24 @@ void PrimaryGeneratorAction::ValidateConfiguration() const {
   const auto radialSquared = fPosition.x() * fPosition.x() +
                              fPosition.y() * fPosition.y();
   if (fParticleMode == "gamma") {
+    if (fFaceSize > 0.0 && fBeamRadius > 0.0) {
+      G4Exception("PrimaryGeneratorAction::ValidateConfiguration",
+                  "GAGG-B7-002", FatalException,
+                  "faceSize and beamRadius cannot both be non-zero");
+    }
+    const auto sourceHalfExtent = 0.5 * fFaceSize;
     const auto insideWorld =
-        std::abs(fPosition.x()) < config::kWorldHalfLength &&
-        std::abs(fPosition.y()) < config::kWorldHalfLength &&
+        std::abs(fPosition.x()) + sourceHalfExtent <
+            config::kWorldHalfLength &&
+        std::abs(fPosition.y()) + sourceHalfExtent <
+            config::kWorldHalfLength &&
         std::abs(fPosition.z()) < config::kWorldHalfLength;
     const auto beamCenterRadius = std::sqrt(radialSquared);
+    const auto squareCornerRadius = std::sqrt(2.0) * sourceHalfExtent;
+    const auto transverseExtent =
+        fFaceSize > 0.0 ? squareCornerRadius : fBeamRadius;
     const auto aimedAtCrystal =
-        beamCenterRadius + fBeamRadius <= config::kCrystalRadius;
+        beamCenterRadius + transverseExtent <= config::kCrystalRadius;
     const auto abovePaperGeometry =
         fPosition.z() >= config::kStageAGammaSourceZ;
     if (fDirectionMode != "fixed" || !insideWorld || !aimedAtCrystal ||
@@ -245,7 +277,8 @@ void PrimaryGeneratorAction::ValidateConfiguration() const {
       G4Exception("PrimaryGeneratorAction::ValidateConfiguration",
                   "GAGG-A6-001", FatalException,
                   "The A6 gamma source must use fixed mode, start inside the "
-                  "world above the paper geometry, and point at the crystal");
+                  "world above the paper geometry, and fit within the "
+                  "crystal projection");
     }
     return;
   }

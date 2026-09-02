@@ -291,6 +291,32 @@ if(BUILD_TESTING)
   )
 
   add_test(
+    NAME b7_1_face_source_export
+    COMMAND $<TARGET_FILE:gagg_surface_study>
+            ${PROJECT_BINARY_DIR}/macros/validation/b7_face_source.mac
+  )
+  set_tests_properties(b7_1_face_source_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[output\\] csv=results/b7_1_face_source/positions.csv rows=5000"
+    FAIL_REGULAR_EXPRESSION "unclassified=[1-9][0-9]*|status=FAIL|G4Exception|Fatal Exception"
+    TIMEOUT 300
+  )
+
+  add_test(
+    NAME b7_1_face_source_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_b7_face_source.py
+            --input ${PROJECT_BINARY_DIR}/results/b7_1_face_source/positions.csv
+            --output-dir ${PROJECT_BINARY_DIR}/results/b7_1_face_source/figures
+            --expect-events 5000
+            --face-size-mm 2.5
+  )
+  set_tests_properties(b7_1_face_source_validate PROPERTIES
+    DEPENDS b7_1_face_source_export
+    ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
+    PASS_REGULAR_EXPRESSION "\\[b7.1\\] face_source_sampling status=PASS"
+  )
+
+  add_test(
     NAME b1_surface_export
     COMMAND $<TARGET_FILE:gagg_surface_study>
             ${PROJECT_BINARY_DIR}/macros/stage_b/b1_compare.mac
