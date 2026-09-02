@@ -6,10 +6,16 @@
 #include "G4Electron.hh"
 #include "G4Event.hh"
 #include "G4Gamma.hh"
+#include "G4GeneralParticleSource.hh"
 #include "G4GenericMessenger.hh"
+#include "G4Ions.hh"
 #include "G4OpticalPhoton.hh"
 #include "G4ParticleGun.hh"
+#include "G4PrimaryParticle.hh"
+#include "G4PrimaryVertex.hh"
 #include "G4PhysicalConstants.hh"
+#include "G4SingleParticleSource.hh"
+#include "G4SPSPosDistribution.hh"
 #include "G4StateManager.hh"
 #include "G4UIcmdWith3VectorAndUnit.hh"
 #include "G4ios.hh"
@@ -22,12 +28,13 @@ namespace gagg {
 PrimaryGeneratorAction::PrimaryGeneratorAction()
     : fMessenger(std::make_unique<G4GenericMessenger>(
           this, "/gagg/source/", "Primary source controls")),
+      fGeneralParticleSource(std::make_unique<G4GeneralParticleSource>()),
       fParticleGun(std::make_unique<G4ParticleGun>(1)) {
   auto& particleCommand = fMessenger->DeclareMethod(
       "particle", &PrimaryGeneratorAction::SetParticleMode,
-      "Select optical primaries, one electron, or one gamma per event.");
+      "Select optical, electron, gamma, or a GPS Na22-ion primary.");
   particleCommand.SetParameterName("particle", false);
-  particleCommand.SetCandidates("optical electron gamma");
+  particleCommand.SetCandidates("optical electron gamma na22");
   particleCommand.SetDefaultValue("optical");
   particleCommand.SetStates(G4State_PreInit, G4State_Idle);
 
@@ -71,6 +78,15 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
   eventSeedCommand.SetDefaultValue("0");
   eventSeedCommand.SetStates(G4State_PreInit, G4State_Idle);
 
+  auto& sourceDistanceCommand = fMessenger->DeclareMethodWithUnit(
+      "sourceDistance", "mm", &PrimaryGeneratorAction::SetSourceDistance,
+      "Place the Na22 point source on the +z axis this distance outside "
+      "the experiment crystal's +z incident face.");
+  sourceDistanceCommand.SetParameterName("distance", false);
+  sourceDistanceCommand.SetRange("distance>0.");
+  sourceDistanceCommand.SetDefaultValue("20.");
+  sourceDistanceCommand.SetStates(G4State_PreInit, G4State_Idle);
+
   fPositionCommand = std::make_unique<G4UIcmdWith3VectorAndUnit>(
       "/gagg/source/position", this);
   fPositionCommand->SetGuidance(
@@ -79,6 +95,12 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
   fPositionCommand->SetDefaultUnit("mm");
   fPositionCommand->SetUnitCandidates("nm um mm cm m");
   fPositionCommand->AvailableForStates(G4State_PreInit, G4State_Idle);
+
+  auto* gpsPosition = fGeneralParticleSource->GetCurrentSource()->GetPosDist();
+  gpsPosition->SetPosDisType("Point");
+  gpsPosition->SetCentreCoords(
+      {0.0, 0.0,
+       0.5 * config::kExperimentCrystalLength + fSourceDistance});
 
   fParticleGun->SetParticleDefinition(G4OpticalPhoton::Definition());
   fParticleGun->SetParticleEnergy(config::EmissionPhotonEnergy());
@@ -100,6 +122,17 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event) {
     // the observed same-process rough-surface run-history effect.
     G4Random::setTheSeeds(seeds, 2);
   }
+  if (fParticleMode == "na22") {
+    fGeneralParticleSource->GeneratePrimaryVertex(event);
+    const auto* vertex = event->GetPrimaryVertex(0);
+    if (vertex != nullptr) {
+      fEventPosition =
+          {vertex->GetX0(), vertex->GetY0(), vertex->GetZ0()};
+    }
+    ValidateNa22Primary(event);
+    return;
+  }
+
   ValidateConfiguration();
   fEventPosition = fPosition;
   if (fParticleMode == "gamma" && fBeamRadius > 0.0) {
@@ -178,8 +211,19 @@ void PrimaryGeneratorAction::SetEventSeedBase(G4long seed) {
 }
 
 G4double PrimaryGeneratorAction::GetSourceEnergy() const {
+  if (fParticleMode == "na22") {
+    return 0.0;
+  }
   return fParticleMode == "optical" ? config::EmissionPhotonEnergy()
                                      : fKineticEnergy;
+}
+
+G4ThreeVector PrimaryGeneratorAction::GetPosition() const {
+  if (fParticleMode == "na22") {
+    return fGeneralParticleSource->GetCurrentSource()
+        ->GetPosDist()->GetCentreCoords();
+  }
+  return fPosition;
 }
 
 void PrimaryGeneratorAction::SetPhotonsPerEvent(G4int count) {
@@ -192,6 +236,21 @@ void PrimaryGeneratorAction::SetPhotonsPerEvent(G4int count) {
 
 void PrimaryGeneratorAction::SetPosition(const G4ThreeVector& position) {
   fPosition = position;
+  fGeneralParticleSource->GetCurrentSource()
+      ->GetPosDist()->SetCentreCoords(position);
+}
+
+void PrimaryGeneratorAction::SetSourceDistance(G4double distance) {
+  if (distance <= 0.0) {
+    G4Exception("PrimaryGeneratorAction::SetSourceDistance", "GAGG-NA22-001",
+                FatalException, "sourceDistance must be positive");
+  }
+  fSourceDistance = distance;
+  auto* position = fGeneralParticleSource->GetCurrentSource()->GetPosDist();
+  position->SetPosDisType("Point");
+  position->SetCentreCoords(
+      {0.0, 0.0,
+       0.5 * config::kExperimentCrystalLength + fSourceDistance});
 }
 
 void PrimaryGeneratorAction::ResetDirectionDiagnostics() {
@@ -244,8 +303,9 @@ void PrimaryGeneratorAction::ValidateConfiguration() const {
         !abovePaperGeometry) {
       G4Exception("PrimaryGeneratorAction::ValidateConfiguration",
                   "GAGG-A6-001", FatalException,
-                  "The A6 gamma source must use fixed mode, start inside the "
-                  "world above the paper geometry, and point at the crystal");
+                  "A gamma source must use fixed control mode and start "
+                  "inside the world above the geometry and point at the "
+                  "crystal");
     }
     return;
   }
@@ -261,18 +321,66 @@ void PrimaryGeneratorAction::ValidateConfiguration() const {
   }
 }
 
-void PrimaryGeneratorAction::ConfigureIsotropicPhoton() {
-  const auto cosineTheta = 2.0 * G4UniformRand() - 1.0;
-  const auto sineTheta = std::sqrt(1.0 - cosineTheta * cosineTheta);
-  const auto phi = twopi * G4UniformRand();
-  const G4ThreeVector direction(sineTheta * std::cos(phi),
-                                sineTheta * std::sin(phi), cosineTheta);
-  ++fDirectionSamples;
-  fDirectionSum += direction;
-  fDirectionSquareSum +=
-      {direction.x() * direction.x(), direction.y() * direction.y(),
-       direction.z() * direction.z()};
+void PrimaryGeneratorAction::ValidateNa22Primary(const G4Event* event) const {
+  const auto* vertex = event->GetPrimaryVertex(0);
+  const auto* primary = vertex == nullptr ? nullptr : vertex->GetPrimary(0);
+  const auto* definition =
+      primary == nullptr ? nullptr : primary->GetG4code();
+  const auto* ion = dynamic_cast<const G4Ions*>(definition);
+  const auto expectedZ =
+      0.5 * config::kExperimentCrystalLength + fSourceDistance;
+  const auto positionValid =
+      vertex != nullptr && std::abs(vertex->GetX0()) < 1.0e-12 * mm &&
+      std::abs(vertex->GetY0()) < 1.0e-12 * mm &&
+      std::abs(vertex->GetZ0() - expectedZ) < 1.0e-12 * mm;
+  const auto particleValid =
+      definition != nullptr && definition->GetAtomicNumber() == 11 &&
+      definition->GetAtomicMass() == 22 && ion != nullptr &&
+      std::abs(ion->GetExcitationEnergy()) < 1.0e-12 * eV;
+  const auto energyValid =
+      primary != nullptr &&
+      std::abs(primary->GetKineticEnergy()) < 1.0e-12 * eV;
+  const auto multiplicityValid =
+      vertex != nullptr && vertex->GetNumberOfParticle() == 1;
+  if (!positionValid || !particleValid || !energyValid ||
+      !multiplicityValid) {
+    G4ExceptionDescription description;
+    description << "Na22 GPS validation failed: particle="
+                << (definition == nullptr ? G4String("none")
+                                          : definition->GetParticleName())
+                << " Z="
+                << (definition == nullptr ? -1 : definition->GetAtomicNumber())
+                << " A="
+                << (definition == nullptr ? -1 : definition->GetAtomicMass())
+                << " kinetic_eV="
+                << (primary == nullptr ? -1.0
+                                       : primary->GetKineticEnergy() / eV)
+                << " position_mm="
+                << (vertex == nullptr
+                        ? G4ThreeVector()
+                        : G4ThreeVector(vertex->GetX0(), vertex->GetY0(),
+                                        vertex->GetZ0()) / mm)
+                << " expected_z_mm=" << expectedZ / mm;
+    G4Exception("PrimaryGeneratorAction::ValidateNa22Primary",
+                "GAGG-NA22-002", FatalException, description);
+  }
+  if (event->GetEventID() == 0) {
+    G4cout << "[na22-primary] particle=" << definition->GetParticleName()
+           << " Z=" << definition->GetAtomicNumber()
+           << " A=" << definition->GetAtomicMass()
+           << " excitation_keV=" << ion->GetExcitationEnergy() / keV
+           << " kinetic_eV=" << primary->GetKineticEnergy() / eV
+           << " position_mm=" << fEventPosition / mm
+           << " crystal_incident_face_z_mm="
+           << 0.5 * config::kExperimentCrystalLength / mm
+           << " source_distance_mm=" << fSourceDistance / mm
+           << " gps=true status=PASS" << G4endl;
+  }
+}
 
+void PrimaryGeneratorAction::ConfigureIsotropicPhoton() {
+  const auto direction = SampleIsotropicDirection();
+  RecordDirectionSample(direction);
   const auto firstTransverse = direction.orthogonal().unit();
   const auto secondTransverse = direction.cross(firstTransverse).unit();
   const auto polarizationAngle = twopi * G4UniformRand();
@@ -280,6 +388,22 @@ void PrimaryGeneratorAction::ConfigureIsotropicPhoton() {
                             std::sin(polarizationAngle) * secondTransverse;
   fParticleGun->SetParticleMomentumDirection(direction);
   fParticleGun->SetParticlePolarization(polarization);
+}
+
+G4ThreeVector PrimaryGeneratorAction::SampleIsotropicDirection() const {
+  const auto cosineTheta = 2.0 * G4UniformRand() - 1.0;
+  const auto sineTheta = std::sqrt(1.0 - cosineTheta * cosineTheta);
+  const auto phi = twopi * G4UniformRand();
+  return {sineTheta * std::cos(phi), sineTheta * std::sin(phi), cosineTheta};
+}
+
+void PrimaryGeneratorAction::RecordDirectionSample(
+    const G4ThreeVector& direction) {
+  ++fDirectionSamples;
+  fDirectionSum += direction;
+  fDirectionSquareSum +=
+      {direction.x() * direction.x(), direction.y() * direction.y(),
+       direction.z() * direction.z()};
 }
 
 }  // namespace gagg

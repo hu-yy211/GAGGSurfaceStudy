@@ -11,6 +11,7 @@
 #include <memory>
 
 class G4GenericMessenger;
+class G4GeneralParticleSource;
 class G4ParticleGun;
 class G4UIcmdWith3VectorAndUnit;
 
@@ -31,6 +32,7 @@ class PrimaryGeneratorAction final : public G4VUserPrimaryGeneratorAction,
   void SetEventSeedBase(G4long seed);
   void SetPhotonsPerEvent(G4int count);
   void SetPosition(const G4ThreeVector& position);
+  void SetSourceDistance(G4double distance);
 
   const G4String& GetDirectionMode() const { return fDirectionMode; }
   const G4String& GetParticleMode() const { return fParticleMode; }
@@ -39,8 +41,9 @@ class PrimaryGeneratorAction final : public G4VUserPrimaryGeneratorAction,
     return fParticleMode == "optical" ? fPhotonsPerEvent : 0;
   }
   G4int GetPhotonsPerEvent() const { return fPhotonsPerEvent; }
-  const G4ThreeVector& GetPosition() const { return fPosition; }
+  G4ThreeVector GetPosition() const;
   const G4ThreeVector& GetEventPosition() const { return fEventPosition; }
+  G4double GetSourceDistance() const { return fSourceDistance; }
   G4double GetBeamRadius() const { return fBeamRadius; }
   G4long GetEventSeedBase() const { return fEventSeedBase; }
   void ResetDirectionDiagnostics();
@@ -48,10 +51,14 @@ class PrimaryGeneratorAction final : public G4VUserPrimaryGeneratorAction,
 
  private:
   void ValidateConfiguration() const;
+  void ValidateNa22Primary(const G4Event* event) const;
   void ConfigureIsotropicPhoton();
+  G4ThreeVector SampleIsotropicDirection() const;
+  void RecordDirectionSample(const G4ThreeVector& direction);
 
   std::unique_ptr<G4GenericMessenger> fMessenger;
   std::unique_ptr<G4UIcmdWith3VectorAndUnit> fPositionCommand;
+  std::unique_ptr<G4GeneralParticleSource> fGeneralParticleSource;
   std::unique_ptr<G4ParticleGun> fParticleGun;
   G4String fParticleMode = "optical";
   G4String fDirectionMode = "fixed";
@@ -59,6 +66,7 @@ class PrimaryGeneratorAction final : public G4VUserPrimaryGeneratorAction,
   G4int fPhotonsPerEvent = 1;
   G4ThreeVector fPosition;
   G4ThreeVector fEventPosition;
+  G4double fSourceDistance = 20.0 * mm;
   G4double fBeamRadius = 0.0;
   G4long fEventSeedBase = 0;
   std::int64_t fDirectionSamples = 0;

@@ -23,6 +23,8 @@ class B3Config:
     path: Path
     events: int
     gamma_energy_kev: float
+    gamma_source_mode: str
+    source_label: str
     source_position_mm: tuple[float, float, float]
     beam_radius_mm: float
     event_seed_base: int
@@ -84,6 +86,9 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> B3Config:
         raise ValueError("B3 configuration must declare stage=B3")
     events = int(raw["events"])
     energy = float(raw["gamma_energy_keV"])
+    gamma_source_mode = str(raw.get("gamma_source_mode", "pencil"))
+    if gamma_source_mode != "pencil":
+        raise ValueError(f"unsupported gamma source mode: {gamma_source_mode}")
     position = tuple(float(value) for value in raw["source_position_mm"])
     run_seeds = tuple(int(value) for value in raw["run_seeds"])
     if events <= 0 or energy <= 0.0 or len(position) != 3:
@@ -95,6 +100,8 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> B3Config:
     geometry = {key: float(value) for key, value in raw["geometry"].items()}
     expected_geometry = {
         "side_air_gap_mm",
+        "top_air_gap_mm",
+        "bottom_air_gap_mm",
         "black_housing_thickness_mm",
         "esr_thickness_mm",
         "pmt_window_thickness_mm",
@@ -106,6 +113,8 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> B3Config:
         path=path,
         events=events,
         gamma_energy_kev=energy,
+        gamma_source_mode=gamma_source_mode,
+        source_label=str(raw.get("source_label", "511 keV pencil beam")),
         source_position_mm=(position[0], position[1], position[2]),
         beam_radius_mm=float(raw["beam_radius_mm"]),
         event_seed_base=int(raw["event_seed_base"]),
@@ -161,7 +170,8 @@ def load_gamma_sample(
             raise ValueError(f"sigma_alpha mismatch in {path}")
 
         edep = float(row["edep_keV"])
-        if edep < 0.0 or edep > config.gamma_energy_kev + 1.0e-6:
+        primary_energy = config.gamma_energy_kev
+        if edep < 0.0 or edep > primary_energy + 1.0e-6:
             raise ValueError(f"unphysical energy deposit in {path}: {edep}")
         values = {key: int(row[key]) for key in COUNT_COLUMNS}
         if values["scintillation"] != values["generated"]:

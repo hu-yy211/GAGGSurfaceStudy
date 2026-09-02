@@ -451,14 +451,15 @@ python analysis/summarize_a7_models.py \
 ## B0 experimental geometry and optical baseline
 
 B0 is validated independently of the failed A7 ordering. It establishes the
-measured 5.75 x 5.75 x 20 mm3 GAGG crystal, an explicit side air volume,
-surrounding black absorber, top ESR and a bottom PMT receiver window. The
-convention is +z top/ESR and -z bottom/PMT.
+measured 5.75 x 5.75 x 20 mm3 GAGG crystal, explicit air volumes on all six
+faces, a surrounding black absorber, top ESR and a bottom PMT receiver window.
+The convention is +z top/ESR and -z bottom/PMT.
 
 ~~~text
                      +z
               ┌─────────────┐
               │  top ESR    │
+              │   air gap   │
         ┌─────┴─────────────┴─────┐
         │ black │  side air │ black│
         │       │ ┌───────┐ │      │
@@ -466,14 +467,16 @@ convention is +z top/ESR and -z bottom/PMT.
         │       │ │5.75 mm│ │      │
         │       │ └───────┘ │      │
         └───────┴─────┬─────┴──────┘
+                      │ air gap
                       │ PMT window
                      -z
 ~~~
 
-The ESR and ideal black absorber use UNIFIED polished boundaries in B0. The
-GAGG faces remain geometrically polished; no rough `sigma_alpha` and no
-six-state surface switch are introduced until B1. B0 counts only photons that
-actually transmit into `PMTWindow`, stored in the existing `output` column.
+The ESR and ideal black absorber use UNIFIED polished outer boundaries in B0.
+The top, bottom and side GAGG-to-air faces remain polished; no rough
+`sigma_alpha` and no six-state surface switch are introduced until B1. B0
+counts only photons transmitted from the bottom air gap into `PMTWindow`,
+stored in the existing `output` column.
 
 Run the geometry and 5000-photon optical baseline:
 
@@ -489,17 +492,18 @@ python analysis/validate_b0.py \
   ./build/macros/validation/b0_vis.mac
 ~~~
 
-The validated baseline delivered 1845/5000 photons to the PMT window,
-`N_PMT/N_generated = 0.369`. All 5000 photons had exactly one terminal
+The updated six-face-air baseline delivered 618/5000 photons to the PMT
+window, `N_PMT/N_generated = 0.1236`. All 5000 photons had exactly one terminal
 classification, the direction sample passed isotropy checks, all analytic
-geometry/position/overlap checks passed, and the full suite passed 23/23
-CTest tests in 44.05 s.
+geometry/position/overlap checks passed, and all six optical border surfaces
+were found and validated.
 
 ## B1 six runtime surface states
 
-B1 assigns independent UNIFIED borders to the GAGG top, bottom and sides. The
-top ESR is represented as dielectric-metal; the bottom PMT-window and side-air
-interfaces are dielectric-dielectric. The `/gagg/stageB/surfaceState` messenger
+B1 assigns independent UNIFIED dielectric-dielectric borders to the GAGG top,
+bottom and sides, each now facing air. Separate polished outer borders model
+air-to-ESR as dielectric-metal and bottom-air-to-PMT-window as
+dielectric-dielectric. The `/gagg/stageB/surfaceState` messenger
 switches all six experimental states without recompilation. Every rough face
 uses the same `/gagg/stageB/sigmaAlpha`; separate per-face roughness parameters
 do not exist. The CSV records the active state and shared value together with
@@ -527,20 +531,20 @@ B2 surface implementation gives:
 
 | State | N_PMT / N_generated | Normalized to all polished |
 |---|---:|---:|
-| all polished | 0.3816 | 1.000 |
-| bottom rough | 0.4562 | 1.195 |
-| top rough | 0.4522 | 1.185 |
-| side rough | 0.2070 | 0.542 |
-| bottom polished, others rough | 0.1916 | 0.502 |
-| top polished, others rough | 0.1968 | 0.516 |
+| all polished | 0.1300 | 1.000 |
+| bottom rough | 0.2790 | 2.146 |
+| top rough | 0.3634 | 2.795 |
+| side rough | 0.1006 | 0.774 |
+| bottom polished, others rough | 0.1028 | 0.791 |
+| top polished, others rough | 0.0894 | 0.688 |
 
 This is a surface-assignment and transport diagnostic. The value 0.20 rad was
 not fitted, no 511 keV interaction is present, and B1 does not claim an
 experimental prediction. The exact all-polished repeat, runtime state and
 roughness changes, shared-roughness checks, photon accounting, face counters
 and plot export all passed. The `b1` tag retains the original B1 diagnostic;
-B2 corrected the top ESR UNIFIED reflection components so a ground top face
-actually responds to `sigma_alpha`.
+the present revision instead applies top-face roughness at the GAGG-to-air
+boundary and keeps the air-to-ESR reflector boundary separately polished.
 
 ## B2 optical-only roughness/position scan
 
@@ -573,15 +577,15 @@ For orientation only, the normalized optical collection at the grid point
 | State | z=-8 mm | z=0 mm | z=+8 mm |
 |---|---:|---:|---:|
 | all polished | 1.000 | 1.000 | 1.000 |
-| bottom rough | 1.227 | 1.223 | 1.205 |
-| top rough | 1.187 | 1.192 | 1.205 |
-| side rough | 0.913 | 0.596 | 0.809 |
-| bottom polished, others rough | 0.912 | 0.515 | 0.686 |
-| top polished, others rough | 0.890 | 0.528 | 0.778 |
+| bottom rough | 2.305 | 2.300 | 2.132 |
+| top rough | 2.767 | 2.862 | 2.821 |
+| side rough | 1.089 | 0.860 | 0.915 |
+| bottom polished, others rough | 1.024 | 0.817 | 0.943 |
+| top polished, others rough | 1.042 | 0.813 | 0.785 |
 
 All 90 points closed photon accounting. The repeated point was identical at
 event level, all-polished results were identical across the unused roughness
-parameter, and the largest adjacent efficiency jump was 0.0608, below the
+parameter, and the largest adjacent efficiency jump was 0.0362, below the
 predeclared 0.20 discontinuity guard. These are optical-source diagnostics,
 not 511 keV predictions or an experimental fit. Full A0-B2 regression passed
 29/29 tests in 64.33 s.
@@ -608,9 +612,9 @@ MPLCONFIGDIR=results/.mplconfig python analysis/plot_b3.py \
   --output-dir results/b3/figures --config config/b3_gamma.json
 ~~~
 
-The 100-event locked sample contains 30 zero-deposit, 42 partial-energy and
-28 full-energy events. The 510.5--511.5 keV full-energy subset gives
-53999.86 generated photons/MeV and `N_PMT/N_generated=0.371400`; every event
+The 100-event locked sample contains 28 zero-deposit, 40 partial-energy and
+32 full-energy events. The 510.5--511.5 keV full-energy subset gives
+53999.88 generated photons/MeV and `N_PMT/N_generated=0.126031`; every event
 closes terminal photon accounting. The energy spectrum and light-yield plot
 were visually checked, and full A0--B3 regression passed 32/32 tests.
 
@@ -636,21 +640,22 @@ MPLCONFIGDIR=results/.mplconfig python analysis/plot_b4.py \
   --config config/b4_comparison.json
 ~~~
 
-The 28 paired full-energy events give:
+The 32 paired full-energy events give:
 
 | State | N_PMT/N_generated | Simulation, normalized | Paired 95% CI | Experiment |
 |---|---:|---:|---:|---:|
-| all polished | 0.371400 | 1.000 | 1.000--1.000 | 1.00 |
-| bottom rough | 0.445774 | 1.200 | 1.196--1.204 | 1.60 |
-| top rough | 0.444558 | 1.197 | 1.191--1.205 | 1.54 |
-| side rough | 0.254264 | 0.685 | 0.651--0.720 | 0.39 |
-| bottom polished, others rough | 0.234767 | 0.632 | 0.596--0.671 | 0.39 |
-| top polished, others rough | 0.242808 | 0.654 | 0.621--0.688 | 0.32 |
+| all polished | 0.126031 | 1.000 | 1.000--1.000 | 1.00 |
+| bottom rough | 0.283180 | 2.247 | 2.229--2.264 | 1.60 |
+| top rough | 0.358486 | 2.844 | 2.813--2.880 | 1.54 |
+| side rough | 0.114572 | 0.909 | 0.888--0.934 | 0.39 |
+| bottom polished, others rough | 0.113494 | 0.901 | 0.874--0.930 | 0.39 |
+| top polished, others rough | 0.101507 | 0.805 | 0.772--0.845 | 0.32 |
 
-The current model therefore reproduces the broad separation between the two
+The six-face-air model still reproduces the broad separation between the two
 single-end rough states (enhanced) and the three side/multiple-rough states
-(suppressed). It underpredicts both enhancements, underpredicts the amount of
-suppression, and reverses the last two states. The comparison gate passes
+(suppressed). It now overpredicts both end-face enhancements, predicts top
+rough above bottom rough (opposite the measured order), and still
+underpredicts the amount of side/multiple-face suppression. The comparison gate passes
 because pairing, accounting, uncertainty calculation and parameter
 provenance pass; agreement with experiment is deliberately not a pass test.
 
@@ -678,16 +683,15 @@ MPLCONFIGDIR=results/.mplconfig python analysis/plot_b5.py \
 | State | Shared-sigma prediction envelope | Experiment | Covered? |
 |---|---:|---:|---:|
 | all polished | 1.000--1.000 | 1.00 | yes, normalization |
-| bottom rough | 1.200--1.203 | 1.60 | no |
-| top rough | 1.170--1.207 | 1.54 | no |
-| side rough | 0.630--0.745 | 0.39 | no |
-| bottom polished, others rough | 0.567--0.724 | 0.39 | no |
-| top polished, others rough | 0.581--0.731 | 0.32 | no |
+| bottom rough | 2.148--2.286 | 1.60 | no |
+| top rough | 2.808--2.860 | 1.54 | no |
+| side rough | 0.834--1.007 | 0.39 | no |
+| bottom polished, others rough | 0.817--1.014 | 0.39 | no |
+| top polished, others rough | 0.663--0.975 | 0.32 | no |
 
 Changing the full-energy half-width among 0.25, 0.5 and 1.0 keV retained the
-same 28 ideal full-energy events. Four of five rough states changed by at
-least the retained 0.01 reporting threshold; bottom rough changed by only
-0.003. Thus the current discrepancy is larger than Monte Carlo uncertainty
+same 32 ideal full-energy events. All five rough states changed by at least
+the retained 0.01 reporting threshold. Thus the current discrepancy is larger than Monte Carlo uncertainty
 and cannot be removed by the tested peak window or by selecting another
 single shared sigma within this range. Unknown coupling, PMT response, ESR
 placement/properties, black structure and surface metrology remain hypotheses,
@@ -719,23 +723,98 @@ At shared `sigma_alpha=0.20 rad`, the main terminal fractions are:
 
 | State | PMT | GAGG absorption | Top ESR | Black structure |
 |---|---:|---:|---:|---:|
-| all polished | 0.3714 | 0.2959 | 0.0383 | 0.2932 |
-| bottom rough | 0.4458 | 0.1343 | 0.0143 | 0.4032 |
-| top rough | 0.4446 | 0.1418 | 0.0153 | 0.3971 |
-| side rough | 0.2543 | 0.0305 | 0.0055 | 0.7061 |
-| bottom polished, others rough | 0.2348 | 0.0296 | 0.0055 | 0.7261 |
-| top polished, others rough | 0.2428 | 0.0309 | 0.0055 | 0.7169 |
+| all polished | 0.1260 | 0.5646 | 0.0019 | 0.2954 |
+| bottom rough | 0.2832 | 0.1885 | 0.0064 | 0.4905 |
+| top rough | 0.3585 | 0.1613 | 0.0038 | 0.4439 |
+| side rough | 0.1146 | 0.0342 | 0.0020 | 0.8370 |
+| bottom polished, others rough | 0.1135 | 0.0345 | 0.0019 | 0.8373 |
+| top polished, others rough | 0.1015 | 0.0344 | 0.0021 | 0.8499 |
 
 End-face roughness shortens trapped paths and reduces crystal self-absorption,
-but redirects much of that recovered light to the black structure; the net PMT
-gain is only about 0.074. Side/multiple roughness drives black absorption up
-by 0.413--0.433 and is therefore the direct cause of the simulated light
-suppression. Since the black boundary is already an ideal zero-reflectivity
+while redirecting part of the recovered light to both the PMT and black
+structure; the net PMT gains are 0.157 and 0.232. Side/multiple roughness
+drives black absorption up by about 0.542--0.554 and is therefore the direct
+cause of the simulated light suppression. Since the black boundary is already an ideal zero-reflectivity
 absorber, the remaining experiment/model gap cannot be solved by making it
 darker. Detailed evidence and next measurements are in `docs/b6-findings.md`.
 
-The B3--B6 targeted suite passed 11/11 tests in 152.98 s. Final A0--B6
-regression passed 40/40 tests in 214.37 s.
+The revised B2--B6 targeted suite passed 14/14 tests in 282.55 s. Final
+A0--B6 regression passed 40/40 tests in 338.37 s.
+
+## Nominal stepped-cavity geometry: minimal B4 comparison
+
+The current experimental geometry replaces the uniform black shell with a
+fixed schematic estimate: 5.75 mm clearance on each side, 1.15 mm top and
+bottom gaps, a 17.25 mm square cavity, 6.75 mm upper/lower shoulder aperture,
+1.5/1.0 mm upper/lower shoulder heights, 4 mm printed walls, an
+11.5 x 11.5 x 0.1 mm ESR and a diameter-25 x 1 mm PMT window. Black coating is
+represented by a 0.02-reflectivity opaque UNIFIED boundary. These values are
+diagram-derived assumptions, not measurements or fit results.
+
+A deliberately minimal B4 run used 60 paired 511 keV histories per state and
+retained 14 full-energy events. At the unchanged shared
+`sigma_alpha=0.20 rad`, the normalized results were:
+
+| State | Minimal simulation | Preliminary experiment |
+|---|---:|---:|
+| all polished | 1.000 | 1.00 |
+| bottom rough | 2.190 | 1.60 |
+| top rough | 3.094 | 1.54 |
+| side rough | 1.043 | 0.39 |
+| bottom polished, others rough | 1.047 | 0.39 |
+| top polished, others rough | 0.937 | 0.32 |
+
+The stepped nominal geometry therefore preserves end-face enhancement but
+does not reproduce the strong measured suppression for side/multiple rough
+states. No dimension or optical parameter was scanned. Results and the trend
+figure are under `results/b4_nominal_geometry_minimal/`.
+
+## Physical Na-22 decay-only source validation
+
+The radioactive-source validation is deliberately separated from the optical
+surface study. Run the executable with `--decay-only`; this registers
+`G4DecayPhysics`, `G4EmStandardPhysics` and `G4RadioactiveDecayPhysics` but
+does not register `G4OpticalPhysics`. The detector also omits every optical
+material-properties table and every border/skin optical surface in this mode.
+
+The primary generator uses `G4GeneralParticleSource`. Each event begins with
+one stationary ground-state `Na22` ion (`Z=11`, `A=22`, zero excitation and
+zero kinetic energy). No gamma, positron or branching ratio is generated by
+user code. Geant4 RDM produces the beta-plus/electron-capture decay and the
+excited Ne-22 daughter; Geant4 nuclear de-excitation produces the 1274.54 keV
+gamma, and EM positron transport plus `annihil` produces the 510.999 keV
+annihilation gammas.
+
+For experiment geometry the GAGG centre is `(0,0,0)`, the source-facing face
+is `z=+10 mm`, and `/gagg/source/sourceDistance 20 mm` therefore places the
+point source at `(0,0,+30 mm)`. The distance is relative to the crystal face,
+not the crystal centre.
+
+~~~sh
+./build/gagg_surface_study --decay-only \
+  build/macros/validation/na22_decay_debug.mac
+./build/gagg_surface_study --decay-only \
+  build/macros/stage_b/na22_spectrum_100k.mac
+MPLCONFIGDIR=build/.mplconfig python analysis/plot_na22_spectrum.py \
+  --input results/na22_decay_100k/na22_events.csv \
+  --output-dir results/na22_decay_100k/figures --expect-events 100000
+./build/gagg_surface_study --decay-only-interactive \
+  build/macros/validation/na22_vis.mac
+~~~
+
+`SteppingAction` adds `GetTotalEnergyDeposit()` for every non-optical step
+whose pre-step volume is `GAGG`. `EventAction` resets the accumulator at the
+start of each event and writes it once at event end as CSV `edep_keV`.
+`plot_na22_spectrum.py` fills the 0--2500 keV, 2500-bin histogram once per CSV
+event, never once per step.
+
+The final 100000-event run produced 508 nonzero-GAGG events. Counts within
+plus/minus 2 keV were 76 at 511 keV and 13 at 1274.5 keV. The 20-keV bands
+immediately below/above the theoretical Compton edges contained 11/6 events
+at 340.7 keV and 7/1 at 1061.7 keV. No 1022, 1785.5 or 2296.5 keV sum peak
+was observed at this statistic. Runtime audit found zero optical processes,
+no GAGG optical MPT, zero optical border/skin surfaces and zero generated
+optical photons. Results are under `results/na22_decay_100k/`.
 
 ## Directory design
 
@@ -786,20 +865,23 @@ centralized in "include/GAGG/SimulationConfig.hh".
 | A7 beam radius | 12.7 mm | documented interpretation | uniform parallel beam over crystal face |
 | A7 event seed base | 730001 | validation control | pairs source/Edep/generated across finishes |
 | Stage B crystal | 5.75 x 5.75 x 20 mm3 | measured/setup | slides |
-| B0 side air gap | 0.1 mm | unmeasured placeholder | runtime-selectable; not fitted |
-| B0 black structure thickness | 1.0 mm | unmeasured placeholder | runtime-selectable; ideal absorber |
+| B0 side air gap | 5.75 mm | schematic estimate | nominal stepped-cavity model; not fitted |
+| B0 top air gap | 1.15 mm | schematic estimate | crystal-to-ESR; not fitted |
+| B0 bottom air gap | 1.15 mm | schematic estimate | crystal-to-PMT window; not fitted |
+| B0 black structure thickness | 4.0 mm | schematic estimate | 3D-printed wall; not fitted |
 | B0 top ESR thickness | 0.1 mm | unmeasured placeholder | runtime-selectable |
-| B0 PMT window thickness/index | 0.5 mm / 1.52 | model placeholder | direct contact in B0 |
+| B0 PMT window size/index | diameter 25 x 1 mm / 1.52 | schematic estimate | outside bottom air gap |
 | B1 rough sigma_alpha | 0.20 rad | free validation parameter | predeclared diagnostic value; one shared value; not fitted |
 | B2 sigma_alpha grid | 0, 0.05, 0.10, 0.20, 0.30 rad | free validation grid | locked before B2 results; no selected value |
 | B2 optical source positions | z=-8, 0, +8 mm | validation geometry | axial points, 2 mm from each end at extremes |
 | B3 gamma energy / source | 511 keV / z=+14.7 mm pencil beam | validation control | Stage B gamma-response gate |
+| Na-22 decay-only source | stationary ground-state Na22 ion at z=30 mm | physical source model | GPS point, 20 mm from +z crystal face; Geant4 RDM/EM, optical off |
 | B3 full-energy gate | 510.5--511.5 keV | analysis definition | locked before B4 comparison |
 | B3/B4 event seed base | 830001 | validation control | supports event-paired surface comparisons |
 | B4 measured ratios | 1.00, 1.60, 1.54, 0.39, 0.39, 0.32 | measured/preliminary | comparison only; never supplied to Geant4 |
 | B4 bootstrap | 5000 paired resamples, seed 840001 | analysis control | 95% confidence intervals |
 | B5 shared sigma grid | 0.10, 0.20, 0.30 rad | free validation grid | B2-predeclared subset; no point selected |
-| B5 full-energy half-widths | 0.25, 0.5, 1.0 keV | analysis robustness grid | identical 28-event ideal sample |
+| B5 full-energy half-widths | 0.25, 0.5, 1.0 keV | analysis robustness grid | identical 32-event ideal sample |
 | B6 surface-loss locations | top, bottom, side, black, other | diagnostic counters | exact subtotals; no physics change |
 | ESR specular-lobe fraction | 1.0 | UNIFIED model choice | fixed, not fitted; makes ground ESR reflection sigma-driven |
 

@@ -13,17 +13,16 @@ simulation envelopes:
 
 | State | Simulation envelope | Experiment | Inside envelope |
 |---|---:|---:|---:|
-| bottom rough | 1.200--1.203 | 1.60 | no |
-| top rough | 1.170--1.207 | 1.54 | no |
-| side rough | 0.630--0.745 | 0.39 | no |
-| bottom polished, others rough | 0.567--0.724 | 0.39 | no |
-| top polished, others rough | 0.581--0.731 | 0.32 | no |
+| bottom rough | 2.148--2.286 | 1.60 | no |
+| top rough | 2.808--2.860 | 1.54 | no |
+| side rough | 0.834--1.007 | 0.39 | no |
+| bottom polished, others rough | 0.817--1.014 | 0.39 | no |
+| top polished, others rough | 0.663--0.975 | 0.32 | no |
 
-The bottom-rough span is only 0.003; changing this shared microfacet width has
-almost no leverage on that enhancement. Four of five rough states exceed the
-0.01 response-reporting threshold. Larger roughness increases loss for the
-side/multiple-rough states but still does not reach the measured suppression
-within the scanned range. The ideal 511 keV sample selects the same 28 events
+All five rough states exceed the 0.01 response-reporting threshold. Larger
+roughness reduces bottom-rough enhancement and increases loss for the
+side/multiple-rough states, but no state reaches its measured value within the
+scanned range. The ideal 511 keV sample selects the same 32 events
 with full-energy half-widths of 0.25, 0.5 and 1.0 keV.
 
 Therefore the B4 discrepancy is not explained by finite Monte Carlo
@@ -35,14 +34,17 @@ wrong, and it does not justify separate face-by-face roughness fits.
 
 These are hypotheses, not conclusions from B5:
 
-- The PMT is currently a refractive receiver window. Photocathode quantum
-  efficiency, angular response, optical grease/couplant and any bottom air gap
-  are absent.
-- The top ESR touches the crystal in the model and uses wavelength-independent
-  0.98 reflectivity with a pure UNIFIED specular-lobe branch. Actual spacing,
-  wrapping/contact and ESR angular/spectral response are not measured inputs.
-- The side air gap, ESR thickness, PMT-window thickness and black-housing
-  thickness are B0 placeholders. The black structure is an ideal absorber.
+- The PMT is currently a refractive receiver window behind a 0.1 mm bottom
+  air-gap placeholder. Photocathode quantum efficiency and angular response
+  are absent; optical grease/couplant is intentionally not present in this
+  revised geometry.
+- The top ESR is behind a 0.1 mm air-gap placeholder and uses
+  wavelength-independent 0.98 reflectivity with a pure UNIFIED specular-lobe
+  branch. Actual spacing, wrapping and ESR angular/spectral response are not
+  measured inputs.
+- All three air-gap dimensions, ESR thickness, PMT-window thickness and
+  black-housing thickness are B0 placeholders. The black structure is an
+  ideal absorber.
 - A single `sigma_alpha` represents all surfaces made by the same roughening
   process. No profilometry or calibrated mapping from the real finish to
   UNIFIED microfacet width is yet available.
@@ -53,7 +55,8 @@ These are hypotheses, not conclusions from B5:
 
 ## Measurements needed before model refinement
 
-The highest-value next inputs are the bottom coupling stack and gaps, the
+The highest-value next inputs are measured top/bottom/side gap sizes, the
+actual bottom coupling stack, the
 actual ESR placement/product data, black-structure dimensions/reflectance,
 surface profilometry for the shared roughening process, and the PMT spectral
 and angular detection response. Once recorded, each should enter as a measured

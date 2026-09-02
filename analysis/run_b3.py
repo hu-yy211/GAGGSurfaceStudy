@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 from pathlib import Path
 
@@ -34,6 +35,8 @@ def write_macro(config: B3Config, output_dir: Path) -> tuple[Path, Path]:
         "/gagg/geometry/mode experiment",
         "/gagg/stageA/surface none",
         f"/gagg/stageB/sideAirGap {geometry['side_air_gap_mm']} mm",
+        f"/gagg/stageB/topAirGap {geometry['top_air_gap_mm']} mm",
+        f"/gagg/stageB/bottomAirGap {geometry['bottom_air_gap_mm']} mm",
         f"/gagg/stageB/blackHousingThickness {geometry['black_housing_thickness_mm']} mm",
         f"/gagg/stageB/esrThickness {geometry['esr_thickness_mm']} mm",
         f"/gagg/stageB/pmtWindowThickness {geometry['pmt_window_thickness_mm']} mm",
@@ -89,6 +92,8 @@ def main() -> int:
         for marker in ("status=FAIL", "G4Exception", "Fatal Exception")
         if marker in process_output
     ]
+    if re.search(r"unclassified=[1-9][0-9]*", process_output):
+        failures.append("nonzero unclassified optical photons")
     expected_marker = f"[output] csv={output_path.resolve()} rows={config.events}"
     if completed.returncode != 0 or failures or expected_marker not in completed.stdout:
         print(process_output[-12000:])
@@ -98,7 +103,8 @@ def main() -> int:
         )
     print(
         f"[b3-runner] output={output_path} events={config.events} "
-        "gamma_keV=511 deferred_scintillation=true status=PASS"
+        "gamma_keV=511 gamma_mode=pencil "
+        "deferred_scintillation=true status=PASS"
     )
     return 0
 

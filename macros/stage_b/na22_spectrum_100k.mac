@@ -1,0 +1,37 @@
+# Pure radioactive-decay + EM transport + event-level GAGG Edep spectrum.
+# This macro must be run with the executable's --decay-only option.
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+
+/gagg/geometry/mode experiment
+/gagg/stageA/surface none
+/gagg/stageB/sideAirGap 5.75 mm
+/gagg/stageB/topAirGap 1.15 mm
+/gagg/stageB/bottomAirGap 1.15 mm
+/gagg/stageB/blackHousingThickness 4.0 mm
+/gagg/stageB/esrThickness 0.1 mm
+/gagg/stageB/pmtWindowThickness 1.0 mm
+
+/run/initialize
+# Na-22 half-life is about 2.6 years; allow Geant4 RDM to process it.
+/process/had/rdm/thresholdForVeryLongDecayTime 1.0e+60 year
+
+/gagg/source/particle na22
+/gps/particle ion
+/gps/ion 11 22 0 0
+/gps/ene/type Mono
+/gps/ene/mono 0 eV
+/gps/pos/type Point
+# GAGG centre is z=0, +z incident face is z=+10 mm, source is z=+30 mm.
+/gagg/source/sourceDistance 20 mm
+/gps/number 1
+/gagg/source/eventSeedBase 930001
+
+/gagg/decayDebug/enabled false
+/gagg/output/eventPrintModulo 0
+/gagg/output/csv results/na22_decay_100k/na22_events.csv
+/random/setSeeds 141421 173205
+/run/printProgress 10000
+/run/beamOn 100000

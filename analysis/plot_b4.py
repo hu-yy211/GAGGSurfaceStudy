@@ -50,6 +50,7 @@ def main() -> int:
             "n_pmt_per_generated", "simulation_normalized", "ci95_low",
             "ci95_high", "measured_normalized", "simulation_minus_measured",
             "shared_sigma_alpha_rad",
+            "gamma_source_mode", "source_z_mm",
         ])
         for row in rows:
             writer.writerow([
@@ -58,6 +59,8 @@ def main() -> int:
                 f"{row.ci_low:.10f}", f"{row.ci_high:.10f}",
                 f"{row.measured:.10f}", f"{row.residual:.10f}",
                 f"{config.shared_sigma_alpha_rad:.10f}",
+                config.b3.gamma_source_mode,
+                f"{config.b3.source_position_mm[2]:.10f}",
             ])
 
     x = list(range(len(rows)))
@@ -68,13 +71,17 @@ def main() -> int:
         [row.normalized - row.ci_low for row in rows],
         [row.ci_high - row.normalized for row in rows],
     ]
-    figure, axis = plt.subplots(figsize=(12.2, 6.2))
-    axis.bar([value - width / 2 for value in x], simulated, width, color="#2878B5", label="Geant4, shared sigma=0.20 rad", yerr=errors, capsize=3)
+    figure, axis = plt.subplots(figsize=(13.4, 6.5))
+    simulation_label = (
+        f"Geant4, {config.b3.source_label}, "
+        f"shared sigma={config.shared_sigma_alpha_rad:.2f} rad"
+    )
+    axis.bar([value - width / 2 for value in x], simulated, width, color="#2878B5", label=simulation_label, yerr=errors, capsize=3)
     axis.bar([value + width / 2 for value in x], measured, width, color="#D95F02", label="Experiment (preliminary)")
     axis.axhline(1.0, color="#555555", linestyle="--", linewidth=1)
     axis.set_xticks(x, [LABELS[row.state] for row in rows])
     axis.set_ylabel("Relative 511 keV light output (all polished = 1)")
-    axis.set_title("B4: six surface states — prediction versus experiment")
+    axis.set_title("B4: six surface states — prediction versus experiment\n" + config.b3.source_label)
     axis.grid(axis="y", alpha=0.25)
     axis.legend()
     figure.tight_layout()

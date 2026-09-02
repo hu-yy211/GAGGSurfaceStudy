@@ -18,7 +18,7 @@ namespace gagg {
 
 class DetectorConstruction final : public G4VUserDetectorConstruction {
  public:
-  DetectorConstruction();
+  explicit DetectorConstruction(G4bool enableOpticalModel = true);
   ~DetectorConstruction() override;
 
   G4VPhysicalVolume* Construct() override;
@@ -43,6 +43,7 @@ class DetectorConstruction final : public G4VUserDetectorConstruction {
   G4double GetCrystalSizeX() const;
   G4double GetCrystalSizeY() const;
   G4double GetCrystalSizeZ() const;
+  G4double GetCrystalCenterZ() const;
   const G4String& GetStageBSurfaceState() const {
     return fStageBSurfaceState;
   }
@@ -55,6 +56,7 @@ class DetectorConstruction final : public G4VUserDetectorConstruction {
   G4bool IsOnOutputFace(const G4ThreeVector& position,
                         G4double tolerance) const;
   G4String GetOutputReceiverVolumeName() const;
+  G4bool IsOpticalModelEnabled() const { return fEnableOpticalModel; }
 
  private:
   void ConfigureStageASurface();
@@ -70,11 +72,14 @@ class DetectorConstruction final : public G4VUserDetectorConstruction {
   std::unique_ptr<G4OpticalSurface> fStageAOpticalSurface;
   std::unique_ptr<G4MaterialPropertiesTable> fStageASurfaceProperties;
   std::unique_ptr<G4OpticalSurface> fExperimentTopSurface;
+  std::unique_ptr<G4OpticalSurface> fExperimentEsrSurface;
   std::unique_ptr<G4OpticalSurface> fExperimentBottomSurface;
+  std::unique_ptr<G4OpticalSurface> fExperimentPmtSurface;
   std::unique_ptr<G4OpticalSurface> fExperimentSideSurface;
   std::unique_ptr<G4OpticalSurface> fExperimentBlackSurface;
   std::unique_ptr<G4MaterialPropertiesTable> fExperimentEsrProperties;
   std::unique_ptr<G4MaterialPropertiesTable> fExperimentBlackProperties;
+  G4bool fEnableOpticalModel = true;
   G4String fGeometryMode = "bare";
   G4String fStageASurface = "none";
   G4String fStageAInterfaceMode = "direct";
@@ -84,6 +89,10 @@ class DetectorConstruction final : public G4VUserDetectorConstruction {
   G4double fStageBSigmaAlpha = config::kStageBSigmaAlphaValidation;
   G4double fExperimentSideAirGap =
       config::kExperimentSideAirGapDefault;
+  G4double fExperimentTopAirGap =
+      config::kExperimentTopAirGapDefault;
+  G4double fExperimentBottomAirGap =
+      config::kExperimentBottomAirGapDefault;
   G4double fExperimentBlackHousingThickness =
       config::kExperimentBlackHousingThicknessDefault;
   G4double fExperimentEsrThickness =
@@ -102,7 +111,10 @@ class DetectorConstruction final : public G4VUserDetectorConstruction {
   G4VPhysicalVolume* fSideAirGapPhysical = nullptr;
   G4VPhysicalVolume* fTopAirGapPhysical = nullptr;
   G4VPhysicalVolume* fExperimentSideAirGapPhysical = nullptr;
+  G4VPhysicalVolume* fExperimentTopAirGapPhysical = nullptr;
+  G4VPhysicalVolume* fExperimentBottomAirGapPhysical = nullptr;
   G4VPhysicalVolume* fExperimentBlackHousingPhysical = nullptr;
+  G4VPhysicalVolume* fExperimentTopStructurePhysical = nullptr;
   G4VPhysicalVolume* fExperimentEsrPhysical = nullptr;
   G4VPhysicalVolume* fExperimentPmtWindowPhysical = nullptr;
 };

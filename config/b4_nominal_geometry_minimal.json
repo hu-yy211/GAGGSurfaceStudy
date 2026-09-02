@@ -1,0 +1,30 @@
+{
+  "stage": "B4",
+  "b3_config": "b3_nominal_geometry_minimal.json",
+  "states": [
+    "all_polished",
+    "bottom_rough",
+    "top_rough",
+    "side_rough",
+    "bottom_polished_others_rough",
+    "top_polished_others_rough"
+  ],
+  "shared_sigma_alpha_rad": 0.20,
+  "sigma_provenance": "fixed shared validation value; not fitted to experiment",
+  "measured_normalized_light_output": {
+    "all_polished": 1.00,
+    "bottom_rough": 1.60,
+    "top_rough": 1.54,
+    "side_rough": 0.39,
+    "bottom_polished_others_rough": 0.39,
+    "top_polished_others_rough": 0.32
+  },
+  "validation": {
+    "minimum_full_energy_events": 8,
+    "bootstrap_samples": 2000,
+    "bootstrap_seed": 870002,
+    "confidence_level": 0.95,
+    "require_exact_b3_all_polished_repeat": false,
+    "experimental_agreement_is_pass_gate": false
+  }
+}

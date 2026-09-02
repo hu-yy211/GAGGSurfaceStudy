@@ -6,10 +6,12 @@
   "event_seed_base": 820001,
   "run_seeds": [626262, 737373],
   "geometry": {
-    "side_air_gap_mm": 0.1,
-    "black_housing_thickness_mm": 1.0,
+    "side_air_gap_mm": 5.75,
+    "top_air_gap_mm": 1.15,
+    "bottom_air_gap_mm": 1.15,
+    "black_housing_thickness_mm": 4.0,
     "esr_thickness_mm": 0.1,
-    "pmt_window_thickness_mm": 0.5
+    "pmt_window_thickness_mm": 1.0
   },
   "sigma_alpha": [
     {"tag": "000", "value_rad": 0.0},

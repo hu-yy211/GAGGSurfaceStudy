@@ -7,12 +7,12 @@ event-paired 511 keV full-energy events.
 
 | State | PMT receiver | GAGG self-absorption | Top ESR absorption | Black-structure absorption |
 |---|---:|---:|---:|---:|
-| all polished | 0.3714 | 0.2959 | 0.0383 | 0.2932 |
-| bottom rough | 0.4458 | 0.1343 | 0.0143 | 0.4032 |
-| top rough | 0.4446 | 0.1418 | 0.0153 | 0.3971 |
-| side rough | 0.2543 | 0.0305 | 0.0055 | 0.7061 |
-| bottom polished, others rough | 0.2348 | 0.0296 | 0.0055 | 0.7261 |
-| top polished, others rough | 0.2428 | 0.0309 | 0.0055 | 0.7169 |
+| all polished | 0.1260 | 0.5646 | 0.0019 | 0.2954 |
+| bottom rough | 0.2832 | 0.1885 | 0.0064 | 0.4905 |
+| top rough | 0.3585 | 0.1613 | 0.0038 | 0.4439 |
+| side rough | 0.1146 | 0.0342 | 0.0020 | 0.8370 |
+| bottom polished, others rough | 0.1135 | 0.0345 | 0.0019 | 0.8373 |
+| top polished, others rough | 0.1015 | 0.0344 | 0.0021 | 0.8499 |
 
 Every row closes to one when the small remaining terminal channels are
 included. The five surface-absorption location counters close exactly to the
@@ -21,21 +21,22 @@ pre-existing aggregate surface-absorption count.
 ## Mechanism supported by the counters
 
 The all-polished geometry traps photons for many reflections: it records
-40.17 side interactions per generated photon. Bottom-rough and top-rough
-reduce that burden to 18.63 and 19.78; the side/multiple-rough states reduce it
-to about 3.4. This path shortening strongly reduces GAGG self-absorption.
+67.10 side interactions per generated photon. Bottom-rough and top-rough
+reduce that burden to 23.16 and 19.60; the side/multiple-rough states reduce it
+to about 3.9. This path shortening strongly reduces GAGG self-absorption.
 
-For bottom rough and top rough, self-absorption falls by 0.1616 and 0.1541
+For bottom rough and top rough, self-absorption falls by 0.3761 and 0.4032
 relative to all polished. Black-structure absorption simultaneously rises by
-0.1101 and 0.1039, so only 0.0744 and 0.0732 emerge as additional PMT
-collection. Thus the simulated end-face enhancement is a redistribution of
-photons that would otherwise be lost on long trapped paths; much of the
-recovered light is redirected to the black structure instead of the PMT.
+0.1951 and 0.1485, while PMT collection rises by 0.1571 and 0.2325. Thus the
+simulated end-face enhancement is a redistribution of photons that would
+otherwise be lost on long trapped paths. The top/bottom asymmetry introduced
+by the air-separated ESR and PMT stack is now large enough to reverse the
+measured end-face ordering.
 
 For side rough and the two multiple-rough states, black-structure absorption
-rises by 0.4129--0.4330 and is the dominant change. Reduced self-absorption
-partly compensates this loss, leaving the net PMT reductions at
-0.1171--0.1366. The model therefore supports a direct explanation for the
+rises by 0.5416--0.5545 and is the dominant change. Reduced self-absorption
+almost compensates this loss, leaving net PMT reductions of only
+0.0115--0.0245. The model therefore supports a direct explanation for the
 broad experimental trend: rough sides release total-internally-reflected light
 into the side air region, where the surrounding black structure absorbs it.
 
@@ -49,10 +50,11 @@ converted to measured charge.
 
 The highest-value next checks are:
 
-1. Add a measured bottom coupling stack and PMT angular/spectral detection
-   response. The current score treats every photon transmitted into the PMT
-   window equally, even though rough surfaces change incidence angles.
-2. Measure or bound the top ESR contact/air spacing and product response. This
+1. Replace the 0.1 mm bottom-gap placeholder with a measured coupling stack
+   and PMT angular/spectral detection response. The current score treats every
+   photon transmitted into the PMT window equally, even though rough surfaces
+   change incidence angles.
+2. Measure or bound the top ESR air spacing and product response. This
    controls whether light released by an end roughness is redirected toward
    the PMT or toward the side absorber.
 3. Replace the centered pencil beam with the measured 22Na capsule and support

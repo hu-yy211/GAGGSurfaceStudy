@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
+import re
 import subprocess
 from pathlib import Path
 
@@ -34,6 +36,8 @@ def write_macro(config: B4Config, output_dir: Path, state: str) -> tuple[Path, P
         "/gagg/geometry/mode experiment",
         "/gagg/stageA/surface none",
         f"/gagg/stageB/sideAirGap {geometry['side_air_gap_mm']} mm",
+        f"/gagg/stageB/topAirGap {geometry['top_air_gap_mm']} mm",
+        f"/gagg/stageB/bottomAirGap {geometry['bottom_air_gap_mm']} mm",
         f"/gagg/stageB/blackHousingThickness {geometry['black_housing_thickness_mm']} mm",
         f"/gagg/stageB/esrThickness {geometry['esr_thickness_mm']} mm",
         f"/gagg/stageB/pmtWindowThickness {geometry['pmt_window_thickness_mm']} mm",
@@ -70,6 +74,10 @@ def main() -> int:
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--generate-only", action="store_true")
+    parser.add_argument(
+        "--jobs", type=int, default=1,
+        help="Number of isolated Geant4 surface-state processes to run concurrently",
+    )
     args = parser.parse_args()
     config = load_config(args.config)
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -77,10 +85,14 @@ def main() -> int:
     if args.generate_only:
         print(f"[b4-runner] macros={len(jobs)} generate_only=true status=PASS")
         return 0
+    if not 1 <= args.jobs <= len(jobs):
+        raise ValueError(f"--jobs must be between 1 and {len(jobs)}")
     executable = args.executable.resolve()
     logs: list[str] = []
     validations = 0
-    for index, (macro_path, output_path) in enumerate(jobs, start=1):
+
+    def execute_job(index_and_job: tuple[int, tuple[Path, Path]]):
+        index, (macro_path, output_path) = index_and_job
         completed = subprocess.run(
             [str(executable), str(macro_path.resolve())],
             text=True,
@@ -88,8 +100,9 @@ def main() -> int:
             check=False,
         )
         process_output = completed.stdout + completed.stderr
-        logs.extend([f"===== B4 isolated job {index}/{len(jobs)}: {macro_path.name} =====", process_output])
         failures = [marker for marker in ("status=FAIL", "G4Exception", "Fatal Exception") if marker in process_output]
+        if re.search(r"unclassified=[1-9][0-9]*", process_output):
+            failures.append("nonzero unclassified optical photons")
         marker = f"[output] csv={output_path.resolve()} rows={config.b3.events}"
         if completed.returncode != 0 or failures or marker not in completed.stdout:
             print(process_output[-12000:])
@@ -97,7 +110,19 @@ def main() -> int:
                 f"B4 job failed: macro={macro_path}, code={completed.returncode}, "
                 f"markers={failures}, fresh_output={marker in completed.stdout}"
             )
-        validations += completed.stdout.count("[b1] surface_validation")
+        return index, macro_path, process_output, completed.stdout.count(
+            "[b1] surface_validation"
+        )
+
+    indexed_jobs = list(enumerate(jobs, start=1))
+    with ThreadPoolExecutor(max_workers=args.jobs) as executor:
+        completed_jobs = list(executor.map(execute_job, indexed_jobs))
+    for index, macro_path, process_output, validation_count in completed_jobs:
+        logs.extend([
+            f"===== B4 isolated job {index}/{len(jobs)}: {macro_path.name} =====",
+            process_output,
+        ])
+        validations += validation_count
     log_path = args.output_dir / "b4_run.log"
     log_path.write_text("\n".join(logs), encoding="utf-8")
     if validations != len(jobs):
@@ -105,6 +130,8 @@ def main() -> int:
     print(
         f"[b4-runner] states={len(jobs)} events_per_state={config.b3.events} "
         f"processes={len(jobs)} surface_validations={validations} "
+        f"parallel_jobs={args.jobs} "
+        "gamma_mode=pencil "
         "process_isolation=true shared_sigma=true status=PASS"
     )
     return 0

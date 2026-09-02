@@ -45,10 +45,12 @@ def main() -> int:
         )
         if history != reference_history:
             raise ValueError(f"gamma/Edep/generated event pairing failed for {state}")
+    repeat_status = "not_required"
     if config.require_exact_b3_repeat:
         b3_reference = load_gamma_sample(args.b3_reference, config.b3)
         if b3_reference.events != summaries["all_polished"].events:
             raise ValueError("B4 all-polished sample is not an exact B3 repeat")
+        repeat_status = "exact"
 
     rows = make_comparison(config, summaries)
     for row in rows:
@@ -59,7 +61,7 @@ def main() -> int:
             f"measured={row.measured:.3f} residual={row.residual:+.6f} status=PASS"
         )
     print(
-        "[b4-check] pairing=exact b3_repeat=exact accounting=closed "
+        f"[b4-check] pairing=exact b3_repeat={repeat_status} accounting=closed "
         "shared_sigma=true per_face_fit=false experimental_agreement_gate=false status=PASS"
     )
     print("[b4-check] six_state_comparison status=PASS")

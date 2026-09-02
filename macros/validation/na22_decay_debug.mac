@@ -1,0 +1,35 @@
+# Validate a real stationary Na-22 GPS ion and its Geant4 decay products.
+# Run with: gagg_surface_study --decay-only na22_decay_debug.mac
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+
+/gagg/geometry/mode experiment
+/gagg/stageA/surface none
+/gagg/stageB/sideAirGap 5.75 mm
+/gagg/stageB/topAirGap 1.15 mm
+/gagg/stageB/bottomAirGap 1.15 mm
+/gagg/stageB/blackHousingThickness 4.0 mm
+/gagg/stageB/esrThickness 0.1 mm
+/gagg/stageB/pmtWindowThickness 1.0 mm
+
+/run/initialize
+/process/had/rdm/thresholdForVeryLongDecayTime 1.0e+60 year
+
+/gagg/source/particle na22
+/gps/particle ion
+/gps/ion 11 22 0 0
+/gps/ene/type Mono
+/gps/ene/mono 0 eV
+/gps/pos/type Point
+/gagg/source/sourceDistance 20 mm
+/gps/number 1
+/gagg/source/eventSeedBase 920001
+
+/gagg/decayDebug/enabled true
+/gagg/decayDebug/events 5
+/gagg/output/eventPrintModulo 1
+/gagg/output/csv results/na22_decay_debug/events.csv
+/random/setSeeds 112358 132134
+/run/beamOn 5

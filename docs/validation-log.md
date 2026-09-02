@@ -571,3 +571,103 @@ localized to photon redirection/detection assumptions rather than an unknown
 terminal accounting loss.
 
 Final validation: A0--B6 regression passed 40/40 tests in 214.37 s.
+
+## 2026-08-26 - Stage B six-face-air geometry revision
+
+- Added independent runtime-selectable `topAirGap` and `bottomAirGap`
+  dimensions, both defaulting to the same documented 0.1 mm unmeasured
+  placeholder as the side gap. The crystal is now adjacent to air on all six
+  faces; ESR and PMT-window positions move outward by the corresponding gaps.
+- Split the optical model into six directional borders: GAGG-to-top-air,
+  top-air-to-ESR, GAGG-to-bottom-air, bottom-air-to-PMT, GAGG-to-side-air and
+  side-air-to-black. The three crystal surfaces use UNIFIED
+  dielectric-dielectric boundaries and share one rough `sigma_alpha`; ESR and
+  PMT remain separate polished outer boundaries.
+- Moved `N_PMT` scoring to successful bottom-air-to-PMT-window transmission.
+  Top, bottom and side interaction counters remain tied to the corresponding
+  GAGG face. Geometry validation found the two new 3.30625 mm3 air slabs,
+  navigator probes passed, overlap count was zero and all six borders passed.
+- B0/B1 targeted CTest passed 6/6. The complete B2--B6 targeted suite passed
+  14/14 in 282.55 s. B2 process isolation, repeatability, photon accounting,
+  paired gamma histories, surface subtotals and terminal budgets all passed.
+- The revised 100-event B3 sample contains 28 zero-deposit, 40 partial-energy
+  and 32 full-energy events; the full-energy light yield is 53999.88
+  photons/MeV. All six B4 states use exactly paired histories within this
+  revised geometry.
+- At shared `sigma_alpha=0.20 rad`, B4 predicts normalized light outputs
+  1.000, 2.247, 2.844, 0.909, 0.901 and 0.805. The broad end-enhanced versus
+  side-suppressed grouping remains, but top/bottom end ordering is reversed,
+  end enhancement is too large and side suppression is too weak relative to
+  the preliminary measurements.
+- All B1--B6 figures and summary CSV files under `results/` were regenerated
+  from the revised model. No parameter was fitted to the experimental ratios.
+
+Status: the six-face-air Stage B revision is structurally and statistically
+validated, but it does not quantitatively reproduce the experimental ratios.
+
+Final regression: A0--B6 passed 40/40 tests in 338.37 s; no Stage A result or
+validation gate regressed.
+
+## 2026-08-31 - B4 back-to-back 511 keV source at 20 mm
+
+- Added runtime-selectable `/gagg/source/gammaMode annihilationPair`. Each
+  event emits two 511 keV gamma rays with exactly opposite directions and an
+  isotropically sampled pair axis. The original `pencil` mode remains the
+  default and existing configurations remain compatible.
+- Placed the point source at `(0,0,31.25) mm`, 20 mm above the outer ESR face.
+  This approximation intentionally excludes the finite source capsule,
+  positron transport and the 1274.5 keV 22Na gamma.
+- The 1000-event source gate passed geometry, back-to-back construction,
+  five-sigma isotropy, scintillation yield and terminal accounting checks.
+- Ran 100000 events for each of six states in isolated parallel processes.
+  Every state retained the same 143 full-energy events and 3945932 generated
+  full-energy scintillation photons. All source and surface checks passed.
+- Initial reduction detected four unclassified terminal photons among about
+  47 million transported scintillation photons. Added explicit accounting for
+  implicit boundary termination (`NoRINDEX`/absorption/detection) plus a final
+  stopped-track fallback, and made nonzero `unclassified` a B3/B4 runner
+  failure. The complete deterministic rerun passed with `unclassified=0` in
+  all six states.
+- Normalized B4 predictions are 1.000, 2.198, 3.132, 0.983, 1.001 and 0.870.
+  The actual source approximation therefore does not recover the measured
+  end ordering or strong side/multiple-face suppression.
+
+Status: requested 100k-event actual-source B4 comparison passed all structural,
+source-statistical, accounting and reduction gates. Experimental agreement is
+reported, not used as a pass condition.
+
+## 2026-08-31 - Physical Na-22 radioactive-decay correction
+
+- Audit found that the preceding `annihilationPair` study was not a physical
+  Na-22 decay: it manually emitted two 511 keV gammas, had no radioactive
+  decay constructor, no positron transport and no 1274.5 keV nuclear gamma.
+  Its generated results remain historical but are superseded as a Na-22 model.
+- Added a GPS `na22` primary. Runtime validation proves one `Na22` ion per
+  event with Z=11, A=22, zero excitation, zero kinetic energy and position
+  `(0,0,30) mm`. The experiment crystal incident face is `z=+10 mm`, so the
+  configured `/gagg/source/sourceDistance 20 mm` is face-relative.
+- Registered `G4DecayPhysics` and `G4RadioactiveDecayPhysics` alongside the
+  existing `G4EmStandardPhysics`. The macro raises the very-long-decay-time
+  threshold to `1e60 year`, required for the approximately 2.6-year Na-22
+  half-life in Geant4 11.2.
+- Added `--decay-only`. Runtime process and geometry audits passed with no
+  optical processes, no GAGG optical material table, zero border surfaces,
+  zero skin surfaces and zero generated optical photons.
+- Five debug events showed e+ and excited Ne22 created by Geant4's process
+  name `Radioactivation`; two 510.999 keV gammas were created by `annihil`,
+  and a 1274.54 keV gamma was created by `Radioactivation` from the excited
+  Ne22 daughter. No decay products or branching ratios are user-generated.
+- Confirmed existing GAGG scoring is event-level: every GAGG step contributes
+  `GetTotalEnergyDeposit()`, the accumulator resets in `BeginOfEventAction`,
+  and one total is saved in `EndOfEventAction`.
+- The final 100000-event no-optical run wrote 100000 event rows, of which 508
+  had nonzero GAGG Edep. The event histogram has 2500 one-keV bins from 0 to
+  2500 keV. Plus/minus-2-keV peak windows contain 76 events at 511 keV and 13
+  at 1274.5 keV. Bands below/above the 340.7 and 1061.7 keV Compton edges are
+  11/6 and 7/1 events, respectively. No sum peak was resolved.
+- Final build completed without warnings; targeted `smoke` CTest passed 1/1.
+
+Status: the radioactive source now meets the physical-primary acceptance
+criterion. Remaining realism limits are the mathematical point source, absent
+source capsule/backing and low detector solid angle/statistics; no artificial
+physics adjustment was made to create missing sum peaks.

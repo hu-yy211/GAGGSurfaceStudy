@@ -1,0 +1,37 @@
+# Geometry and GPS point-source visualization for the decay-only mode.
+# Run with: gagg_surface_study --decay-only-interactive na22_vis.mac
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+
+/gagg/geometry/mode experiment
+/gagg/stageA/surface none
+/gagg/stageB/sideAirGap 5.75 mm
+/gagg/stageB/topAirGap 1.15 mm
+/gagg/stageB/bottomAirGap 1.15 mm
+/gagg/stageB/blackHousingThickness 4.0 mm
+/gagg/stageB/esrThickness 0.1 mm
+/gagg/stageB/pmtWindowThickness 1.0 mm
+
+/run/initialize
+/process/had/rdm/thresholdForVeryLongDecayTime 1.0e+60 year
+/gagg/source/particle na22
+/gps/particle ion
+/gps/ion 11 22 0 0
+/gps/ene/type Mono
+/gps/ene/mono 0 eV
+/gps/pos/type Point
+/gagg/source/sourceDistance 20 mm
+/gps/number 1
+
+/vis/open OGL
+/vis/drawVolume
+/vis/viewer/set/viewpointThetaPhi 75 35 deg
+/vis/viewer/set/style surface
+/vis/scene/add/gps red
+/vis/scene/add/trajectories smooth
+/vis/scene/endOfEventAction accumulate 1
+/tracking/storeTrajectory 1
+/run/beamOn 1
+/vis/viewer/flush
