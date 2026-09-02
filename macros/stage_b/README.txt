@@ -77,3 +77,13 @@ B7.4 generates isolated macros under the selected results directory using:
 It scans one shared sigma_alpha for all rough faces, reuses one all-polished
 reference and forbids per-face fitting. Generated macros are run artifacts;
 the locked inputs live in config/b7_4_sigma_scan.json.
+
+B7.5 generates only bottom_rough and top_rough macros at sigma_alpha=0.70 rad:
+
+  python analysis/run_b7_5.py --executable build/gagg_surface_study \
+    --config config/b7_5_endface_sigma070.json \
+    --output-dir results/b7_5_endface_sigma070_100k --jobs 2
+
+Each state uses 100000 paired events. The validator reuses the B7.3
+all-polished reference and writes numerical CSV summaries only; B7.5 does not
+create a plot.

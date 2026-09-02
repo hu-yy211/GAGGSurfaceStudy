@@ -681,3 +681,25 @@ and uncertainty only; no roughness scan or experiment-driven fit was made.
 Status: B7.4 structural validation gate passed. Experimental agreement was
 deliberately not a pass gate. The result rejects a shared `sigma_alpha` as the
 only missing physical parameter and does not justify per-face fitting.
+
+## 2026-09-02 - B7.5 sigma=0.70 end-face comparison
+
+- Ran only `bottom_rough` and `top_rough` at shared sigma=0.70 rad, with
+  100000 effective annihilation-pair events per state. No side/multiple-rough
+  state and no new plot were produced.
+- Reused the B7.3 100k all-polished reference. All three samples had exact
+  event-history pairing and selected the same 187 full-energy events;
+  generated light was 5,160,063 photons in each state and optical terminal
+  accounting closed.
+- Bottom rough: `N_PMT=1,027,238`, mean 5493.251, efficiency 0.1990747,
+  normalized response 2.083677 (95% bootstrap interval 2.073532--2.093680).
+- Top rough: `N_PMT=1,509,780`, mean 8073.690, efficiency 0.2925895,
+  normalized response 3.062478 (95% bootstrap interval 3.038424--3.086668).
+- The paired bottom/top ratio was 0.680389 (95% interval
+  0.676611--0.684050). The mean paired difference was -2580.439 optical
+  photons per full-energy event with standard error 19.422.
+
+Status: B7.5 focused validation passed. The current geometry plus UNIFIED
+roughness predicts top rough substantially brighter than bottom rough. The
+preliminary experiment has bottom/top=1.60/1.54=1.03896, so this discrepancy
+is a model-mechanism problem rather than an unresolved sigma value.

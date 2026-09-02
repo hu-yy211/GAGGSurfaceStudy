@@ -426,6 +426,35 @@ if(BUILD_TESTING)
   )
 
   add_test(
+    NAME b7_5_endface_export
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/run_b7_5.py
+            --executable $<TARGET_FILE:gagg_surface_study>
+            --config ${PROJECT_SOURCE_DIR}/config/b7_5_endface_sigma070.json
+            --output-dir ${PROJECT_BINARY_DIR}/results/b7_5_endface_sigma070
+  )
+  set_tests_properties(b7_5_endface_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[b7.5-runner\\].*points=2.*sigma_rad=0.7.*status=PASS"
+    FAIL_REGULAR_EXPRESSION "unclassified=[1-9][0-9]*|status=FAIL|G4Exception|Fatal Exception"
+    TIMEOUT 3600
+    LABELS "slow;b7"
+  )
+
+  add_test(
+    NAME b7_5_endface_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_b7_5.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/b7_5_endface_sigma070
+            --reference ${PROJECT_BINARY_DIR}/results/b7_3_full_energy/annihilation_pair_all_polished.csv
+            --config ${PROJECT_SOURCE_DIR}/config/b7_5_endface_sigma070.json
+  )
+  set_tests_properties(b7_5_endface_validate PROPERTIES
+    DEPENDS "b7_5_endface_export;b7_3_full_energy_export"
+    PASS_REGULAR_EXPRESSION "\\[b7.5-comparison\\].*no_plot=true.*status=PASS"
+    LABELS "slow;b7"
+  )
+
+  add_test(
     NAME b1_surface_export
     COMMAND $<TARGET_FILE:gagg_surface_study>
             ${PROJECT_BINARY_DIR}/macros/stage_b/b1_compare.mac

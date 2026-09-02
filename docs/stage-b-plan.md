@@ -159,3 +159,11 @@ was sigma=0 rad (0.79278); the positive-sigma minimum was the 0.70 rad upper
 boundary (0.79688). Neither reproduces the six measurements, so the result is
 evidence that roughness angle alone is insufficient, not a calibrated
 roughness measurement.
+
+B7.5 fixes sigma=0.70 rad and compares only bottom rough with top rough using
+100000 exactly paired events per state. It selected 187 full-energy events.
+Normalized outputs were 2.08368 and 3.06248, respectively; bottom/top was
+0.680389 (95% bootstrap interval 0.676611--0.684050). The experimental
+bottom/top ratio is about 1.03896, so the simulated end-face ordering is
+opposite to the measurement. Status: focused comparison passed structurally
+on 2026-09-02; no plot was produced.
