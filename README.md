@@ -737,7 +737,18 @@ darker. Detailed evidence and next measurements are in `docs/b6-findings.md`.
 The B3--B6 targeted suite passed 11/11 tests in 152.98 s. Final A0--B6
 regression passed 40/40 tests in 214.37 s.
 
-## B7 effective annihilation-source face
+## B7 effective source, full-energy response and photon-fate audit
+
+| Stage | Objective | Validation outcome |
+|---|---|---|
+| B7.1 | Sample a 2.5 x 2.5 mm2 effective source face | 5000-event square-uniformity gate passed |
+| B7.2 | Emit an effective back-to-back 511 keV annihilation pair | 10000-event energy, vertex, isotropy and anti-parallel gates passed |
+| B7.3 | Lock the estimated experiment geometry and 511 keV full-energy statistic | 100k all-polished baseline; 187 full-energy events; accounting closed |
+| B7.4 | Scan one shared UNIFIED `sigma_alpha` for the original six states | 51 points passed structurally; no shared sigma reproduces experiment |
+| B7.5 | Add simultaneous top-and-bottom roughening at 0.70 rad | It is dimmer than both single-end controls |
+| B7.6 | Audit terminal photon fate and collected-photon transport | Roughness redirects light but has no direct processed-surface loss |
+
+### B7.1 square effective source face
 
 B7.1 adds a backward-compatible square gamma-source position sampler. The
 existing point and circular beam remain active when `/gagg/source/faceSize`
@@ -760,6 +771,8 @@ correlation, edge-coverage and grid-uniformity check passed.
 
 This B7.1 macro deliberately uses one fixed-direction 1 keV gamma only to
 make the position test inexpensive. It is not a source-physics result.
+
+### B7.2 effective annihilation-pair source
 
 B7.2 adds `/gagg/source/particle annihilationPair`. Every event now contains
 one primary vertex at the validated square-face position and two 511 keV
@@ -790,6 +803,8 @@ The B7.2 validation transported the particles through the optical model and
 closed all photon accounting, but its aggregate light totals are not a
 511 keV full-energy selection. That event gate and PMT-light estimator belong
 to B7.3.
+
+### B7.3 experiment geometry and all-polished full-energy baseline
 
 B7.3 migrates the schematic experiment geometry used after B6: 5.75 mm side
 air clearance, 1.15 mm top and bottom air gaps, 4.0 mm black structure,
@@ -824,6 +839,8 @@ photons and delivered 492,993 photons to the PMT window, giving
 53999.84 photons/MeV. All optical terminal accounting closed. B7.3 validates
 the source-to-response statistic only.
 
+### B7.4 shared-roughness scan of the original six states
+
 B7.4 scans one shared UNIFIED `sigma_alpha` over
 `0, 0.02, 0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.70 rad`. Each of the
 five rough-surface states uses exactly the same sigma at a scan point; no
@@ -849,6 +866,8 @@ with preliminary experimental values 1.60 and 1.54. Side/multiple-rough
 states also remain too bright. B7.4 therefore validates the scan machinery
 but rejects shared `sigma_alpha` alone as an adequate explanation of all six
 experimental responses.
+
+### B7.5 simultaneous top-and-bottom roughening
 
 B7.5 adds the focused state `top_bottom_rough` at the B7.4 positive-grid
 candidate `sigma_alpha=0.70 rad`. In this state the GAGG-air top and bottom
@@ -877,12 +896,38 @@ efficiency 0.191306 and normalized response 2.00237. Its paired response is
 top rough (0.651925--0.655914). Simultaneous end-face roughening therefore
 does not produce the highest collection rate in this model.
 
+### B7.6 full-energy photon-fate audit
+
 B7.6 performs a location-resolved photon-fate audit without changing any
 optical parameter. Five exactly paired 100k states at sigma=0.70 rad use a
 separate optional audit CSV for aggregate path length, collected-photon path,
 crystal-face encounters and PMT incidence angle. The original event CSV schema
 remains unchanged, and the extra tracking is inactive unless
 `/gagg/output/photonAuditCsv` is set.
+
+~~~sh
+python analysis/run_b7_6.py --executable build/gagg_surface_study \
+  --config config/b7_6_photon_fate_audit.json \
+  --output-dir results/b7_6_photon_fate_audit_100k --jobs 5
+python analysis/validate_b7_6.py \
+  --input-dir results/b7_6_photon_fate_audit_100k \
+  --output-dir results/b7_6_photon_fate_audit_100k/figures \
+  --config config/b7_6_photon_fate_audit.json
+MPLCONFIGDIR=build/.mplconfig python analysis/plot_b7_6.py \
+  --input-dir results/b7_6_photon_fate_audit_100k/figures \
+  --output-dir results/b7_6_photon_fate_audit_100k/figures
+~~~
+
+All five samples selected the same 187 full-energy histories and 5,160,063
+generated scintillation photons. Their terminal fractions are:
+
+| State | PMT | GAGG absorption | Black structure | Top/ESR surface | Other |
+|---|---:|---:|---:|---:|---:|
+| all polished | 0.09554 | 0.56295 | 0.29433 | 0.00171 | 0.04547 |
+| bottom rough | 0.19907 | 0.14699 | 0.51147 | 0.00543 | 0.13704 |
+| top rough | 0.29259 | 0.13274 | 0.44687 | 0.00378 | 0.12403 |
+| top + bottom rough | 0.19131 | 0.11670 | 0.57167 | 0.00394 | 0.11638 |
+| side rough | 0.08696 | 0.03812 | 0.80783 | 0.00272 | 0.06437 |
 
 The all-polished sample loses 56.29% of generated light to GAGG self-absorption
 after an average total path of 366.29 mm per generated photon. Top rough cuts
@@ -892,6 +937,11 @@ delivers 29.26% to the PMT. Side rough cuts self-absorption to 3.81% but sends
 GAGG-air interfaces show zero direct surface absorption: the current UNIFIED
 roughness redirects light but does not model a lossy processing layer. Full
 tables and interpretation are in `docs/b7_6-findings.md`.
+
+Validated milestone tags are `b7.1`, `b7.2`, `b7.3`, `b7.4`, `b7.5` and
+`b7.6`. Generated event data remain under `results/` and are intentionally
+excluded from Git; the committed configurations and analysis scripts reproduce
+the runs.
 
 ## Directory design
 
