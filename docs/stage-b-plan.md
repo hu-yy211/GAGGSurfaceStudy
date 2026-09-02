@@ -137,3 +137,21 @@ roughness increases black-structure absorption by 0.413--0.433, producing a
 net PMT loss of 0.117--0.137. All 18 sigma/state budgets and every differential
 budget close exactly. Final A0--B6 regression passed 40/40 tests. See
 `docs/b6-findings.md`.
+
+## B7 - Effective source and revised response baseline - IN PROGRESS
+
+B7.1 validated uniform sampling on a 2.5 x 2.5 mm2 face at z=+30 mm. B7.2
+validated one same-vertex, exactly back-to-back pair of 511 keV gammas with a
+uniform 4pi pair axis. This is an effective annihilation source, not a Na-22
+decay or positron-transport model.
+
+B7.3 uses the estimated six-air-face experimental geometry and validates the
+event-level 511 keV response definition before any roughness fit. Only events
+with `510.5 <= Edep_GAGG <= 511.5 keV` enter the PMT-light estimator. The
+actual 100000-event all-polished sample selected 187 events and gave
+`sum(N_PMT)/sum(N_generated)=0.0955401`, with mean `N_PMT=2636.33 +/- 9.93`
+(standard error). Geometry, surface and photon-accounting checks passed.
+
+Status: B7.3 passed on 2026-09-02. B7.4 may run the six states in isolated
+processes over one shared `sigma_alpha` grid. No per-face roughness fitting is
+allowed.

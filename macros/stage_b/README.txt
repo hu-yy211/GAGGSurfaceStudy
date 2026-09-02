@@ -56,3 +56,14 @@ Use `/gagg/source/particle annihilationPair`, `mode isotropic`, zero
 vertex and two exactly back-to-back 511 keV gammas. The validation macro writes
 an independent source-audit CSV; it does not yet select 511 keV full-energy
 GAGG events or report a B4-style light-output ratio.
+
+B7.3 generates its production macro from the locked JSON configuration:
+
+  python analysis/run_b7_3.py --executable build/gagg_surface_study \
+    --config config/b7_3_full_energy_response.json \
+    --output-dir results/b7_3_full_energy_100k
+
+It runs 100000 all-polished events in the nominal estimated geometry and
+selects Edep_GAGG=511.0+/-0.5 keV during analysis. N_PMT counts optical
+photons transmitted from the bottom air layer into the PMT window. B7.3 does
+not scan or fit sigma_alpha.

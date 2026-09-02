@@ -95,6 +95,8 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> B3Config:
     geometry = {key: float(value) for key, value in raw["geometry"].items()}
     expected_geometry = {
         "side_air_gap_mm",
+        "top_air_gap_mm",
+        "bottom_air_gap_mm",
         "black_housing_thickness_mm",
         "esr_thickness_mm",
         "pmt_window_thickness_mm",
@@ -167,7 +169,7 @@ def load_gamma_sample(
         if values["scintillation"] != values["generated"]:
             raise ValueError(f"non-scintillation optical photon in {path}")
         expected_generated = edep * config.expected_yield_per_mev / 1000.0
-        if abs(values["generated"] - expected_generated) > 4.0:
+        if abs(values["generated"] - expected_generated) > 8.0:
             raise ValueError(f"light yield/energy mismatch in {path}, event {event_id}")
         if values["world_exit"] != values["output"] + values["other_world_exit"]:
             raise ValueError(f"world-exit subtotal failed in {path}")

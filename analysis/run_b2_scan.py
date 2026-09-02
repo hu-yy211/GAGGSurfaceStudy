@@ -37,6 +37,8 @@ def common_lines(config: B2Config) -> list[str]:
         "/gagg/geometry/mode experiment",
         "/gagg/stageA/surface none",
         f"/gagg/stageB/sideAirGap {geometry['side_air_gap_mm']} mm",
+        f"/gagg/stageB/topAirGap {geometry['top_air_gap_mm']} mm",
+        f"/gagg/stageB/bottomAirGap {geometry['bottom_air_gap_mm']} mm",
         "/gagg/stageB/blackHousingThickness "
         f"{geometry['black_housing_thickness_mm']} mm",
         f"/gagg/stageB/esrThickness {geometry['esr_thickness_mm']} mm",

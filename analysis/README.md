@@ -82,3 +82,10 @@ all terminal fractions to sum to generated light. It also requires exact
 state-minus-all-polished differential closure. The plotter writes the
 18-point loss table, a stacked terminal budget, a differential loss chart and
 a logarithmic face-interaction chart. B6 introduces no fit parameter.
+
+B7.3 uses `b7_3_common.py`, `run_b7_3.py`, `validate_b7_3.py` and
+`plot_b7_3.py`. The locked 100k-event all-polished sample uses the B7.2
+annihilation-pair source and selects events by event-total GAGG energy deposit
+in 510.5--511.5 keV. The validator reports both `sum(N_PMT)/sum(N_generated)`
+and mean `N_PMT` with standard errors; it never interprets the approximately
+2.25 eV PMT optical photons as 511 keV particles.

@@ -5,6 +5,7 @@
 
 #include "G4GeometryTolerance.hh"
 #include "G4LogicalBorderSurface.hh"
+#include "G4LogicalSkinSurface.hh"
 #include "G4OpBoundaryProcess.hh"
 #include "G4OpticalPhoton.hh"
 #include "G4ProcessManager.hh"
@@ -65,6 +66,10 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
       atGeometryBoundary && preVolume != nullptr && postVolume != nullptr
           ? G4LogicalBorderSurface::GetSurface(preVolume, postVolume)
           : nullptr;
+  const auto* skinSurface =
+      atGeometryBoundary && borderSurface == nullptr && postVolume != nullptr
+          ? G4LogicalSkinSurface::GetSurface(postVolume->GetLogicalVolume())
+          : nullptr;
   auto* boundary = atGeometryBoundary ? FindBoundaryProcess() : nullptr;
   const auto boundaryStatus =
       boundary == nullptr ? Undefined : boundary->GetStatus();
@@ -74,9 +79,9 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
   if (validBoundaryInteraction) {
     fEventAction->RecordLutInteraction();
     if (preVolume->GetName() == "GAGG") {
-      if (postVolume->GetName() == "ExperimentESR") {
+      if (postVolume->GetName() == "ExperimentTopAirGap") {
         fEventAction->RecordTopSurfaceInteraction();
-      } else if (postVolume->GetName() == "PMTWindow") {
+      } else if (postVolume->GetName() == "ExperimentBottomAirGap") {
         fEventAction->RecordBottomSurfaceInteraction();
       } else if (postVolume->GetName() == "ExperimentSideAirGap") {
         fEventAction->RecordSideSurfaceInteraction();
@@ -88,9 +93,12 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
       atGeometryBoundary && preVolume != nullptr &&
       preVolume->GetName() == "GAGG" &&
       fDetector->IsOnOutputFace(post->GetPosition(), surfaceTolerance);
-  const auto outputFaceCrossing =
-      outputFaceArrival && postVolume != nullptr &&
+  const auto receiverCrossing =
+      atGeometryBoundary && preVolume != nullptr && postVolume != nullptr &&
       postVolume->GetName() == fDetector->GetOutputReceiverVolumeName() &&
+      ((fDetector->GetGeometryMode() == "experiment" &&
+        preVolume->GetName() == "ExperimentBottomAirGap") ||
+       (fDetector->GetGeometryMode() != "experiment" && outputFaceArrival)) &&
       (boundaryStatus == FresnelRefraction ||
        boundaryStatus == Transmission ||
        boundaryStatus == SameMaterial);
@@ -100,21 +108,26 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
     step->GetTrack()->SetTrackStatus(fStopAndKill);
     return;
   }
-  if (outputFaceCrossing) {
+  if (receiverCrossing) {
     fEventAction->RecordOutput();
     step->GetTrack()->SetTrackStatus(fStopAndKill);
     return;
   }
 
-  if (borderSurface != nullptr) {
+  if (borderSurface != nullptr || skinSurface != nullptr) {
     if (boundaryStatus == Absorption || boundaryStatus == Detection) {
       const auto preName =
           preVolume == nullptr ? G4String("none") : preVolume->GetName();
       const auto postName =
           postVolume == nullptr ? G4String("none") : postVolume->GetName();
-      if (preName == "GAGG" && postName == "ExperimentESR") {
+      if ((preName == "GAGG" && postName == "ExperimentTopAirGap") ||
+          (preName == "ExperimentTopAirGap" &&
+           postName == "ExperimentESR")) {
         fEventAction->RecordTopSurfaceAbsorption();
-      } else if (preName == "GAGG" && postName == "PMTWindow") {
+      } else if ((preName == "GAGG" &&
+                  postName == "ExperimentBottomAirGap") ||
+                 (preName == "ExperimentBottomAirGap" &&
+                  postName == "PMTWindow")) {
         fEventAction->RecordBottomSurfaceAbsorption();
       } else if (preName == "GAGG" &&
                  postName == "ExperimentSideAirGap") {
@@ -122,11 +135,21 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
       } else if (preName == "ExperimentSideAirGap" &&
                  postName == "ExperimentBlackHousing") {
         fEventAction->RecordBlackSurfaceAbsorption();
+      } else if (postName == "ExperimentTopStructure" ||
+                 preName == "ExperimentTopStructure") {
+        fEventAction->RecordOtherSurfaceAbsorption();
       } else {
         fEventAction->RecordOtherSurfaceAbsorption();
       }
       return;
     }
+  }
+
+  if (atGeometryBoundary &&
+      (boundaryStatus == Absorption || boundaryStatus == Detection ||
+       boundaryStatus == NoRINDEX)) {
+    fEventAction->RecordOtherSurfaceAbsorption();
+    return;
   }
 
   if (post->GetStepStatus() == fWorldBoundary) {
@@ -146,6 +169,11 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
     } else {
       fEventAction->RecordOtherAbsorption();
     }
+    return;
+  }
+
+  if (step->GetTrack()->GetTrackStatus() == fStopAndKill) {
+    fEventAction->RecordOtherAbsorption();
   }
 }
 

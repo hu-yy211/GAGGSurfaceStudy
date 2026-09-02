@@ -4,10 +4,12 @@
 /tracking/verbose 0
 /gagg/geometry/mode experiment
 /gagg/stageA/surface none
-/gagg/stageB/sideAirGap 0.1 mm
-/gagg/stageB/blackHousingThickness 1.0 mm
+/gagg/stageB/sideAirGap 5.75 mm
+/gagg/stageB/topAirGap 1.15 mm
+/gagg/stageB/bottomAirGap 1.15 mm
+/gagg/stageB/blackHousingThickness 4.0 mm
 /gagg/stageB/esrThickness 0.1 mm
-/gagg/stageB/pmtWindowThickness 0.5 mm
+/gagg/stageB/pmtWindowThickness 1.0 mm
 # B1 validation-only free parameter; not fitted to experiment.
 /gagg/stageB/sigmaAlpha 0.20 rad
 /gagg/stageB/surfaceState all_polished
@@ -25,6 +27,12 @@
 /gagg/stageB/validate
 /random/setSeeds 424242 515151
 /gagg/output/csv results/b1/all_polished.csv
+/run/beamOn 50
+
+# Check exact deterministic replay before any ground-surface rebuild can
+# populate Geant4's cached micro-facet sampling state.
+/random/setSeeds 424242 515151
+/gagg/output/csv results/b1/all_polished_repeat.csv
 /run/beamOn 50
 
 /gagg/stageB/surfaceState bottom_rough
@@ -62,8 +70,9 @@
 /gagg/output/csv results/b1/top_polished_others_rough.csv
 /run/beamOn 50
 
-# Exercise Idle-state sigma switching without using the diagnostic value in
-# the comparison sample.
+# Exercise Idle-state sigma switching after the six-state comparison. B2 and
+# later production scans use one process per state because Geant4 ground-
+# surface sampling caches are not reset by /random/setSeeds.
 /gagg/stageB/sigmaAlpha 0.25 rad
 /run/initialize
 /gagg/stageB/validate
@@ -71,6 +80,3 @@
 /gagg/stageB/surfaceState all_polished
 /run/initialize
 /gagg/stageB/validate
-/random/setSeeds 424242 515151
-/gagg/output/csv results/b1/all_polished_repeat.csv
-/run/beamOn 50

@@ -129,6 +129,8 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> B2Config:
     geometry = {key: float(value) for key, value in raw["geometry"].items()}
     expected_geometry = {
         "side_air_gap_mm",
+        "top_air_gap_mm",
+        "bottom_air_gap_mm",
         "black_housing_thickness_mm",
         "esr_thickness_mm",
         "pmt_window_thickness_mm",

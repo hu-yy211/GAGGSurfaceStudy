@@ -2,17 +2,19 @@
   "stage": "B3",
   "events": 100,
   "gamma_energy_keV": 511.0,
-  "source_position_mm": [0.0, 0.0, 14.7],
+  "source_position_mm": [0.0, 0.0, 16.15],
   "beam_radius_mm": 0.0,
   "event_seed_base": 830001,
   "run_seeds": [161803, 271828],
   "surface_state": "all_polished",
   "sigma_alpha_rad": 0.20,
   "geometry": {
-    "side_air_gap_mm": 0.1,
-    "black_housing_thickness_mm": 1.0,
+    "side_air_gap_mm": 5.75,
+    "top_air_gap_mm": 1.15,
+    "bottom_air_gap_mm": 1.15,
+    "black_housing_thickness_mm": 4.0,
     "esr_thickness_mm": 0.1,
-    "pmt_window_thickness_mm": 0.5
+    "pmt_window_thickness_mm": 1.0
   },
   "validation": {
     "full_energy_half_width_keV": 0.5,

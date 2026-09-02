@@ -70,7 +70,9 @@ class DetectorConstruction final : public G4VUserDetectorConstruction {
   std::unique_ptr<G4OpticalSurface> fStageAOpticalSurface;
   std::unique_ptr<G4MaterialPropertiesTable> fStageASurfaceProperties;
   std::unique_ptr<G4OpticalSurface> fExperimentTopSurface;
+  std::unique_ptr<G4OpticalSurface> fExperimentEsrSurface;
   std::unique_ptr<G4OpticalSurface> fExperimentBottomSurface;
+  std::unique_ptr<G4OpticalSurface> fExperimentPmtSurface;
   std::unique_ptr<G4OpticalSurface> fExperimentSideSurface;
   std::unique_ptr<G4OpticalSurface> fExperimentBlackSurface;
   std::unique_ptr<G4MaterialPropertiesTable> fExperimentEsrProperties;
@@ -84,6 +86,10 @@ class DetectorConstruction final : public G4VUserDetectorConstruction {
   G4double fStageBSigmaAlpha = config::kStageBSigmaAlphaValidation;
   G4double fExperimentSideAirGap =
       config::kExperimentSideAirGapDefault;
+  G4double fExperimentTopAirGap =
+      config::kExperimentTopAirGapDefault;
+  G4double fExperimentBottomAirGap =
+      config::kExperimentBottomAirGapDefault;
   G4double fExperimentBlackHousingThickness =
       config::kExperimentBlackHousingThicknessDefault;
   G4double fExperimentEsrThickness =
@@ -102,7 +108,10 @@ class DetectorConstruction final : public G4VUserDetectorConstruction {
   G4VPhysicalVolume* fSideAirGapPhysical = nullptr;
   G4VPhysicalVolume* fTopAirGapPhysical = nullptr;
   G4VPhysicalVolume* fExperimentSideAirGapPhysical = nullptr;
+  G4VPhysicalVolume* fExperimentTopAirGapPhysical = nullptr;
+  G4VPhysicalVolume* fExperimentBottomAirGapPhysical = nullptr;
   G4VPhysicalVolume* fExperimentBlackHousingPhysical = nullptr;
+  G4VPhysicalVolume* fExperimentTopStructurePhysical = nullptr;
   G4VPhysicalVolume* fExperimentEsrPhysical = nullptr;
   G4VPhysicalVolume* fExperimentPmtWindowPhysical = nullptr;
 };

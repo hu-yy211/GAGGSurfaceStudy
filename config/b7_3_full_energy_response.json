@@ -1,0 +1,33 @@
+{
+  "stage": "B7.3",
+  "events": 100000,
+  "source": {
+    "particle": "annihilationPair",
+    "gamma_energy_keV": 511.0,
+    "position_mm": [0.0, 0.0, 30.0],
+    "face_size_mm": 2.5,
+    "beam_radius_mm": 0.0,
+    "direction_mode": "isotropic",
+    "event_seed_base": 873001,
+    "run_seeds": [314159, 265359]
+  },
+  "geometry": {
+    "side_air_gap_mm": 5.75,
+    "top_air_gap_mm": 1.15,
+    "bottom_air_gap_mm": 1.15,
+    "black_housing_thickness_mm": 4.0,
+    "esr_thickness_mm": 0.1,
+    "pmt_window_thickness_mm": 1.0
+  },
+  "surface": {
+    "state": "all_polished",
+    "shared_sigma_alpha_rad": 0.20
+  },
+  "validation": {
+    "full_energy_center_keV": 511.0,
+    "full_energy_half_width_keV": 0.5,
+    "minimum_full_energy_events": 50,
+    "expected_yield_photons_per_MeV": 54000.0,
+    "max_yield_relative_error": 0.0001
+  }
+}

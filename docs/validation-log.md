@@ -625,3 +625,36 @@ Status: B7.2 validation gate passed. The effective source intentionally omits
 positron transport, source encapsulation and annihilation-polarization
 correlations. B7.3 may define the event-level 511 keV GAGG-deposition gate and
 PMT optical-photon statistic without changing this source.
+
+## 2026-09-02 - B7.3 full-energy response baseline
+
+- Selectively migrated the post-B6 schematic geometry without importing the
+  archived radioactive-decay implementation: 5.75 mm side clearance,
+  1.15 mm top/bottom gaps, 4 mm black structure and shoulders, 11.5 mm ESR,
+  and a 25 mm diameter PMT window.
+- B0 analytic volumes, navigator probes, six UNIFIED boundaries, overlap
+  checks and PMT refractive index passed. B0/B1 targeted regression passed
+  6/6. B1 deterministic repeat is performed before any ground-surface rebuild;
+  production surface comparisons remain isolated by process.
+- Ran 100000 effective annihilation-pair events at z=+30 mm. The fixed
+  510.5--511.5 keV event-total GAGG gate selected 187 events; 99400 events had
+  zero deposit and 413 had partial deposit.
+- Selected totals were `N_generated=5,160,063` and `N_PMT=492,993`, so
+  `sum(N_PMT)/sum(N_generated)=0.0955401126`. Mean `N_PMT` was 2636.326 with
+  standard error 9.934; the measured selected-event yield was
+  53999.843 photons/MeV.
+- All 100000 rows passed source-face, event-energy, surface metadata, yield,
+  terminal-accounting and zero-deposit-light checks. One partial event showed
+  a -5.34 photon event-total/step-wise yield residual; the structural bound is
+  therefore +/-8 photons while the aggregate yield remains constrained to
+  1e-4 relative accuracy.
+- The independent CTest production run passed export/validate/plot 3/3 in
+  570.73 s. Its event CSV was byte-identical to the first 100k run; both have
+  SHA-256 `2ba1ec86789e3bc90900ff867e3f3b2ca926a4695900245cb2f917a0870e0af7`.
+- Smoke, A6, B0/B1, B3 and B7.1/B7.2 compatibility checks all passed after
+  the Stage-B B2--B6 geometry configurations were migrated to the nominal
+  air-gap geometry. B2/B4/B5 generated 90/6/12 isolated macros successfully;
+  their old production scans were intentionally not rerun in B7.3.
+
+Status: B7.3 validation gate passed. It establishes the all-polished response
+and uncertainty only; no roughness scan or experiment-driven fit was made.

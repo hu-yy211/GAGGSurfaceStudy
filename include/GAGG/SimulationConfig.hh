@@ -55,17 +55,26 @@ inline constexpr G4double kExperimentCrystalLength = 20.0 * mm;
 inline constexpr G4double kB7FaceSourceSize = 2.5 * mm;
 inline constexpr G4double kB7AnnihilationGammaEnergy = 511.0 * keV;
 
-// B0 geometry placeholders. These remain runtime-selectable and must be
-// replaced by measurements before quantitative Stage B comparison.
-inline constexpr G4double kExperimentSideAirGapDefault = 0.1 * mm;
-inline constexpr G4double kExperimentBlackHousingThicknessDefault = 1.0 * mm;
+// Nominal Stage B geometry inferred from the experiment cross-section. These
+// are schematic estimates, not measurements or fit parameters.
+inline constexpr G4double kExperimentSideAirGapDefault = 5.75 * mm;
+inline constexpr G4double kExperimentTopAirGapDefault = 1.15 * mm;
+inline constexpr G4double kExperimentBottomAirGapDefault = 1.15 * mm;
+inline constexpr G4double kExperimentBlackHousingThicknessDefault = 4.0 * mm;
 inline constexpr G4double kExperimentEsrThicknessDefault = 0.1 * mm;
-inline constexpr G4double kExperimentPmtWindowThicknessDefault = 0.5 * mm;
+inline constexpr G4double kExperimentPmtWindowThicknessDefault = 1.0 * mm;
+inline constexpr G4double kExperimentShoulderAperture = 6.75 * mm;
+inline constexpr G4double kExperimentUpperShoulderHeight = 1.5 * mm;
+inline constexpr G4double kExperimentLowerShoulderHeight = 1.0 * mm;
+inline constexpr G4double kExperimentEsrWidth = 11.5 * mm;
+inline constexpr G4double kExperimentEsrDepth = 11.5 * mm;
+inline constexpr G4double kExperimentPmtWindowDiameter = 25.0 * mm;
+inline constexpr G4double kExperimentTopStructureThickness = 4.0 * mm;
 inline constexpr G4double kExperimentPmtWindowRefractiveIndex = 1.52;
 inline constexpr G4double kExperimentBlackRefractiveIndex = 1.50;
 inline constexpr G4double kExperimentBlackAbsorptionLength = 1.0 * um;
 inline constexpr G4double kExperimentEsrReflectivity = 0.98;
-inline constexpr G4double kExperimentBlackReflectivity = 0.0;
+inline constexpr G4double kExperimentBlackReflectivity = 0.02;
 // A ground UNIFIED dielectric-metal surface uses sigma_alpha only through the
 // specular-lobe branch. Fixing this probability to one makes sigma_alpha the
 // sole rough-reflection shape parameter rather than falling back to a

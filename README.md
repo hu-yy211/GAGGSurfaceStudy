@@ -791,6 +791,40 @@ closed all photon accounting, but its aggregate light totals are not a
 511 keV full-energy selection. That event gate and PMT-light estimator belong
 to B7.3.
 
+B7.3 migrates the schematic experiment geometry used after B6: 5.75 mm side
+air clearance, 1.15 mm top and bottom air gaps, 4.0 mm black structure,
+upper/lower shoulders, an 11.5 x 11.5 x 0.1 mm3 ESR sheet and a 25 mm diameter
+x 1 mm PMT window. These are image-based estimates, not measured dimensions
+or fit parameters. The top and bottom roughness surfaces now act at the
+GAGG-air boundaries; fixed polished interfaces connect the air layers to ESR
+and PMT. `N_PMT` is counted only when an optical photon transmits from the
+bottom air layer into the PMT window.
+
+The locked all-polished run uses 100000 annihilation-pair events and applies
+the event-level gate `510.5 <= Edep_GAGG <= 511.5 keV`. This does not select
+511 keV optical photons: it selects 511 keV gamma full-energy events and then
+counts their approximately 2.25 eV scintillation photons at the PMT window.
+
+~~~sh
+python analysis/run_b7_3.py --executable build/gagg_surface_study \
+  --config config/b7_3_full_energy_response.json \
+  --output-dir results/b7_3_full_energy_100k
+python analysis/validate_b7_3.py \
+  --input results/b7_3_full_energy_100k/annihilation_pair_all_polished.csv
+MPLCONFIGDIR=build/.mplconfig python analysis/plot_b7_3.py \
+  --input results/b7_3_full_energy_100k/annihilation_pair_all_polished.csv \
+  --output-dir results/b7_3_full_energy_100k/figures
+~~~
+
+The actual sample contained 99400 zero-deposit, 413 partial-deposit and 187
+full-energy events. The selected events generated 5,160,063 scintillation
+photons and delivered 492,993 photons to the PMT window, giving
+`sum(N_PMT)/sum(N_generated) = 0.0955401`. Mean `N_PMT` was
+2636.33 +/- 9.93 (standard error), and the selected-event light yield was
+53999.84 photons/MeV. All optical terminal accounting closed. B7.3 validates
+the source-to-response statistic only; the shared-`sigma_alpha` six-state
+scan remains the next milestone.
+
 ## Directory design
 
 ~~~text
@@ -857,6 +891,9 @@ centralized in "include/GAGG/SimulationConfig.hh".
 | B6 surface-loss locations | top, bottom, side, black, other | diagnostic counters | exact subtotals; no physics change |
 | B7 effective source face | 2.5 x 2.5 mm2, centred at (0,0,30) mm | explicit model assumption | B7.1 uniform x-y sampling validated; directions deferred to B7.2 |
 | B7 effective annihilation emission | two 511 keV gammas, one vertex, exactly back-to-back | explicit model assumption | B7.2 pair axis sampled uniformly over 4pi; unpolarized |
+| B7 nominal side/top/bottom air gaps | 5.75 / 1.15 / 1.15 mm | image-based estimate | not measured and not fitted |
+| B7 nominal black/ESR/PMT geometry | 4.0 mm black; 11.5 x 11.5 x 0.1 mm3 ESR; 25 mm diameter x 1 mm PMT window | image-based estimate | includes upper/lower shoulders |
+| B7.3 full-energy gate | 510.5--511.5 keV event-total GAGG Edep | analysis definition | PMT counts remain optical scintillation photons |
 | ESR specular-lobe fraction | 1.0 | UNIFIED model choice | fixed, not fitted; makes ground ESR reflection sigma-driven |
 
 The bulk composition is stoichiometric Gd3Al2Ga3O12. Ce concentration was not

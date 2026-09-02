@@ -343,6 +343,46 @@ if(BUILD_TESTING)
   )
 
   add_test(
+    NAME b7_3_full_energy_export
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/run_b7_3.py
+            --executable $<TARGET_FILE:gagg_surface_study>
+            --config ${PROJECT_SOURCE_DIR}/config/b7_3_full_energy_response.json
+            --output-dir ${PROJECT_BINARY_DIR}/results/b7_3_full_energy
+  )
+  set_tests_properties(b7_3_full_energy_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[b7.3-runner\\].*events=100000.*status=PASS"
+    FAIL_REGULAR_EXPRESSION "unclassified=[1-9][0-9]*|status=FAIL|G4Exception|Fatal Exception"
+    TIMEOUT 1800
+  )
+
+  add_test(
+    NAME b7_3_full_energy_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_b7_3.py
+            --input ${PROJECT_BINARY_DIR}/results/b7_3_full_energy/annihilation_pair_all_polished.csv
+            --config ${PROJECT_SOURCE_DIR}/config/b7_3_full_energy_response.json
+  )
+  set_tests_properties(b7_3_full_energy_validate PROPERTIES
+    DEPENDS b7_3_full_energy_export
+    PASS_REGULAR_EXPRESSION "\\[b7.3-check\\] event_level_511_gate=true.*status=PASS"
+  )
+
+  add_test(
+    NAME b7_3_plot
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/plot_b7_3.py
+            --input ${PROJECT_BINARY_DIR}/results/b7_3_full_energy/annihilation_pair_all_polished.csv
+            --output-dir ${PROJECT_BINARY_DIR}/results/b7_3_full_energy/figures
+            --config ${PROJECT_SOURCE_DIR}/config/b7_3_full_energy_response.json
+  )
+  set_tests_properties(b7_3_plot PROPERTIES
+    DEPENDS b7_3_full_energy_validate
+    ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
+    PASS_REGULAR_EXPRESSION "\\[b7.3-plot\\].*status=PASS"
+  )
+
+  add_test(
     NAME b1_surface_export
     COMMAND $<TARGET_FILE:gagg_surface_study>
             ${PROJECT_BINARY_DIR}/macros/stage_b/b1_compare.mac
