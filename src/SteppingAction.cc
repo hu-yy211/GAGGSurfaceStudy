@@ -2,6 +2,7 @@
 
 #include "GAGG/DetectorConstruction.hh"
 #include "GAGG/EventAction.hh"
+#include "GAGG/PhotonTrackInformation.hh"
 
 #include "G4GeometryTolerance.hh"
 #include "G4LogicalBorderSurface.hh"
@@ -57,6 +58,18 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
     return;
   }
 
+  auto* track = step->GetTrack();
+  PhotonTrackInformation* trackInformation = nullptr;
+  if (fEventAction->IsPhotonAuditEnabled()) {
+    trackInformation = dynamic_cast<PhotonTrackInformation*>(
+        track->GetUserInformation());
+    if (trackInformation == nullptr) {
+      trackInformation = new PhotonTrackInformation();
+      track->SetUserInformation(trackInformation);
+    }
+    fEventAction->RecordOpticalStepLength(step->GetStepLength());
+  }
+
   const auto* post = step->GetPostStepPoint();
   const auto* postVolume = post->GetPhysicalVolume();
   const auto surfaceTolerance =
@@ -81,10 +94,19 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
     if (preVolume->GetName() == "GAGG") {
       if (postVolume->GetName() == "ExperimentTopAirGap") {
         fEventAction->RecordTopSurfaceInteraction();
+        if (trackInformation != nullptr) {
+          trackInformation->AddTopInteraction();
+        }
       } else if (postVolume->GetName() == "ExperimentBottomAirGap") {
         fEventAction->RecordBottomSurfaceInteraction();
+        if (trackInformation != nullptr) {
+          trackInformation->AddBottomInteraction();
+        }
       } else if (postVolume->GetName() == "ExperimentSideAirGap") {
         fEventAction->RecordSideSurfaceInteraction();
+        if (trackInformation != nullptr) {
+          trackInformation->AddSideInteraction();
+        }
       }
     }
   }
@@ -104,11 +126,25 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
        boundaryStatus == SameMaterial);
   if (outputFaceArrival &&
       fDetector->GetOutputScoringMode() == "firstArrival") {
+    if (trackInformation != nullptr) {
+      fEventAction->RecordOutputPhotonDiagnostics(
+          track->GetTrackLength(), trackInformation->GetTopInteractions(),
+          trackInformation->GetBottomInteractions(),
+          trackInformation->GetSideInteractions(),
+          std::acos(std::abs(track->GetMomentumDirection().z())));
+    }
     fEventAction->RecordOutput();
     step->GetTrack()->SetTrackStatus(fStopAndKill);
     return;
   }
   if (receiverCrossing) {
+    if (trackInformation != nullptr) {
+      fEventAction->RecordOutputPhotonDiagnostics(
+          track->GetTrackLength(), trackInformation->GetTopInteractions(),
+          trackInformation->GetBottomInteractions(),
+          trackInformation->GetSideInteractions(),
+          std::acos(std::abs(track->GetMomentumDirection().z())));
+    }
     fEventAction->RecordOutput();
     step->GetTrack()->SetTrackStatus(fStopAndKill);
     return;

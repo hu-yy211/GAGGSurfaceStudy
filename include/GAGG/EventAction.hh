@@ -15,6 +15,7 @@ class EventAction final : public G4UserEventAction {
               const PrimaryGeneratorAction* primaryGenerator);
   void BeginOfEventAction(const G4Event*) override;
   void EndOfEventAction(const G4Event*) override;
+  G4bool IsPhotonAuditEnabled() const;
 
   void RecordOutput() { ++fOutput; }
   void RecordCrystalAbsorption() { ++fCrystalAbsorption; }
@@ -46,6 +47,21 @@ class EventAction final : public G4UserEventAction {
   void RecordBottomSurfaceInteraction() { ++fBottomSurfaceInteractions; }
   void RecordSideSurfaceInteraction() { ++fSideSurfaceInteractions; }
   void RecordEnergyDeposit(G4double energy) { fEnergyDeposit += energy; }
+  void RecordOpticalStepLength(G4double length) {
+    fTotalOpticalPath += length;
+  }
+  void RecordOutputPhotonDiagnostics(G4double pathLength,
+                                     G4int topInteractions,
+                                     G4int bottomInteractions,
+                                     G4int sideInteractions,
+                                     G4double incidenceAngle) {
+    ++fOutputDiagnosticPhotons;
+    fOutputOpticalPath += pathLength;
+    fOutputTopInteractions += topInteractions;
+    fOutputBottomInteractions += bottomInteractions;
+    fOutputSideInteractions += sideInteractions;
+    fOutputIncidenceAngle += incidenceAngle;
+  }
   void RecordScintillationPhoton() {
     ++fScintillation;
     ++fGenerated;
@@ -72,6 +88,13 @@ class EventAction final : public G4UserEventAction {
   G4int fTopSurfaceInteractions = 0;
   G4int fBottomSurfaceInteractions = 0;
   G4int fSideSurfaceInteractions = 0;
+  G4double fTotalOpticalPath = 0.0;
+  G4double fOutputOpticalPath = 0.0;
+  G4int fOutputDiagnosticPhotons = 0;
+  G4int fOutputTopInteractions = 0;
+  G4int fOutputBottomInteractions = 0;
+  G4int fOutputSideInteractions = 0;
+  G4double fOutputIncidenceAngle = 0.0;
 };
 
 }  // namespace gagg

@@ -1,6 +1,7 @@
 #include "GAGG/EventAction.hh"
 
 #include "GAGG/EventRecord.hh"
+#include "GAGG/PhotonAuditRecord.hh"
 #include "GAGG/PrimaryGeneratorAction.hh"
 #include "GAGG/RunAction.hh"
 
@@ -12,6 +13,10 @@ namespace gagg {
 EventAction::EventAction(RunAction* runAction,
                          const PrimaryGeneratorAction* primaryGenerator)
     : fRunAction(runAction), fPrimaryGenerator(primaryGenerator) {}
+
+G4bool EventAction::IsPhotonAuditEnabled() const {
+  return fRunAction->IsPhotonAuditEnabled();
+}
 
 void EventAction::BeginOfEventAction(const G4Event*) {
   fEnergyDeposit = 0.0;
@@ -32,6 +37,13 @@ void EventAction::BeginOfEventAction(const G4Event*) {
   fTopSurfaceInteractions = 0;
   fBottomSurfaceInteractions = 0;
   fSideSurfaceInteractions = 0;
+  fTotalOpticalPath = 0.0;
+  fOutputOpticalPath = 0.0;
+  fOutputDiagnosticPhotons = 0;
+  fOutputTopInteractions = 0;
+  fOutputBottomInteractions = 0;
+  fOutputSideInteractions = 0;
+  fOutputIncidenceAngle = 0.0;
 }
 
 void EventAction::EndOfEventAction(const G4Event* event) {
@@ -61,6 +73,18 @@ void EventAction::EndOfEventAction(const G4Event* event) {
                            fBottomSurfaceInteractions,
                            fSideSurfaceInteractions,
                            unclassified};
+  const PhotonAuditRecord audit{
+      event->GetEventID(),
+      fGenerated,
+      fOutputDiagnosticPhotons,
+      fTotalOpticalPath,
+      fOutputOpticalPath,
+      fOutputTopInteractions + fOutputBottomInteractions +
+          fOutputSideInteractions,
+      fOutputTopInteractions,
+      fOutputBottomInteractions,
+      fOutputSideInteractions,
+      fOutputIncidenceAngle};
 
   if (fRunAction->ShouldPrintEvent(event->GetEventID()) || unclassified != 0) {
     G4cout << "[event] id=" << event->GetEventID()
@@ -84,6 +108,7 @@ void EventAction::EndOfEventAction(const G4Event* event) {
            << " unclassified=" << unclassified << G4endl;
   }
   fRunAction->WriteEvent(record);
+  fRunAction->WritePhotonAudit(audit);
 }
 
 }  // namespace gagg

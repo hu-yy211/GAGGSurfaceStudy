@@ -89,3 +89,15 @@ Each state uses 100000 paired events. The validator reuses the B7.3
 all-polished reference and writes numerical CSV summaries only; B7.5 does not
 create a plot. To reuse validated single-end controls and run only the added
 state, append `--state top_bottom_rough`.
+
+B7.6 enables a separate photon-audit CSV while leaving the established event
+CSV unchanged. Production macros are generated with:
+
+  python analysis/run_b7_6.py --executable build/gagg_surface_study \
+    --config config/b7_6_photon_fate_audit.json \
+    --output-dir results/b7_6_photon_fate_audit_100k --jobs 5
+
+The audit output is enabled by `/gagg/output/photonAuditCsv <path>`. It records
+event-aggregate path and PMT-arrival diagnostics and is inactive when the path
+is empty. `../validation/b7_6_photon_audit.mac` provides the low-statistics
+schema and count-matching test.

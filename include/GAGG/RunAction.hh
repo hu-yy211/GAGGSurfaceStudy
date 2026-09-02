@@ -15,6 +15,7 @@ namespace gagg {
 class PrimaryGeneratorAction;
 class DetectorConstruction;
 struct EventRecord;
+struct PhotonAuditRecord;
 
 class RunAction final : public G4UserRunAction {
  public:
@@ -26,16 +27,23 @@ class RunAction final : public G4UserRunAction {
   void EndOfRunAction(const G4Run*) override;
 
   void WriteEvent(const EventRecord& record);
+  void WritePhotonAudit(const PhotonAuditRecord& record);
   G4bool ShouldPrintEvent(G4int eventId) const;
+  G4bool IsPhotonAuditEnabled() const {
+    return !fPhotonAuditCsvPath.empty();
+  }
 
  private:
   std::unique_ptr<G4GenericMessenger> fMessenger;
   PrimaryGeneratorAction* fPrimaryGenerator = nullptr;
   const DetectorConstruction* fDetector = nullptr;
   G4String fCsvPath;
+  G4String fPhotonAuditCsvPath;
   G4int fEventPrintModulo = 1;
   std::ofstream fCsv;
+  std::ofstream fPhotonAuditCsv;
   G4int fRowsWritten = 0;
+  G4int fPhotonAuditRowsWritten = 0;
   G4double fEnergyDeposit = 0.0;
   std::int64_t fScintillation = 0;
   std::int64_t fGenerated = 0;

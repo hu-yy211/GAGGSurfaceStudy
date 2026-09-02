@@ -1,0 +1,33 @@
+{
+  "stage": "B7.6",
+  "b7_3_config": "b7_3_full_energy_response.json",
+  "events": 100000,
+  "states": [
+    "all_polished",
+    "bottom_rough",
+    "top_rough",
+    "top_bottom_rough",
+    "side_rough"
+  ],
+  "shared_sigma_alpha_rad": 0.70,
+  "max_parallel_processes": 5,
+  "terminal_channels": [
+    "output",
+    "crystal_absorption",
+    "reflector_absorption",
+    "other_absorption",
+    "top_surface_absorption",
+    "bottom_surface_absorption",
+    "side_surface_absorption",
+    "black_surface_absorption",
+    "other_surface_absorption",
+    "other_world_exit"
+  ],
+  "validation": {
+    "minimum_full_energy_events": 50,
+    "require_exact_event_history_pairing": true,
+    "require_exact_terminal_balance": true,
+    "require_exact_surface_absorption_subtotal": true,
+    "require_output_audit_match": true
+  }
+}

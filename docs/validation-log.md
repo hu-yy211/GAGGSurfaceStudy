@@ -710,3 +710,29 @@ only missing physical parameter and does not justify per-face fitting.
 Status: corrected B7.5 focused validation passed. Simultaneously roughening
 both end faces does not increase collection above either single-end case; it
 is 3.90% below bottom rough and 34.62% below top rough in the paired totals.
+
+## 2026-09-02 - B7.6 photon-fate audit
+
+- Added an optional independent audit CSV. When enabled it records per-event
+  total optical path and, for PMT photons, summed path, top/bottom/side crystal
+  encounters and PMT incidence angle. The established event CSV is unchanged;
+  audit tracking is not allocated when the output is disabled.
+- The 20-event, 100-optical-photon plumbing test passed main/audit count
+  matching, positive-path and face-subtotal checks. Smoke and original B1
+  regression passed with the audit disabled (5/5 tests in 2.04 s).
+- Ran five isolated 100000-event states at sigma=0.70 rad. All selected the
+  same 187 full-energy histories and 5,160,063 generated photons. Every
+  terminal budget, surface subtotal, audit/main output count and differential
+  budget closed exactly.
+- PMT/GAGG/black fractions were 0.09554/0.56295/0.29433 for all polished,
+  0.19907/0.14699/0.51147 for bottom rough,
+  0.29259/0.13274/0.44687 for top rough,
+  0.19131/0.11670/0.57167 for top plus bottom rough, and
+  0.08696/0.03812/0.80783 for side rough.
+- Three figures and three numerical tables were generated and visually
+  inspected. Detailed transport metrics and interpretation are recorded in
+  `docs/b7_6-findings.md`.
+
+Status: B7.6 photon-fate data gate passed. The model contains directional
+roughness but no direct loss at bottom/side rough GAGG-air boundaries. The
+experiment mismatch therefore cannot be interpreted as a missing sigma value.

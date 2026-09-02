@@ -168,3 +168,13 @@ bottom, top and both-end rough, respectively. Both-end/bottom was 0.960977
 (95% interval 0.956261--0.965825), and both-end/top was 0.653838
 (0.651925--0.655914). Status: corrected focused comparison passed
 structurally on 2026-09-02; no plot was produced.
+
+B7.6 audits five paired 100k samples at sigma=0.70 rad without adding or
+fitting a transport parameter. A separate event-aggregate diagnostic records
+optical path, collected-photon face interactions and PMT incidence angle while
+the stable main event schema supplies terminal locations. All states selected
+the same 187 full-energy events. The audit finds that rough interfaces reduce
+GAGG self-absorption but redirect much of the recovered light into the black
+structure; the rough GAGG-air boundaries themselves have no explicit surface
+loss. Status: B7.6 physics-data validation passed on 2026-09-02. See
+`docs/b7_6-findings.md`.

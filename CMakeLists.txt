@@ -455,6 +455,72 @@ if(BUILD_TESTING)
   )
 
   add_test(
+    NAME b7_6_photon_audit_export
+    COMMAND $<TARGET_FILE:gagg_surface_study>
+            ${PROJECT_BINARY_DIR}/macros/validation/b7_6_photon_audit.mac
+  )
+  set_tests_properties(b7_6_photon_audit_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[output\\] photon_audit_csv=.*rows=20"
+    FAIL_REGULAR_EXPRESSION "unclassified=[1-9][0-9]*|status=FAIL|G4Exception|Fatal Exception"
+  )
+
+  add_test(
+    NAME b7_6_photon_audit_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_b7_6_plumbing.py
+            --events ${PROJECT_BINARY_DIR}/results/b7_6_plumbing/events.csv
+            --audit ${PROJECT_BINARY_DIR}/results/b7_6_plumbing/photon_audit.csv
+            --expect-events 20
+  )
+  set_tests_properties(b7_6_photon_audit_validate PROPERTIES
+    DEPENDS b7_6_photon_audit_export
+    PASS_REGULAR_EXPRESSION "\\[b7.6-plumbing\\].*status=PASS"
+  )
+
+  add_test(
+    NAME b7_6_fate_audit_export
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/run_b7_6.py
+            --executable $<TARGET_FILE:gagg_surface_study>
+            --config ${PROJECT_SOURCE_DIR}/config/b7_6_photon_fate_audit.json
+            --output-dir ${PROJECT_BINARY_DIR}/results/b7_6_photon_fate_audit
+  )
+  set_tests_properties(b7_6_fate_audit_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[b7.6-runner\\].*points=5.*separate_audit_csv=true.*status=PASS"
+    FAIL_REGULAR_EXPRESSION "unclassified=[1-9][0-9]*|status=FAIL|G4Exception|Fatal Exception"
+    TIMEOUT 5400
+    LABELS "slow;b7"
+  )
+
+  add_test(
+    NAME b7_6_fate_audit_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_b7_6.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/b7_6_photon_fate_audit
+            --output-dir ${PROJECT_BINARY_DIR}/results/b7_6_photon_fate_audit/figures
+            --config ${PROJECT_SOURCE_DIR}/config/b7_6_photon_fate_audit.json
+  )
+  set_tests_properties(b7_6_fate_audit_validate PROPERTIES
+    DEPENDS b7_6_fate_audit_export
+    PASS_REGULAR_EXPRESSION "\\[b7.6-check\\].*pairing=exact.*status=PASS"
+    LABELS "slow;b7"
+  )
+
+  add_test(
+    NAME b7_6_fate_audit_plot
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/plot_b7_6.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/b7_6_photon_fate_audit/figures
+            --output-dir ${PROJECT_BINARY_DIR}/results/b7_6_photon_fate_audit/figures
+  )
+  set_tests_properties(b7_6_fate_audit_plot PROPERTIES
+    DEPENDS b7_6_fate_audit_validate
+    ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
+    PASS_REGULAR_EXPRESSION "\\[b7.6-plot\\].*status=PASS"
+    LABELS "slow;b7"
+  )
+
+  add_test(
     NAME b1_surface_export
     COMMAND $<TARGET_FILE:gagg_surface_study>
             ${PROJECT_BINARY_DIR}/macros/stage_b/b1_compare.mac

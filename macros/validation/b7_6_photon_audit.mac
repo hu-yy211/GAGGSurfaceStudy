@@ -1,0 +1,28 @@
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/gagg/geometry/mode experiment
+/gagg/stageA/surface none
+/gagg/stageB/sideAirGap 5.75 mm
+/gagg/stageB/topAirGap 1.15 mm
+/gagg/stageB/bottomAirGap 1.15 mm
+/gagg/stageB/blackHousingThickness 4.0 mm
+/gagg/stageB/esrThickness 0.1 mm
+/gagg/stageB/pmtWindowThickness 1.0 mm
+/gagg/stageB/surfaceState top_bottom_rough
+/gagg/stageB/sigmaAlpha 0.70 rad
+/gagg/optics/gaggBulkAbsorption true
+/gagg/scoring/outputMode transmitted
+/gagg/source/particle optical
+/gagg/source/mode isotropic
+/gagg/source/photonsPerEvent 100
+/gagg/source/position 0 0 0 mm
+/gagg/source/eventSeedBase 876001
+/gagg/output/eventPrintModulo 0
+/run/initialize
+/gagg/stageB/validate
+/random/setSeeds 767676 868686
+/gagg/output/csv results/b7_6_plumbing/events.csv
+/gagg/output/photonAuditCsv results/b7_6_plumbing/photon_audit.csv
+/run/beamOn 20

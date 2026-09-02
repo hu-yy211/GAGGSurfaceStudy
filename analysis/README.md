@@ -103,3 +103,9 @@ sigma=0.70 rad with 100000 paired events. It reuses the B7.3 all-polished
 reference and writes
 `b7_5_endface_summary.csv` plus `b7_5_endface_comparison.csv`. There is no
 B7.5 plotting program by design.
+
+B7.6 uses `b7_6_common.py`, `run_b7_6.py`, `validate_b7_6.py` and
+`plot_b7_6.py`. The optional `/gagg/output/photonAuditCsv` keeps path and PMT
+arrival diagnostics separate from the stable main event schema. Validation
+writes terminal, differential and transport CSV tables; plotting writes the
+matching stacked budget, delta budget and four-panel transport figures.

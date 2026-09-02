@@ -877,6 +877,22 @@ efficiency 0.191306 and normalized response 2.00237. Its paired response is
 top rough (0.651925--0.655914). Simultaneous end-face roughening therefore
 does not produce the highest collection rate in this model.
 
+B7.6 performs a location-resolved photon-fate audit without changing any
+optical parameter. Five exactly paired 100k states at sigma=0.70 rad use a
+separate optional audit CSV for aggregate path length, collected-photon path,
+crystal-face encounters and PMT incidence angle. The original event CSV schema
+remains unchanged, and the extra tracking is inactive unless
+`/gagg/output/photonAuditCsv` is set.
+
+The all-polished sample loses 56.29% of generated light to GAGG self-absorption
+after an average total path of 366.29 mm per generated photon. Top rough cuts
+self-absorption to 13.27%, raises black-structure absorption to 44.69%, and
+delivers 29.26% to the PMT. Side rough cuts self-absorption to 3.81% but sends
+80.78% to the black structure, leaving 8.70% at the PMT. Bottom and side rough
+GAGG-air interfaces show zero direct surface absorption: the current UNIFIED
+roughness redirects light but does not model a lossy processing layer. Full
+tables and interpretation are in `docs/b7_6-findings.md`.
+
 ## Directory design
 
 ~~~text

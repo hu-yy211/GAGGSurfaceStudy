@@ -2,6 +2,7 @@
 
 #include "GAGG/DetectorConstruction.hh"
 #include "GAGG/EventRecord.hh"
+#include "GAGG/PhotonAuditRecord.hh"
 #include "GAGG/PrimaryGeneratorAction.hh"
 #include "GAGG/SimulationConfig.hh"
 
@@ -26,6 +27,11 @@ RunAction::RunAction(PrimaryGeneratorAction* primaryGenerator,
       "csv", fCsvPath, "Event-level CSV file; empty disables CSV output.");
   csvCommand.SetStates(G4State_PreInit, G4State_Idle);
 
+  auto& photonAuditCsvCommand = fMessenger->DeclareProperty(
+      "photonAuditCsv", fPhotonAuditCsvPath,
+      "Optional event-level photon transport audit CSV.");
+  photonAuditCsvCommand.SetStates(G4State_PreInit, G4State_Idle);
+
   auto& printCommand = fMessenger->DeclareProperty(
       "eventPrintModulo", fEventPrintModulo,
       "Print every Nth event; zero disables normal per-event printing.");
@@ -37,6 +43,7 @@ RunAction::~RunAction() = default;
 void RunAction::BeginOfRunAction(const G4Run*) {
   fPrimaryGenerator->ResetDirectionDiagnostics();
   fRowsWritten = 0;
+  fPhotonAuditRowsWritten = 0;
   fEnergyDeposit = 0.0;
   fScintillation = 0;
   fGenerated = 0;
@@ -134,6 +141,26 @@ void RunAction::BeginOfRunAction(const G4Run*) {
           "bottom_surface_interactions,side_surface_interactions,"
           "unclassified\n";
   G4cout << "[output] csv_open=" << fCsvPath << G4endl;
+
+  if (!fPhotonAuditCsvPath.empty()) {
+    const std::filesystem::path auditPath(fPhotonAuditCsvPath.c_str());
+    if (auditPath.has_parent_path()) {
+      std::filesystem::create_directories(auditPath.parent_path());
+    }
+    fPhotonAuditCsv.open(auditPath, std::ios::out | std::ios::trunc);
+    if (!fPhotonAuditCsv) {
+      G4cerr << "[output] failed_to_open_photon_audit="
+             << fPhotonAuditCsvPath << G4endl;
+    } else {
+      fPhotonAuditCsv
+          << "event_id,generated,output,total_optical_path_mm,"
+             "output_optical_path_mm,output_face_interactions,"
+             "output_top_interactions,output_bottom_interactions,"
+             "output_side_interactions,output_incidence_angle_deg_sum\n";
+      G4cout << "[output] photon_audit_csv_open="
+             << fPhotonAuditCsvPath << G4endl;
+    }
+  }
 }
 
 void RunAction::EndOfRunAction(const G4Run* run) {
@@ -141,6 +168,11 @@ void RunAction::EndOfRunAction(const G4Run* run) {
     fCsv.close();
     G4cout << "[output] csv=" << fCsvPath << " rows=" << fRowsWritten
            << G4endl;
+  }
+  if (fPhotonAuditCsv.is_open()) {
+    fPhotonAuditCsv.close();
+    G4cout << "[output] photon_audit_csv=" << fPhotonAuditCsvPath
+           << " rows=" << fPhotonAuditRowsWritten << G4endl;
   }
   const auto efficiency =
       fGenerated == 0 ? 0.0 : static_cast<G4double>(fOutput) / fGenerated;
@@ -233,6 +265,22 @@ void RunAction::WriteEvent(const EventRecord& record) {
          << record.unclassified << '\n';
     ++fRowsWritten;
   }
+}
+
+void RunAction::WritePhotonAudit(const PhotonAuditRecord& record) {
+  if (!fPhotonAuditCsv.is_open()) {
+    return;
+  }
+  fPhotonAuditCsv << record.eventId << ',' << record.generated << ','
+                  << record.output << ',' << std::setprecision(12)
+                  << record.totalOpticalPath / mm << ','
+                  << record.outputOpticalPath / mm << ','
+                  << record.outputFaceInteractions << ','
+                  << record.outputTopInteractions << ','
+                  << record.outputBottomInteractions << ','
+                  << record.outputSideInteractions << ','
+                  << record.outputIncidenceAngle / deg << '\n';
+  ++fPhotonAuditRowsWritten;
 }
 
 G4bool RunAction::ShouldPrintEvent(G4int eventId) const {
