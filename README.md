@@ -759,9 +759,37 @@ reduced chi-square was 1.36375 and every predeclared range, moment,
 correlation, edge-coverage and grid-uniformity check passed.
 
 This B7.1 macro deliberately uses one fixed-direction 1 keV gamma only to
-make the position test inexpensive. It is not a source-physics result. B7.2
-must add two back-to-back 511 keV gammas with an isotropically sampled pair
-axis while reusing this validated position sampler.
+make the position test inexpensive. It is not a source-physics result.
+
+B7.2 adds `/gagg/source/particle annihilationPair`. Every event now contains
+one primary vertex at the validated square-face position and two 511 keV
+gammas. One pair axis is sampled uniformly over 4pi and the second gamma is
+assigned the exactly opposite direction. Source kinematics are written to a
+separate audit CSV so the locked A0--B6 event schema remains unchanged:
+
+~~~sh
+./build/gagg_surface_study \
+  build/macros/validation/b7_annihilation_pair_source.mac
+MPLCONFIGDIR=build/.mplconfig \
+python analysis/validate_b7_annihilation_pair.py \
+  --input results/b7_2_annihilation_pair/source_audit.csv \
+  --output-dir results/b7_2_annihilation_pair/figures \
+  --expect-events 10000 --face-size-mm 2.5
+~~~
+
+All 10000 events had one vertex, two primaries and two 511 keV energies. The
+sampled first-axis component means were (-0.00927, 0.00906, -0.00124), and
+second moments were (0.33651, 0.33412, 0.32937), consistent with isotropy.
+The cos(theta) range was [-0.999886, 0.999877], the 12-bin phi reduced
+chi-square was 1.75818, and every pair had a direction dot product of -1.
+The source is an effective unpolarized gamma model; positron transport,
+source encapsulation and annihilation-polarization correlations are not
+represented.
+
+The B7.2 validation transported the particles through the optical model and
+closed all photon accounting, but its aggregate light totals are not a
+511 keV full-energy selection. That event gate and PMT-light estimator belong
+to B7.3.
 
 ## Directory design
 
@@ -828,6 +856,7 @@ centralized in "include/GAGG/SimulationConfig.hh".
 | B5 full-energy half-widths | 0.25, 0.5, 1.0 keV | analysis robustness grid | identical 28-event ideal sample |
 | B6 surface-loss locations | top, bottom, side, black, other | diagnostic counters | exact subtotals; no physics change |
 | B7 effective source face | 2.5 x 2.5 mm2, centred at (0,0,30) mm | explicit model assumption | B7.1 uniform x-y sampling validated; directions deferred to B7.2 |
+| B7 effective annihilation emission | two 511 keV gammas, one vertex, exactly back-to-back | explicit model assumption | B7.2 pair axis sampled uniformly over 4pi; unpolarized |
 | ESR specular-lobe fraction | 1.0 | UNIFIED model choice | fixed, not fitted; makes ground ESR reflection sigma-driven |
 
 The bulk composition is stoichiometric Gd3Al2Ga3O12. Ce concentration was not

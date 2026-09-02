@@ -8,6 +8,7 @@
 #include "globals.hh"
 
 #include <cstdint>
+#include <fstream>
 #include <memory>
 
 class G4GenericMessenger;
@@ -50,6 +51,11 @@ class PrimaryGeneratorAction final : public G4VUserPrimaryGeneratorAction,
 
  private:
   void ValidateConfiguration() const;
+  void GenerateAnnihilationPair(G4Event* event);
+  G4ThreeVector SampleIsotropicDirection() const;
+  void RecordDirectionSample(const G4ThreeVector& direction);
+  void WriteSourceAudit(G4int eventId, const G4ThreeVector& firstDirection,
+                        const G4ThreeVector& secondDirection);
   void ConfigureIsotropicPhoton();
 
   std::unique_ptr<G4GenericMessenger> fMessenger;
@@ -64,9 +70,15 @@ class PrimaryGeneratorAction final : public G4VUserPrimaryGeneratorAction,
   G4double fBeamRadius = 0.0;
   G4double fFaceSize = 0.0;
   G4long fEventSeedBase = 0;
+  G4String fSourceAuditCsvPath;
+  std::ofstream fSourceAuditCsv;
+  G4int fSourceAuditRows = 0;
   std::int64_t fDirectionSamples = 0;
   G4ThreeVector fDirectionSum;
   G4ThreeVector fDirectionSquareSum;
+  std::int64_t fAnnihilationPairEvents = 0;
+  G4double fPairDirectionDotSum = 0.0;
+  G4double fPairDirectionMaxDeviation = 0.0;
 };
 
 }  // namespace gagg

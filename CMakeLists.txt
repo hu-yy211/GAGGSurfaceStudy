@@ -317,6 +317,32 @@ if(BUILD_TESTING)
   )
 
   add_test(
+    NAME b7_2_annihilation_pair_export
+    COMMAND $<TARGET_FILE:gagg_surface_study>
+            ${PROJECT_BINARY_DIR}/macros/validation/b7_annihilation_pair_source.mac
+  )
+  set_tests_properties(b7_2_annihilation_pair_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[b7.2-source\\] audit_csv=.*source_audit.csv rows=10000"
+    FAIL_REGULAR_EXPRESSION "unclassified=[1-9][0-9]*|status=FAIL|G4Exception|Fatal Exception"
+    TIMEOUT 300
+  )
+
+  add_test(
+    NAME b7_2_annihilation_pair_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_b7_annihilation_pair.py
+            --input ${PROJECT_BINARY_DIR}/results/b7_2_annihilation_pair/source_audit.csv
+            --output-dir ${PROJECT_BINARY_DIR}/results/b7_2_annihilation_pair/figures
+            --expect-events 10000
+            --face-size-mm 2.5
+  )
+  set_tests_properties(b7_2_annihilation_pair_validate PROPERTIES
+    DEPENDS b7_2_annihilation_pair_export
+    ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
+    PASS_REGULAR_EXPRESSION "\\[b7.2\\] annihilation_pair_source status=PASS"
+  )
+
+  add_test(
     NAME b1_surface_export
     COMMAND $<TARGET_FILE:gagg_surface_study>
             ${PROJECT_BINARY_DIR}/macros/stage_b/b1_compare.mac

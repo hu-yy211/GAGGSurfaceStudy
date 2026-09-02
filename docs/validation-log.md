@@ -596,3 +596,32 @@ Final validation: A0--B6 regression passed 40/40 tests in 214.37 s.
 Status: B7.1 validation gate passed. The test uses one 1 keV fixed-direction
 gamma only for inexpensive spatial validation. Back-to-back 511 keV emission
 and isotropic pair-axis validation belong exclusively to B7.2.
+
+## 2026-09-02 - B7.2 effective annihilation-pair emission
+
+- Added the independent `annihilationPair` particle mode. Each event creates
+  exactly one `G4PrimaryVertex` containing two 511 keV gamma primaries at the
+  B7.1 square-face position. Gamma 1 samples a uniform 4pi axis; gamma 2 uses
+  its exact negative rather than an independent direction.
+- Added a separate source-audit CSV instead of changing the locked A0--B6
+  event schema. It records event/vertex/primary counts, source position, both
+  energies, both directions and their dot product.
+- In 10000 deterministic events, component means were
+  `(-0.00927,0.00906,-0.00124)` and second moments were
+  `(0.33651,0.33412,0.32937)`. The cos(theta) range was
+  `[-0.999886,0.999877]`; the 12-bin phi reduced chi-square was 1.75818.
+- All events had one vertex and two primaries, both energies were exactly
+  511 keV, every direction was unit length within CSV precision, and every
+  pair had dot product -1 with zero stored component residual.
+- The transport run deposited 19.3191 MeV in GAGG, generated 1,043,225
+  scintillation photons and classified all of them (`unclassified=0`). These
+  aggregate values are transport evidence only, not a full-energy-peak light
+  result.
+- B7.2 tests passed 2/2. The final smoke, B7.1, B7.2, A6 gamma and B3 gamma
+  regression set passed 9/9 in 73.06 s. The validation plot was visually
+  inspected.
+
+Status: B7.2 validation gate passed. The effective source intentionally omits
+positron transport, source encapsulation and annihilation-polarization
+correlations. B7.3 may define the event-level 511 keV GAGG-deposition gate and
+PMT optical-photon statistic without changing this source.

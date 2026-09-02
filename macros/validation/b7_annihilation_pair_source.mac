@@ -1,0 +1,27 @@
+# B7.2: validate a 2.5 mm square effective annihilation face source.
+# Each event contains one vertex, two 511 keV gammas, and one isotropically
+# sampled pair axis; gamma 2 is exactly back-to-back with gamma 1.
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+
+/gagg/geometry/mode experiment
+/gagg/stageA/surface none
+/gagg/stageB/surfaceState all_polished
+/gagg/stageB/sigmaAlpha 0.20 rad
+/run/initialize
+
+/gagg/source/particle annihilationPair
+/gagg/source/mode isotropic
+/gagg/source/position 0 0 30 mm
+/gagg/source/beamRadius 0 mm
+/gagg/source/faceSize 2.5 mm
+/gagg/source/eventSeedBase 750001
+/gagg/source/auditCsv results/b7_2_annihilation_pair/source_audit.csv
+
+/gagg/output/eventPrintModulo 0
+/gagg/output/csv results/b7_2_annihilation_pair/events.csv
+/random/setSeeds 264575 282843
+/run/printProgress 2000
+/run/beamOn 10000

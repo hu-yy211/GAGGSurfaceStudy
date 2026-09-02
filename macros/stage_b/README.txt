@@ -46,3 +46,13 @@ The `/gagg/source/faceSize 2.5 mm` command samples x and y uniformly around
 the configured source centre. The validation macro uses a single 1 keV
 fixed-direction gamma only to test positions. It does not yet implement the
 back-to-back 511 keV, 4pi pair-axis source planned for B7.2.
+
+B7.2 validates that effective pair source with:
+
+  ../validation/b7_annihilation_pair_source.mac
+
+Use `/gagg/source/particle annihilationPair`, `mode isotropic`, zero
+`beamRadius`, and the validated 2.5 mm `faceSize`. Each event then has one
+vertex and two exactly back-to-back 511 keV gammas. The validation macro writes
+an independent source-audit CSV; it does not yet select 511 keV full-energy
+GAGG events or report a B4-style light-output ratio.
