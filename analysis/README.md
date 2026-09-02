@@ -89,3 +89,10 @@ annihilation-pair source and selects events by event-total GAGG energy deposit
 in 510.5--511.5 keV. The validator reports both `sum(N_PMT)/sum(N_generated)`
 and mean `N_PMT` with standard errors; it never interprets the approximately
 2.25 eV PMT optical photons as 511 keV particles.
+
+B7.4 uses `b7_4_common.py`, `run_b7_4.py`, `validate_b7_4.py` and
+`plot_b7_4.py`. It launches isolated processes for a locked shared-sigma grid,
+reuses one sigma-inactive all-polished reference and requires exact event
+history pairing. The predeclared score is RMSE over the five non-reference
+normalized responses. Agreement is reported but is not a structural pass
+gate; the code forbids per-face sigma values.

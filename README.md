@@ -822,8 +822,33 @@ photons and delivered 492,993 photons to the PMT window, giving
 `sum(N_PMT)/sum(N_generated) = 0.0955401`. Mean `N_PMT` was
 2636.33 +/- 9.93 (standard error), and the selected-event light yield was
 53999.84 photons/MeV. All optical terminal accounting closed. B7.3 validates
-the source-to-response statistic only; the shared-`sigma_alpha` six-state
-scan remains the next milestone.
+the source-to-response statistic only.
+
+B7.4 scans one shared UNIFIED `sigma_alpha` over
+`0, 0.02, 0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.70 rad`. Each of the
+five rough-surface states uses exactly the same sigma at a scan point; no
+per-face fit is permitted. One all-polished reference is reused, and all 51
+points use exactly paired source positions, gamma histories, GAGG deposits
+and scintillation yields.
+
+~~~sh
+python analysis/run_b7_4.py --executable build/gagg_surface_study \
+  --config config/b7_4_sigma_scan.json \
+  --output-dir results/b7_4_sigma_scan_20k --jobs 4
+python analysis/validate_b7_4.py \
+  --config config/b7_4_sigma_scan.json \
+  --input-dir results/b7_4_sigma_scan_20k
+~~~
+
+Every 20000-event point contained the same 38 full-energy events. The
+predeclared five-state RMSE is minimized mathematically at `sigma_alpha=0`
+with RMSE 0.79278. Among positive candidates it is minimized at the scanned
+upper boundary, `0.70 rad`, with RMSE 0.79688. At 0.70 rad the normalized
+responses for bottom rough and top rough are 2.08496 and 3.07435, compared
+with preliminary experimental values 1.60 and 1.54. Side/multiple-rough
+states also remain too bright. B7.4 therefore validates the scan machinery
+but rejects shared `sigma_alpha` alone as an adequate explanation of all six
+experimental responses.
 
 ## Directory design
 

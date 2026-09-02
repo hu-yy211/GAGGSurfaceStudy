@@ -67,3 +67,13 @@ It runs 100000 all-polished events in the nominal estimated geometry and
 selects Edep_GAGG=511.0+/-0.5 keV during analysis. N_PMT counts optical
 photons transmitted from the bottom air layer into the PMT window. B7.3 does
 not scan or fit sigma_alpha.
+
+B7.4 generates isolated macros under the selected results directory using:
+
+  python analysis/run_b7_4.py --executable build/gagg_surface_study \
+    --config config/b7_4_sigma_scan.json \
+    --output-dir results/b7_4_sigma_scan_20k --jobs 4
+
+It scans one shared sigma_alpha for all rough faces, reuses one all-polished
+reference and forbids per-face fitting. Generated macros are run artifacts;
+the locked inputs live in config/b7_4_sigma_scan.json.

@@ -658,3 +658,26 @@ PMT optical-photon statistic without changing this source.
 
 Status: B7.3 validation gate passed. It establishes the all-polished response
 and uncertainty only; no roughness scan or experiment-driven fit was made.
+
+## 2026-09-02 - B7.4 shared roughness scan
+
+- Ran one all-polished reference and five rough states at ten shared
+  `sigma_alpha` values from 0 to 0.70 rad: 51 isolated Geant4 processes and
+  20000 events per process.
+- Every point contained the same 38 full-energy events. Event ID, source
+  position, total GAGG deposit and generated scintillation count paired
+  exactly across all states and sigmas; terminal photon accounting closed.
+- The predeclared RMSE over the five non-reference states was lowest at
+  sigma=0 rad: RMSE 0.792778 and MAE 0.654938. The best positive grid point
+  was sigma=0.70 rad: RMSE 0.796881 and MAE 0.654600; this was the upper scan
+  boundary.
+- At sigma=0.70 rad, normalized bottom-rough and top-rough responses were
+  2.084957 and 3.074354, respectively, versus preliminary measurements 1.60
+  and 1.54. Side rough remained 0.892567 versus 0.39.
+- Python syntax, result validation, whitespace checks and a clean rebuild
+  passed. The final B7.4 CTest chain passed 3/3 in 392.87 s: 51-point export,
+  validation and plotting.
+
+Status: B7.4 structural validation gate passed. Experimental agreement was
+deliberately not a pass gate. The result rejects a shared `sigma_alpha` as the
+only missing physical parameter and does not justify per-face fitting.

@@ -152,6 +152,10 @@ actual 100000-event all-polished sample selected 187 events and gave
 `sum(N_PMT)/sum(N_generated)=0.0955401`, with mean `N_PMT=2636.33 +/- 9.93`
 (standard error). Geometry, surface and photon-accounting checks passed.
 
-Status: B7.3 passed on 2026-09-02. B7.4 may run the six states in isolated
-processes over one shared `sigma_alpha` grid. No per-face roughness fitting is
-allowed.
+Status: B7.3 passed on 2026-09-02. B7.4 passed its structural gate on
+2026-09-02. It ran 51 isolated points over one shared `sigma_alpha` grid with
+exact event-history pairing and no per-face fit. The mathematical RMSE minimum
+was sigma=0 rad (0.79278); the positive-sigma minimum was the 0.70 rad upper
+boundary (0.79688). Neither reproduces the six measurements, so the result is
+evidence that roughness angle alone is insufficient, not a calibrated
+roughness measurement.
