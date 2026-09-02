@@ -383,6 +383,49 @@ if(BUILD_TESTING)
   )
 
   add_test(
+    NAME b7_4_sigma_scan_export
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/run_b7_4.py
+            --executable $<TARGET_FILE:gagg_surface_study>
+            --config ${PROJECT_SOURCE_DIR}/config/b7_4_sigma_scan.json
+            --output-dir ${PROJECT_BINARY_DIR}/results/b7_4_sigma_scan
+  )
+  set_tests_properties(b7_4_sigma_scan_export PROPERTIES
+    PASS_REGULAR_EXPRESSION "\\[b7.4-runner\\].*points=51.*shared_sigma=true.*status=PASS"
+    FAIL_REGULAR_EXPRESSION "unclassified=[1-9][0-9]*|status=FAIL|G4Exception|Fatal Exception"
+    TIMEOUT 7200
+    LABELS "slow;b7"
+  )
+
+  add_test(
+    NAME b7_4_sigma_scan_validate
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/validate_b7_4.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/b7_4_sigma_scan
+            --config ${PROJECT_SOURCE_DIR}/config/b7_4_sigma_scan.json
+  )
+  set_tests_properties(b7_4_sigma_scan_validate PROPERTIES
+    DEPENDS b7_4_sigma_scan_export
+    PASS_REGULAR_EXPRESSION "\\[b7.4-check\\] pairing=exact.*status=PASS"
+    LABELS "slow;b7"
+  )
+
+  add_test(
+    NAME b7_4_plot
+    COMMAND ${Python3_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/analysis/plot_b7_4.py
+            --input-dir ${PROJECT_BINARY_DIR}/results/b7_4_sigma_scan
+            --output-dir ${PROJECT_BINARY_DIR}/results/b7_4_sigma_scan/figures
+            --config ${PROJECT_SOURCE_DIR}/config/b7_4_sigma_scan.json
+  )
+  set_tests_properties(b7_4_plot PROPERTIES
+    DEPENDS b7_4_sigma_scan_validate
+    ENVIRONMENT "MPLCONFIGDIR=${PROJECT_BINARY_DIR}/.mplconfig"
+    PASS_REGULAR_EXPRESSION "\\[b7.4-plot\\].*status=PASS"
+    LABELS "slow;b7"
+  )
+
+  add_test(
     NAME b1_surface_export
     COMMAND $<TARGET_FILE:gagg_surface_study>
             ${PROJECT_BINARY_DIR}/macros/stage_b/b1_compare.mac

@@ -128,7 +128,14 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> B73Config:
     )
 
 
-def load_sample(path: Path, config: B73Config) -> B73Summary:
+def load_sample(
+    path: Path,
+    config: B73Config,
+    expected_state: str | None = None,
+    expected_sigma: float | None = None,
+) -> B73Summary:
+    state = config.state if expected_state is None else expected_state
+    sigma = config.sigma_alpha_rad if expected_sigma is None else expected_sigma
     with path.open(newline="", encoding="utf-8") as stream:
         reader = csv.DictReader(stream)
         if reader.fieldnames != EXPECTED_COLUMNS:
@@ -157,9 +164,9 @@ def load_sample(path: Path, config: B73Config) -> B73Summary:
             raise ValueError("B7.3 source x lies outside the square face")
         if not (center_y - half_face <= y <= center_y + half_face) or z != center_z:
             raise ValueError("B7.3 source position lies outside the source plane")
-        if row["stage_a_surface"] != "none" or row["stage_b_surface_state"] != config.state:
+        if row["stage_a_surface"] != "none" or row["stage_b_surface_state"] != state:
             raise ValueError("B7.3 surface metadata mismatch")
-        if abs(float(row["stage_b_sigma_alpha_rad"]) - config.sigma_alpha_rad) > 1.0e-12:
+        if abs(float(row["stage_b_sigma_alpha_rad"]) - sigma) > 1.0e-12:
             raise ValueError("B7.3 shared sigma metadata mismatch")
 
         edep = float(row["edep_keV"])
